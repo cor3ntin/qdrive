@@ -20,7 +20,7 @@ void QDrivePrivate::stat(uint requiredFlags)
     }
 
     bitmask = CachedAvailableSizeFlag | CachedFreeSizeFlag | CachedSizeFlag |
-              CachedFileSystemNameFlag;
+              CachedFileSystemNameFlag | CachedDeviceFlag;
     if (requiredFlags & bitmask &&
         !getCachedFlag(bitmask))
         statFS();
@@ -44,6 +44,7 @@ void QDrivePrivate::statFS()
                   CachedFreeSizeFlag |
                   CachedSizeFlag);
     fileSystemName = QString(statFS.f_fstypename);
+    device = QString(statFS.f_mntfromname);
 }
 
 FSVolumeRefNum getVolumeRefNumForPath(char *path)
@@ -69,18 +70,17 @@ void QDrivePrivate::getVolumeInfo()
     OSErr result = noErr;
     FSVolumeRefNum thisVolumeRefNum = getVolumeRefNumForPath(rootPath.toUtf8().data());
     HFSUniStr255 volumeName;
-    FSVolumeInfo volumeInfo;
-    FSRef rootDirectory;
+//    FSVolumeInfo volumeInfo;
 
-    bzero((void *) &volumeInfo, sizeof(volumeInfo));
+//    bzero((void *) &volumeInfo, sizeof(volumeInfo));
 
     result = FSGetVolumeInfo(thisVolumeRefNum,
                              0,
                              0,
                              kFSVolInfoFSInfo,
-                             &volumeInfo,
+                             0/*&volumeInfo*/,
                              &volumeName,
-                             &rootDirectory);
+                             0);
     if (result == noErr) {
         CFStringRef stringRef = FSCreateStringFromHFSUniStr(NULL, &volumeName);
         if (stringRef) {
@@ -95,22 +95,6 @@ void QDrivePrivate::getVolumeInfo()
             DisposePtr(volname);
         }
 
-//        CFURLRef url = CFURLCreateFromFSRef(NULL, &rootDirectory);
-//        if (url) {
-//            stringRef = CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
-//            if (stringRef) {
-//                char *volRootDir = NewPtr(CFStringGetLength(stringRef)+1);
-//                #warning TODO: fix encodings
-//                CFStringGetCString(stringRef,
-//                                   volRootDir,
-//                                   CFStringGetLength(stringRef) + 1,
-//                                   kCFStringEncodingMacRoman
-//                                   );
-//                CFRelease(stringRef);
-//                name = QString(volRootDir);
-//                DisposePtr(volRootDir);
-//            }
-//        }
     }
 }
 
