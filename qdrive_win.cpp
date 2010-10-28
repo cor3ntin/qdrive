@@ -26,6 +26,11 @@ void QDrivePrivate::stat(uint requiredFlags)
     if (requiredFlags & bitmask &&
         !getCachedFlag(bitmask))
         getDiskFreeSpace();
+
+    bitmask = CachedDeviceFlag;
+    if (requiredFlags & bitmask &&
+        !getCachedFlag(bitmask))
+        getDevice();
 }
 
 void QDrivePrivate::getVolumeInformation()
@@ -74,7 +79,7 @@ void QDrivePrivate::getDiskFreeSpace()
                                 (PULARGE_INTEGER)&freeSize
                                 );
     if (!result) {
-        DWORD error = GetLastError();
+//        DWORD error = GetLastError();
 //        if (error == ERROR_NOT_READY)
 //            ready = false;
 //        qDebug() << "error" << error;
@@ -84,6 +89,28 @@ void QDrivePrivate::getDiskFreeSpace()
 
     setCachedFlag(CachedAvailableSizeFlag | CachedFreeSizeFlag | CachedSizeFlag);
 }
+
+void QDrivePrivate::getDevice()
+{
+    wchar_t rootPathName[MAX_PATH] = L"";
+    rootPath.toWCharArray(rootPathName);
+
+    wchar_t buffer[MAX_PATH] = L"";
+    bool result;
+
+    result = GetVolumeNameForVolumeMountPoint(rootPathName,
+                                              buffer,
+                                              MAX_PATH);
+    if (!result) {
+//        DWORD error = GetLastError();
+        return;
+    }
+
+    device = QString::fromWCharArray(buffer);
+
+    setCachedFlag(CachedDeviceFlag);
+}
+
 
 QStringList QDrive::drivePaths()
 {

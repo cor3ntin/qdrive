@@ -11,6 +11,7 @@ public:
     void stat(uint requiredFlags);
     void getVolumeInformation();
     void getDiskFreeSpace();
+    void getDevice();
 };
 
 #endif // QDRIVE_WIN_P_H
