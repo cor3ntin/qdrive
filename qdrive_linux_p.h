@@ -14,6 +14,7 @@ public:
     void statFS();
     void getMountEntry();
     bool setName(const QString &name);
+    void getType();
 };
 
 #endif // QDRIVE_LINUX_P_H

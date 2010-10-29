@@ -12,6 +12,7 @@ public:
     void statFS();
     void getVolumeInfo();
     bool setName(const QString &name);
+    void getType();
 };
 
 #endif // QDRIVE_MAC_P_H

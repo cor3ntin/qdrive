@@ -31,6 +31,11 @@ void QDrivePrivate::stat(uint requiredFlags)
     if (requiredFlags & bitmask &&
         !getCachedFlag(bitmask))
         getDevice();
+
+    bitmask = CachedTypeFlag;
+    if (requiredFlags & bitmask &&
+        !getCachedFlag(bitmask))
+        getType();
 }
 
 void QDrivePrivate::getVolumeInformation()
@@ -120,6 +125,36 @@ bool QDrivePrivate::setName(const QString &name)
         return false;
     }
     return true;
+}
+
+void QDrivePrivate::getType()
+{
+#if !defined(Q_OS_WINCE)
+    uint result = GetDriveType((WCHAR *)rootPath.utf16());
+    switch (result) {
+    case 0:
+    case 1:
+        type = QDrive::NoDrive;
+        break;
+    case 2:
+        type = QDrive::RemovableDrive;
+        break;
+    case 3:
+        type = QDrive::InternalDrive;
+        break;
+    case 4:
+        type = QDrive::RemoteDrive;
+        break;
+    case 5:
+        type = QDrive::CdromDrive;
+        break;
+    case 6:
+        break;
+    };
+#endif
+    type = QDrive::NoDrive;
+
+    setCachedFlag(CachedTypeFlag);
 }
 
 QStringList QDrive::drivePaths()

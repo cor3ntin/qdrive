@@ -18,7 +18,8 @@ public:
         CachedNameFlag = 0x20,
         CachedRootPathFlag = 0x40,
         CachedReadyFlag = 0x80,
-        CachedDeviceFlag = 0x100
+        CachedDeviceFlag = 0x100,
+        CachedTypeFlag = 0x200
     };
 
     inline bool getCachedFlag(uint c) const
@@ -34,6 +35,7 @@ public:
     bool    ready;
     QString rootPath;
     quint64 size;
+    QDrive::DriveType type;
 
     bool cache_enabled;
     uint cachedFlags;

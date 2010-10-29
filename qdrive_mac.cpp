@@ -29,6 +29,11 @@ void QDrivePrivate::stat(uint requiredFlags)
     if (requiredFlags & bitmask &&
         !getCachedFlag(bitmask))
         getVolumeInfo();
+
+    bitmask = CachedTypeFlag;
+    if (requiredFlags & bitmask &&
+        !getCachedFlag(bitmask))
+        getType();
 }
 
 void QDrivePrivate::statFS()
@@ -101,6 +106,13 @@ void QDrivePrivate::getVolumeInfo()
 bool QDrivePrivate::setName(const QString &name)
 {
     return false;
+}
+
+void QDrivePrivate::getType()
+{
+    type = QDrive::NoDrive;
+
+    setCachedFlag(CachedTypeFlag);
 }
 
 QStringList QDrive::drivePaths()

@@ -14,6 +14,16 @@ public:
     QDrive(const QString &rootPath);
     ~QDrive();
 
+    enum DriveType {
+        NoDrive = 0,
+        InternalDrive,
+        RemovableDrive,
+        RemoteDrive,
+        CdromDrive,
+        InternalFlashDrive, //1.2
+        RamDrive //1.2
+    };
+
     static QStringList drivePaths();
 
     quint64 availableSize();
@@ -25,6 +35,7 @@ public:
     bool    ready();
     QString rootPath();
     quint64 size();
+    DriveType type();
 
 protected:
     QDrivePrivate *d_ptr;

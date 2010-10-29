@@ -13,6 +13,7 @@ public:
     void getDiskFreeSpace();
     void getDevice();
     bool setName(const QString &name);
+    void getType();
 };
 
 #endif // QDRIVE_WIN_P_H

@@ -100,6 +100,12 @@ quint64 QDrive::size()
     return d_func()->size;
 }
 
+QDrive::DriveType QDrive::type()
+{
+    d_func()->stat(QDrivePrivate::CachedTypeFlag);
+    return d_func()->type;
+}
+
 void QDrive::timerEvent(QTimerEvent *)
 {
 }
