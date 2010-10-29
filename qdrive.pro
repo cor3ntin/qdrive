@@ -26,6 +26,6 @@ unix: {
     mac: {
        HEADERS += qdrive_mac_p.h
        SOURCES += qdrive_mac.cpp
-       LIBS += -framework Cocoa
+       LIBS += -framework CoreServices -framework DiskArbitration -framework IOKit
     }
 }

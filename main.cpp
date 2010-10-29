@@ -22,6 +22,22 @@ int main(int argc, char *argv[])
             qDebug() << "   " << "size:" << f->size()/1000/1000 << "MB";
             qDebug() << "   " << "freeSize:" << f->freeSize()/1000/1000 << "MB";
             qDebug() << "   " << "availableSize:" << f->availableSize()/1000/1000 << "MB";
+            switch(f->type()) {
+            case QDrive::NoDrive:
+                qDebug() << "   " << "QDrive::NoDrive"; break;
+            case QDrive::InternalDrive:
+                qDebug() << "   " << "QDrive::InternalDrive"; break;
+            case QDrive::RemovableDrive:
+                qDebug() << "   " << "QDrive::RemovableDrive"; break;
+            case QDrive::RemoteDrive:
+                qDebug() << "   " << "QDrive::RemoteDrive"; break;
+            case QDrive::CdromDrive:
+                qDebug() << "   " << "QDrive::CdromDrive"; break;
+            case QDrive::InternalFlashDrive:
+                qDebug() << "   " << "QDrive::InternalFlashDrive"; break;
+            case QDrive::RamDrive:
+                qDebug() << "   " << "QDrive::RamDrive"; break;
+            }
         } else {
             qDebug() << "    " <<  f->rootPath() << "is not ready";
         }

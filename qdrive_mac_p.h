@@ -13,6 +13,7 @@ public:
     void getVolumeInfo();
     bool setName(const QString &name);
     void getType();
+    QDrive::DriveType determineType();
 };
 
 #endif // QDRIVE_MAC_P_H

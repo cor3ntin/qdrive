@@ -4,6 +4,9 @@
 #include <sys/mount.h>
 
 #include <CoreServices/CoreServices.h>
+//#include <IOKit/storage/IOCDBlockStorageDriver.h>
+#include <IOKit/storage/IOCDMedia.h>
+#include <IOKit/storage/IODVDMedia.h>
 
 //================================== QDriveInfoPrivate ==================================
 
@@ -110,9 +113,86 @@ bool QDrivePrivate::setName(const QString &name)
 
 void QDrivePrivate::getType()
 {
-    type = QDrive::NoDrive;
+    stat(CachedDeviceFlag); // we need BSD device to determine drive type.
+    type = determineType();
 
     setCachedFlag(CachedTypeFlag);
+}
+
+// From Qt Mobility
+QDrive::DriveType QDrivePrivate::determineType()
+{
+    QDrive::DriveType drivetype =  QDrive::NoDrive;
+
+    DADiskRef diskRef;
+    DASessionRef sessionRef;
+    CFBooleanRef boolRef;
+    CFBooleanRef boolRef2;
+    CFDictionaryRef descriptionDictionary;
+
+    sessionRef = DASessionCreate(NULL);
+    if (sessionRef == NULL) {
+        return QDrive::NoDrive;
+    }
+
+    diskRef = DADiskCreateFromBSDName(NULL,
+                                      sessionRef,
+                                      device.toLatin1()
+                                      /*mountEntriesMap.key(driveVolume).toLatin1()*/);
+    if (diskRef == NULL) {
+        CFRelease(sessionRef);
+        return QDrive::NoDrive;
+    }
+
+    descriptionDictionary = DADiskCopyDescription(diskRef);
+    if (descriptionDictionary == NULL) {
+        CFRelease(diskRef);
+        CFRelease(sessionRef);
+        return QDrive::RemoteDrive;
+    }
+
+    boolRef = (CFBooleanRef)
+              CFDictionaryGetValue(descriptionDictionary, kDADiskDescriptionMediaRemovableKey);
+    if (boolRef) {
+        if(CFBooleanGetValue(boolRef)) {
+            drivetype = QDrive::RemovableDrive;
+        } else {
+            drivetype = QDrive::InternalDrive;
+        }
+    }
+    boolRef2 = (CFBooleanRef)
+              CFDictionaryGetValue(descriptionDictionary, kDADiskDescriptionVolumeNetworkKey);
+    if (boolRef2) {
+        if(CFBooleanGetValue(boolRef2)) {
+            drivetype = QDrive::RemoteDrive;
+        }
+    }
+
+    DADiskRef wholeDisk;
+    wholeDisk = DADiskCopyWholeDisk(diskRef);
+
+    if (wholeDisk) {
+        io_service_t mediaService;
+
+        mediaService = DADiskCopyIOMedia(wholeDisk);
+        if (mediaService) {
+            if (IOObjectConformsTo(mediaService, kIOCDMediaClass)) {
+                drivetype = QDrive::CdromDrive;
+            }
+            if (IOObjectConformsTo(mediaService, kIODVDMediaClass)) {
+                drivetype = QDrive::CdromDrive;
+            }
+            IOObjectRelease(mediaService);
+        }
+        CFRelease(wholeDisk);
+    }
+    CFRelease(diskRef);
+    CFRelease(descriptionDictionary);
+    CFRelease(boolRef);
+    CFRelease(boolRef2);
+    CFRelease(sessionRef);
+
+    return drivetype;
 }
 
 QStringList QDrive::drivePaths()
