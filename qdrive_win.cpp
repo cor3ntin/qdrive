@@ -129,32 +129,36 @@ bool QDrivePrivate::setName(const QString &name)
 
 void QDrivePrivate::getType()
 {
+    type = determineType();
+    setCachedFlag(CachedTypeFlag);
+}
+
+QDrive::DriveType QDrivePrivate::determineType()
+{
 #if !defined(Q_OS_WINCE)
     uint result = GetDriveType((WCHAR *)rootPath.utf16());
     switch (result) {
     case 0:
     case 1:
-        type = QDrive::NoDrive;
+        return QDrive::NoDrive;
         break;
     case 2:
-        type = QDrive::RemovableDrive;
+        return QDrive::RemovableDrive;
         break;
     case 3:
-        type = QDrive::InternalDrive;
+        return QDrive::InternalDrive;
         break;
     case 4:
-        type = QDrive::RemoteDrive;
+        return QDrive::RemoteDrive;
         break;
     case 5:
-        type = QDrive::CdromDrive;
+        return QDrive::CdromDrive;
         break;
     case 6:
         break;
     };
 #endif
-    type = QDrive::NoDrive;
-
-    setCachedFlag(CachedTypeFlag);
+    return QDrive::NoDrive;
 }
 
 QStringList QDrive::drivePaths()

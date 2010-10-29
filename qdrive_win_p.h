@@ -14,6 +14,7 @@ public:
     void getDevice();
     bool setName(const QString &name);
     void getType();
+    QDrive::DriveType determineType();
 };
 
 #endif // QDRIVE_WIN_P_H
