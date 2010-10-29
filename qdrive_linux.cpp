@@ -83,6 +83,11 @@ void QDrivePrivate::getMountEntry()
     setCachedFlag(CachedFileSystemNameFlag | CachedDeviceFlag);
 }
 
+bool QDrivePrivate::setName(const QString &name)
+{
+    return false;
+}
+
 QStringList QDrive::drivePaths()
 {
     QStringList ret;

@@ -98,6 +98,11 @@ void QDrivePrivate::getVolumeInfo()
     }
 }
 
+bool QDrivePrivate::setName(const QString &name)
+{
+    return false;
+}
+
 QStringList QDrive::drivePaths()
 {
     qDebug("drivePaths");

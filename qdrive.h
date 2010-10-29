@@ -21,6 +21,7 @@ public:
     quint64 freeSize();
     QString device() const;
     QString name();
+    bool    setName(const QString &name);
     bool    ready();
     QString rootPath();
     quint64 size();

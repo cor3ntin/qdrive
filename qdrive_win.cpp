@@ -111,6 +111,16 @@ void QDrivePrivate::getDevice()
     setCachedFlag(CachedDeviceFlag);
 }
 
+bool QDrivePrivate::setName(const QString &name)
+{
+    bool result = SetVolumeLabel(reinterpret_cast<const WCHAR*>(rootPath.utf16()),
+                                 reinterpret_cast<const WCHAR*>(name.utf16()));
+    if (!result) {
+        //error handling
+        return false;
+    }
+    return true;
+}
 
 QStringList QDrive::drivePaths()
 {

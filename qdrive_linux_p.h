@@ -13,6 +13,7 @@ public:
     void stat(uint requiredFlags);
     void statFS();
     void getMountEntry();
+    bool setName(const QString &name);
 };
 
 #endif // QDRIVE_LINUX_P_H

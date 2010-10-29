@@ -11,6 +11,7 @@ public:
     void stat(uint requiredFlags);
     void statFS();
     void getVolumeInfo();
+    bool setName(const QString &name);
 };
 
 #endif // QDRIVE_MAC_P_H
