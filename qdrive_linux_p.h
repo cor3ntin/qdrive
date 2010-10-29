@@ -15,6 +15,7 @@ public:
     void getMountEntry();
     bool setName(const QString &name);
     void getType();
+    QDrive::DriveType determineType();
 };
 
 #endif // QDRIVE_LINUX_P_H

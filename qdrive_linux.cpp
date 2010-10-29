@@ -1,23 +1,14 @@
 #include "qdrive_linux_p.h"
 
-#include <sys/statfs.h>
 #include <mntent.h>
-//#include <sysfs.h>
-//#include <syscall.h>
-//#include <unistd.h>
-#include <linux/unistd.h>
-#include <linux/kernel.h>
-//#include <sys/fstyp.h>
-//#include <sys/fsid.h>
+#include <sys/statfs.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
+#include <QtCore/QFile>
 #include <QDebug>
 
 //================================== QDriveInfoPrivate ==================================
-
-//extern "C" {
-//int sysfs(int option, unsigned int fs_index, char *buf);
-//    int sysfs(int, ...);
-//}
 
 QDrivePrivate::QDrivePrivate()
 {
@@ -59,15 +50,12 @@ void QDrivePrivate::statFS()
     setCachedFlag(CachedAvailableSizeFlag |
                   CachedFreeSizeFlag |
                   CachedSizeFlag);
-
-    char buf[255];
-//    int error = ::sysfs(2, statFS.f_type, buf);
 }
 
 void QDrivePrivate::getMountEntry()
 {
     struct mntent *mnt;
-    char *table = MOUNTED;
+    const char *table = MOUNTED;
     FILE *fp;
 
     fp = setmntent (table, "r");
@@ -88,23 +76,72 @@ void QDrivePrivate::getMountEntry()
     setCachedFlag(CachedFileSystemNameFlag | CachedDeviceFlag);
 }
 
-bool QDrivePrivate::setName(const QString &name)
+bool QDrivePrivate::setName(const QString &/*name*/)
 {
     return false;
 }
 
 void QDrivePrivate::getType()
 {
-    type = QDrive::NoDrive;
+    stat(CachedDeviceFlag); // we need a device to get info
+
+    type = determineType();
 
     setCachedFlag(CachedTypeFlag);
+}
+
+// From Qt Mobility
+QDrive::DriveType QDrivePrivate::determineType()
+{
+    QString dmFile;
+
+//    if(mountEntriesMap.value(driveVolume).contains("mapper")) {
+    if(device.contains("mapper")) {
+        struct stat stat_buf;
+        ::stat(device.toLatin1(), &stat_buf);
+
+        dmFile = QString("/sys/block/dm-%1/removable").arg(stat_buf.st_rdev & 0377);
+
+    } else {
+
+        dmFile = device.section("/",2,3);
+        if (dmFile.left(3) == "mmc") { //assume this dev is removable sd/mmc card.
+            return QDrive::RemovableDrive;
+        }
+
+        if(dmFile.length() > 3) { //if device has number, we need the 'parent' device
+            dmFile.chop(1);
+            if (dmFile.right(1) == "p") //get rid of partition number
+                dmFile.chop(1);
+        }
+        dmFile = "/sys/block/"+dmFile+"/removable";
+    }
+
+    QFile file(dmFile);
+    if (!file.open(QIODevice::ReadOnly)) {
+        qDebug() << "Could not open sys file";
+    } else {
+        QTextStream sysinfo(&file);
+        QString line = sysinfo.readAll();
+        if(line.contains("1")) {
+            return QDrive::RemovableDrive;
+        }
+    }
+
+    if(rootPath.left(2) == "//") {
+        return QDrive::RemoteDrive;
+    }
+    if (device.startsWith("/dev"))
+        return QDrive::InternalDrive;
+    else
+        return QDrive::NoDrive;
 }
 
 QStringList QDrive::drivePaths()
 {
     QStringList ret;
     struct mntent *mnt;
-    char *table = MOUNTED;
+    const char *table = MOUNTED;
     FILE *fp;
 
     fp = setmntent (table, "r");
