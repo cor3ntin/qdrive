@@ -20,8 +20,8 @@ public:
         RemovableDrive,
         RemoteDrive,
         CdromDrive,
-        InternalFlashDrive, //1.2
-        RamDrive //1.2
+        InternalFlashDrive,
+        RamDrive
     };
 
     static QStringList drivePaths();
