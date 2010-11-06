@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #include <QtCore/QFile>
+#include <QtCore/QDirIterator>
 #include <QDebug>
 
 //================================== QDriveInfoPrivate ==================================
@@ -36,6 +37,11 @@ void QDrivePrivate::stat(uint requiredFlags)
     if (requiredFlags & bitmask &&
         !getCachedFlag(bitmask))
         getType();
+
+    bitmask = CachedNameFlag;
+    if (requiredFlags & bitmask &&
+        !getCachedFlag(bitmask))
+        getName();
 }
 
 void QDrivePrivate::statFS()
@@ -85,6 +91,34 @@ void QDrivePrivate::getType()
     setCachedFlag(CachedTypeFlag);
 }
 
+// we need udev to be present in system to get label name
+// Unfortunately, i don't know proper way to get labels except this. Maybe libudev can provide
+// this information. TODO: explore it
+void QDrivePrivate::getName()
+{
+    QFileInfo fi(DISK_BY_LABEL);
+    if (!fi.exists() && !fi.isDir()) // /dev/disk/by-label doesn't exists or invalid
+        return;
+
+    stat(CachedDeviceFlag); // we need device to get info
+
+    QDirIterator it(DISK_BY_LABEL, QDir::NoDotAndDotDot);
+    while (it.hasNext()) {
+        QString entry = it.next();
+        QFileInfo fileInfo(entry);
+        if (fileInfo.isSymLink()) {
+            // ok, it is symlink to device and we work with it
+            QString target = fileInfo.symLinkTarget();
+            if (device == target) {
+                name = fileInfo.fileName();
+                break;
+            }
+        }
+    }
+
+    setCachedFlag(CachedNameFlag);
+}
+
 // From Qt Mobility
 QDrive::DriveType QDrivePrivate::determineType()
 {
@@ -114,7 +148,7 @@ QDrive::DriveType QDrivePrivate::determineType()
 
     QFile file(dmFile);
     if (!file.open(QIODevice::ReadOnly)) {
-        qDebug() << "Could not open sys file";
+        qWarning() << "Could not open sys file";
     } else {
         QTextStream sysinfo(&file);
         QString line = sysinfo.readAll();
