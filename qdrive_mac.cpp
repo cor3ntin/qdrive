@@ -106,11 +106,6 @@ void QDrivePrivate::getVolumeInfo()
     }
 }
 
-bool QDrivePrivate::setName(const QString &name)
-{
-    return false;
-}
-
 void QDrivePrivate::getType()
 {
     stat(CachedDeviceFlag); // we need BSD device to determine drive type.

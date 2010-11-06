@@ -77,11 +77,6 @@ QString QDrive::name()
     return d_func()->name;
 }
 
-bool QDrive::setName(const QString &name)
-{
-    return d_func()->setName(name);
-}
-
 bool QDrive::ready()
 {
     d_func()->stat(QDrivePrivate::CachedReadyFlag);

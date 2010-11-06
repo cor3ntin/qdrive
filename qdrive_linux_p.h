@@ -13,7 +13,6 @@ public:
     void stat(uint requiredFlags);
     void statFS();
     void getMountEntry();
-    bool setName(const QString &name);
     void getType();
     QDrive::DriveType determineType();
 };

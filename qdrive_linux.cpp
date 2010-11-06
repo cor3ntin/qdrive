@@ -76,11 +76,6 @@ void QDrivePrivate::getMountEntry()
     setCachedFlag(CachedFileSystemNameFlag | CachedDeviceFlag);
 }
 
-bool QDrivePrivate::setName(const QString &/*name*/)
-{
-    return false;
-}
-
 void QDrivePrivate::getType()
 {
     stat(CachedDeviceFlag); // we need a device to get info
