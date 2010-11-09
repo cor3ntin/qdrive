@@ -1,6 +1,5 @@
 #include <QtCore/QCoreApplication>
 
-#include "qdrive.h"
 #include "qdriveinfo.h"
 #include <QFileInfo>
 #include <QDir>
@@ -30,7 +29,7 @@ int main(int argc, char *argv[])
 //    f();
 //    return a.exec();
 
-    qDebug() << QDrive::drivePaths();
+//    qDebug() << QDrive::drivePaths();
     foreach (QDriveInfo drive, QDriveInfo::drives()) {
 //        qDebug() << "=======";
         QDriveInfo *f = &drive;
@@ -43,19 +42,19 @@ int main(int argc, char *argv[])
             qDebug() << "   " << "freeSize:" << f->freeSize()/1000/1000 << "MB";
             qDebug() << "   " << "availableSize:" << f->availableSize()/1000/1000 << "MB";
             switch(f->type()) {
-            case QDrive::NoDrive:
+            case QDriveInfo::NoDrive:
                 qDebug() << "   " << "QDrive::NoDrive"; break;
-            case QDrive::InternalDrive:
+            case QDriveInfo::InternalDrive:
                 qDebug() << "   " << "QDrive::InternalDrive"; break;
-            case QDrive::RemovableDrive:
+            case QDriveInfo::RemovableDrive:
                 qDebug() << "   " << "QDrive::RemovableDrive"; break;
-            case QDrive::RemoteDrive:
+            case QDriveInfo::RemoteDrive:
                 qDebug() << "   " << "QDrive::RemoteDrive"; break;
-            case QDrive::CdromDrive:
+            case QDriveInfo::CdromDrive:
                 qDebug() << "   " << "QDrive::CdromDrive"; break;
-            case QDrive::InternalFlashDrive:
+            case QDriveInfo::InternalFlashDrive:
                 qDebug() << "   " << "QDrive::InternalFlashDrive"; break;
-            case QDrive::RamDrive:
+            case QDriveInfo::RamDrive:
                 qDebug() << "   " << "QDrive::RamDrive"; break;
             }
         } else {
