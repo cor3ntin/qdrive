@@ -9,23 +9,27 @@ CONFIG -= app_bundle
 TEMPLATE = app
 
 SOURCES += main.cpp \
-    qdrive.cpp
-HEADERS += qdrive.h \
-    qdrive_p.h
+    qdriveinfo.cpp
+HEADERS += \
+    qdriveinfo.h \
+    qdriveinfo_p.h
 
 win32: {
-    HEADERS += qdrive_win_p.h
-    SOURCES += qdrive_win.cpp
+    HEADERS +=
+    SOURCES += \
+            qdriveinfo_win.cpp
 }
 
 unix: {
     linux-*: {
-       HEADERS += qdrive_linux_p.h
-       SOURCES += qdrive_linux.cpp
+       HEADERS +=
+       SOURCES += \
+            qdriveinfo_linux.cpp
     }
     mac: {
-       HEADERS += qdrive_mac_p.h
-       SOURCES += qdrive_mac.cpp
+       HEADERS +=
+       SOURCES += \
+                qdriveinfo_mac.cpp
        LIBS += -framework CoreServices -framework DiskArbitration -framework IOKit
     }
 }
