@@ -1,32 +1,22 @@
 #include "qdriveinfo.h"
 #include "qdriveinfo_p.h"
 
-#include <QtCore/QList>
-#include <QtCore/QString>
-#include <QtCore/QStringList>
-
-#include "qplatformdefs.h"
-
-QStringList QDriveInfoPrivate::drivePaths()
-{
-    QStringList ret;
-    quint32 driveBits = (quint32)GetLogicalDrives() & 0x3ffffff;
-    char driveName[] = "A:/";
-    while (driveBits) {
-        if (driveBits & 1)
-            ret.append(QLatin1String(driveName));
-        driveName[0]++;
-        driveBits = driveBits >> 1;
-    }
-    return ret;
-}
+#include <qplatformdefs.h>
 
 QList<QDriveInfo> QDriveInfoPrivate::drives()
 {
-    QList<QDriveInfo> result;
-    foreach (const QString &path, drivePaths())
-        result.append(QDriveInfo(path));
-    return result;
+    QList<QDriveInfo> drives;
+
+    char driveName[] = "A:/";
+    quint32 driveBits = (quint32)GetLogicalDrives() & 0x3ffffff;
+    while (driveBits) {
+        if (driveBits & 1)
+            drives.append(QDriveInfo(QLatin1String(driveName)));
+        driveName[0]++;
+        driveBits = driveBits >> 1;
+    }
+
+    return drives;
 }
 
 void QDriveInfoPrivate::stat(uint requiredFlags)
@@ -65,25 +55,19 @@ void QDriveInfoPrivate::getVolumeInformation()
 {
     wchar_t nameBuf[MAX_PATH];
     wchar_t fileSystemNameBuf[MAX_PATH];
-    bool result;
-
-    result = GetVolumeInformation((wchar_t *)data->rootPath.utf16(),
-                                  nameBuf, MAX_PATH,
-                                  0, 0, 0,
-                                  fileSystemNameBuf, MAX_PATH);
+    bool result = GetVolumeInformation((wchar_t *)data->rootPath.utf16(),
+                                       nameBuf, MAX_PATH,
+                                       0, 0, 0,
+                                       fileSystemNameBuf, MAX_PATH);
     if (!result) {
-        DWORD error = GetLastError();
-        if (error == ERROR_NOT_READY) {
-            data->ready = false;
-            data->valid = true;
-        } else {
-            data->valid = false;
-        }
+        data->ready = false;
+        data->valid = (GetLastError() == ERROR_NOT_READY);
     } else {
-        data->name = QString::fromWCharArray(nameBuf);
-        data->fileSystemName = QString::fromWCharArray(fileSystemNameBuf);
         data->ready = true;
         data->valid = true;
+
+        data->name = QString::fromWCharArray(nameBuf);
+        data->fileSystemName = QString::fromWCharArray(fileSystemNameBuf);
     }
 }
 

@@ -16,29 +16,19 @@
 #  define _PATH_DISK_BY_LABEL "/dev/disk/by-label"
 #endif
 
-QStringList drivePaths()
-{
-    QStringList ret;
-
-    FILE *fp = setmntent(_PATH_MOUNTED, "r");
-    if (!fp)
-        return ret;
-
-    struct mntent *mnt;
-    while ((mnt = getmntent(fp)))
-        ret.append(QString::fromLocal8Bit(mnt->mnt_dir));
-
-    endmntent(fp);
-
-    return ret;
-}
-
 QList<QDriveInfo> QDriveInfoPrivate::drives()
 {
-    QList<QDriveInfo> result;
-    foreach (const QString &path, drivePaths())
-        result.append(QDriveInfo(path));
-    return result;
+    QList<QDriveInfo> drives;
+
+    FILE *fp = setmntent(_PATH_MOUNTED, "r");
+    if (fp) {
+        struct mntent *mnt;
+        while ((mnt = getmntent(fp)))
+            drives.append(QDriveInfo(QString::fromLocal8Bit(mnt->mnt_dir)));
+        endmntent(fp);
+    }
+
+    return drives;
 }
 
 void QDriveInfoPrivate::stat(uint requiredFlags)
@@ -76,38 +66,36 @@ void QDriveInfoPrivate::stat(uint requiredFlags)
 
 void QDriveInfoPrivate::statFS()
 {
-    struct statfs statFS;
-    int result = statfs(data->rootPath.toUtf8().data(), &statFS);
+    struct statfs statfs_buf;
+    int result = statfs(data->rootPath.toUtf8().data(), &statfs_buf);
     if (result == -1) {
         data->valid = false;
         data->ready = false;
     } else {
-        data->availableSize = statFS.f_bavail * statFS.f_bsize;
-        data->freeSize = statFS.f_bfree * statFS.f_bsize;
-        data->totalSize = statFS.f_blocks * statFS.f_bsize;
-
         data->valid = true;
         data->ready = true;
+
+        data->availableSize = statfs_buf.f_bavail * statfs_buf.f_bsize;
+        data->freeSize = statfs_buf.f_bfree * statfs_buf.f_bsize;
+        data->totalSize = statfs_buf.f_blocks * statfs_buf.f_bsize;
     }
 }
 
 void QDriveInfoPrivate::getMountEntry()
 {
     FILE *fp = setmntent(_PATH_MOUNTED, "r");
-    if (!fp)
-        return;
-
-    struct mntent *mnt;
-    while ((mnt = getmntent(fp))) {
-        if (mnt->mnt_dir == data->rootPath) {
-            // we found our entry
-            data->fileSystemName = QString::fromLatin1(mnt->mnt_type);
-            data->device = QString::fromLocal8Bit(mnt->mnt_fsname);
-            break;
+    if (fp) {
+        struct mntent *mnt;
+        while ((mnt = getmntent(fp))) {
+            if (mnt->mnt_dir == data->rootPath) {
+                // we found our entry
+                data->fileSystemName = QString::fromLatin1(mnt->mnt_type);
+                data->device = QString::fromLocal8Bit(mnt->mnt_fsname);
+                break;
+            }
         }
+        endmntent(fp);
     }
-
-    endmntent(fp);
 }
 
 static inline QDriveInfo::DriveType determineType(const QString &device)
@@ -115,8 +103,8 @@ static inline QDriveInfo::DriveType determineType(const QString &device)
     QString dmFile;
 
     if (device.contains(QLatin1String("mapper"))) {
-        struct stat stat_buf;
-        ::stat(device.toLocal8Bit(), &stat_buf);
+        QT_STATBUF stat_buf;
+        QT_STAT(device.toLocal8Bit(), &stat_buf);
 
         dmFile = QString::number(stat_buf.st_rdev & 0377);
         dmFile = QLatin1String("/sys/block/dm-") + dmFile + QLatin1String("/removable");
@@ -176,22 +164,18 @@ void QDriveInfoPrivate::getType()
 void QDriveInfoPrivate::getName()
 {
     QFileInfo fi(QLatin1String(_PATH_DISK_BY_LABEL));
-    if (!fi.exists() && !fi.isDir()) // /dev/disk/by-label doesn't exists or invalid
+    if (!fi.exists() || !fi.isDir()) // /dev/disk/by-label doesn't exists or invalid
         return;
 
     stat(CachedDeviceFlag); // we need device to get info
 
     QDirIterator it(QLatin1String(_PATH_DISK_BY_LABEL), QDir::NoDotAndDotDot);
     while (it.hasNext()) {
-        QString entry = it.next();
-        QFileInfo fileInfo(entry);
-        if (fileInfo.isSymLink()) {
-            // ok, it is symlink to device and we work with it
-            QString target = fileInfo.symLinkTarget();
-            if (data->device == target) {
-                data->name = fileInfo.fileName();
-                break;
-            }
+        it.next();
+        QFileInfo fileInfo(it.currentFileInfo());
+        if (fileInfo.isSymLink() && data->device == fileInfo.symLinkTarget()) {
+            data->name = fileInfo.fileName();
+            break;
         }
     }
 }

@@ -1,10 +1,6 @@
 #include "qdriveinfo.h"
 #include "qdriveinfo_p.h"
 
-#include <QtCore/QList>
-#include <QtCore/QString>
-#include <QtCore/QStringList>
-
 //#include <sys/param.h>
 #include <sys/mount.h>
 
@@ -13,9 +9,9 @@
 #include <IOKit/storage/IOCDMedia.h>
 #include <IOKit/storage/IODVDMedia.h>
 
-QStringList drivePaths()
+QList<QDriveInfo> QDriveInfoPrivate::drives()
 {
-    QStringList paths;
+    QList<QDriveInfo> drives;
 
     OSErr result = noErr;
     ItemCount volumeIndex;
@@ -27,9 +23,7 @@ QStringList drivePaths()
         result = FSGetVolumeInfo(kFSInvalidVolumeRefNum,
                                  volumeIndex,
                                  &actualVolume,
-                                 0,
-                                 0,
-                                 0,
+                                 0, 0, 0,
                                  &rootDirectory);
         if (result == noErr) {
             CFURLRef url = CFURLCreateFromFSRef(NULL, &rootDirectory);
@@ -42,22 +36,14 @@ QStringList drivePaths()
                                    length,
                                    kCFStringEncodingMacRoman);
                 CFRelease(stringRef);
-                paths.append(QString::fromLocal8Bit(volname));
+                drives.append(QString::fromLocal8Bit(volname));
                 DisposePtr(volname);
             }
             CFRelease(url);
         }
     }
 
-    return paths;
-}
-
-QList<QDriveInfo> QDriveInfoPrivate::drives()
-{
-    QList<QDriveInfo> result;
-    foreach (const QString &path, drivePaths())
-        result.append(QDriveInfo(path));
-    return result;
+    return drives;
 }
 
 void QDriveInfoPrivate::stat(uint requiredFlags)
@@ -89,23 +75,21 @@ void QDriveInfoPrivate::stat(uint requiredFlags)
 
 void QDriveInfoPrivate::statFS()
 {
-    struct statfs statFS;
-    int result;
-
-    result = statfs(data->rootPath.toUtf8().data(), &statFS);
+    struct statfs statfs_buf;
+    int result = statfs(data->rootPath.toUtf8().data(), &statfs_buf);
     if (result == -1) {
         data->valid = false;
         data->ready = false;
     } else {
-        data->totalSize = statFS.f_blocks * statFS.f_bsize;
-        data->freeSize = statFS.f_bfree * statFS.f_bsize;
-        data->availableSize = statFS.f_bavail * statFS.f_bsize;
-
-        data->fileSystemName = QString::fromLatin1(statFS.f_fstypename);
-        data->device = QString::fromLocal8Bit(statFS.f_mntfromname);
-
         data->valid = true;
         data->ready = true;
+
+        data->totalSize = statfs_buf.f_blocks * statfs_buf.f_bsize;
+        data->freeSize = statfs_buf.f_bfree * statfs_buf.f_bsize;
+        data->availableSize = statfs_buf.f_bavail * statfs_buf.f_bsize;
+
+        data->fileSystemName = QString::fromLatin1(statfs_buf.f_fstypename);
+        data->device = QString::fromLocal8Bit(statfs_buf.f_mntfromname);
     }
 }
 

@@ -1,9 +1,9 @@
 #ifndef QDRIVEINFO_P_H
 #define QDRIVEINFO_P_H
 
-#include "qdriveinfo.h"
 #include <QtCore/QExplicitlySharedDataPointer>
-#include <QtCore/QStringList>
+
+#include "qdriveinfo.h"
 
 class QDriveInfoPrivate
 {
@@ -85,27 +85,22 @@ public:
 
     void getType();
 
-#ifdef Q_OS_LINUX
-#if defined(Q_WS_MAEMO_5) || defined(Q_WS_MAEMO_6)
+#if defined(Q_OS_LINUX)
+#  if defined(Q_WS_MAEMO_5) || defined(Q_WS_MAEMO_6)
 
-#else
+#  else
     void statFS();
     void getMountEntry();
     void getName();
-#endif //Q_WS_MAEMO_5 & Q_WS_MAEMO_6
-#endif //Q_OS_LINUX
-
-#ifdef Q_OS_WIN
-    static QStringList drivePaths();
+#  endif
+#elif defined(Q_OS_WIN)
     void getVolumeInformation();
     void getDiskFreeSpace();
     void getDevice();
-#endif
-#ifdef Q_OS_MAC
+#elif defined(Q_OS_MAC)
     void statFS();
     void getVolumeInfo();
-#endif
-#ifdef Q_OS_SYMBIAN
+#elif defined(Q_OS_SYMBIAN)
 
 #endif
 };
