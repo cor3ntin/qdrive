@@ -3,6 +3,7 @@
 
 #include "qdriveinfo_global.h"
 
+#include <QtCore/QList>
 #include <QtCore/QString>
 
 class QDriveInfoPrivate;

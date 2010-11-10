@@ -15,14 +15,12 @@
 
 QStringList drivePaths()
 {
-    qDebug("drivePaths");
     QStringList paths;
 
     OSErr result = noErr;
     ItemCount volumeIndex;
 
     for (volumeIndex = 1; result == noErr || result != nsvErr; volumeIndex++) {
-
         FSVolumeRefNum actualVolume;
         FSRef rootDirectory;
 
@@ -33,18 +31,16 @@ QStringList drivePaths()
                                  0,
                                  0,
                                  &rootDirectory);
-
         if (result == noErr) {
             CFURLRef url = CFURLCreateFromFSRef(NULL, &rootDirectory);
             CFStringRef stringRef = CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
-            if (stringRef)	{
+            if (stringRef) {
                 CFIndex length = CFStringGetLength(stringRef) + 1;
                 char *volname = NewPtr(length);
                 CFStringGetCString(stringRef,
                                    volname,
                                    length,
-                                   kCFStringEncodingMacRoman
-                                   );
+                                   kCFStringEncodingMacRoman);
                 CFRelease(stringRef);
                 paths.append(QString::fromLocal8Bit(volname));
                 DisposePtr(volname);
@@ -52,15 +48,15 @@ QStringList drivePaths()
             CFRelease(url);
         }
     }
+
     return paths;
 }
 
 QList<QDriveInfo> QDriveInfoPrivate::drives()
 {
     QList<QDriveInfo> result;
-    foreach (QString path, drivePaths()) {
+    foreach (const QString &path, drivePaths())
         result.append(QDriveInfo(path));
-    }
     return result;
 }
 
@@ -100,18 +96,17 @@ void QDriveInfoPrivate::statFS()
     if (result == -1) {
         data->valid = false;
         data->ready = false;
-        return;
+    } else {
+        data->totalSize = statFS.f_blocks * statFS.f_bsize;
+        data->freeSize = statFS.f_bfree * statFS.f_bsize;
+        data->availableSize = statFS.f_bavail * statFS.f_bsize;
+
+        data->fileSystemName = QString::fromLatin1(statFS.f_fstypename);
+        data->device = QString::fromLocal8Bit(statFS.f_mntfromname);
+
+        data->valid = true;
+        data->ready = true;
     }
-
-    data->totalSize = statFS.f_blocks*statFS.f_bsize;
-    data->freeSize = statFS.f_bfree*statFS.f_bsize;
-    data->availableSize = statFS.f_bavail*statFS.f_bsize;
-
-    data->fileSystemName = QString::fromLatin1(statFS.f_fstypename);
-    data->device = QString::fromLocal8Bit(statFS.f_mntfromname);
-
-    data->valid = true;
-    data->ready = true;
 }
 
 FSVolumeRefNum getVolumeRefNumForPath(char *path)
@@ -124,11 +119,10 @@ FSVolumeRefNum getVolumeRefNumForPath(char *path)
                                     &catalogInfo,
                                     NULL,
                                     NULL,
-                                    NULL
-                                    );
-    if (noErr == result) {
+                                    NULL);
+    if (noErr == result)
         return catalogInfo.volume;
-    }
+
     return kFSInvalidVolumeRefNum;
 }
 
@@ -152,8 +146,7 @@ void QDriveInfoPrivate::getVolumeInfo()
             CFStringGetCString(stringRef,
                                volname,
                                CFStringGetLength(stringRef) + 1,
-                               kCFStringEncodingMacRoman
-                               );
+                               kCFStringEncodingMacRoman);
             data->name = QString::fromLocal8Bit(volname);
             CFRelease(stringRef);
             DisposePtr(volname);
@@ -172,14 +165,12 @@ static inline QDriveInfo::DriveType determineType(const QString &device)
     CFDictionaryRef descriptionDictionary;
 
     sessionRef = DASessionCreate(NULL);
-    if (sessionRef == NULL) {
+    if (sessionRef == NULL)
         return QDriveInfo::InvalidDrive;
-    }
 
     diskRef = DADiskCreateFromBSDName(NULL,
                                       sessionRef,
-                                      device.toLocal8Bit()
-                                      /*mountEntriesMap.key(driveVolume).toLatin1()*/);
+                                      device.toLocal8Bit());
     if (diskRef == NULL) {
         CFRelease(sessionRef);
         return QDriveInfo::InvalidDrive;
@@ -192,37 +183,23 @@ static inline QDriveInfo::DriveType determineType(const QString &device)
         return QDriveInfo::RemoteDrive;
     }
 
-    boolRef = (CFBooleanRef)
-              CFDictionaryGetValue(descriptionDictionary, kDADiskDescriptionMediaRemovableKey);
-    if (boolRef) {
-        if(CFBooleanGetValue(boolRef)) {
-            drivetype = QDriveInfo::RemovableDrive;
-        } else {
-            drivetype = QDriveInfo::InternalDrive;
-        }
-    }
-    boolRef2 = (CFBooleanRef)
-              CFDictionaryGetValue(descriptionDictionary, kDADiskDescriptionVolumeNetworkKey);
-    if (boolRef2) {
-        if(CFBooleanGetValue(boolRef2)) {
-            drivetype = QDriveInfo::RemoteDrive;
-        }
-    }
+    boolRef = (CFBooleanRef)CFDictionaryGetValue(descriptionDictionary, kDADiskDescriptionMediaRemovableKey);
+    if (boolRef)
+        drivetype = CFBooleanGetValue(boolRef) ? QDriveInfo::RemovableDrive : QDriveInfo::InternalDrive;
+    boolRef2 = (CFBooleanRef)CFDictionaryGetValue(descriptionDictionary, kDADiskDescriptionVolumeNetworkKey);
+    if (boolRef2 && CFBooleanGetValue(boolRef2))
+        drivetype = QDriveInfo::RemoteDrive;
 
     DADiskRef wholeDisk;
     wholeDisk = DADiskCopyWholeDisk(diskRef);
-
     if (wholeDisk) {
         io_service_t mediaService;
-
         mediaService = DADiskCopyIOMedia(wholeDisk);
         if (mediaService) {
-            if (IOObjectConformsTo(mediaService, kIOCDMediaClass)) {
+            if (IOObjectConformsTo(mediaService, kIOCDMediaClass))
                 drivetype = QDriveInfo::CdromDrive;
-            }
-            if (IOObjectConformsTo(mediaService, kIODVDMediaClass)) {
+            else if (IOObjectConformsTo(mediaService, kIODVDMediaClass))
                 drivetype = QDriveInfo::CdromDrive;
-            }
             IOObjectRelease(mediaService);
         }
         CFRelease(wholeDisk);

@@ -8,26 +8,25 @@
 
 #include <QtCore/QFile>
 #include <QtCore/QDirIterator>
-#include <QDebug>
 
-//#define MOUNTED "/etc/mtab"
-#define DISK_BY_LABEL "/dev/disk/by-label"
+#ifndef _PATH_MOUNTED
+#  define _PATH_MOUNTED "/etc/mtab"
+#endif
+#ifndef _PATH_DISK_BY_LABEL
+#  define _PATH_DISK_BY_LABEL "/dev/disk/by-label"
+#endif
 
 QStringList drivePaths()
 {
     QStringList ret;
-    struct mntent *mnt;
-    const char *table = MOUNTED;
-    FILE *fp;
 
-    fp = setmntent (table, "r");
-    if (fp == NULL)
+    FILE *fp = setmntent(_PATH_MOUNTED, "r");
+    if (!fp)
         return ret;
 
-    while ((mnt = getmntent (fp)))
-    {
-        ret.append(QString(mnt->mnt_dir));
-    }
+    struct mntent *mnt;
+    while ((mnt = getmntent(fp)))
+        ret.append(QString::fromLocal8Bit(mnt->mnt_dir));
 
     endmntent(fp);
 
@@ -37,9 +36,8 @@ QStringList drivePaths()
 QList<QDriveInfo> QDriveInfoPrivate::drives()
 {
     QList<QDriveInfo> result;
-    foreach (QString path, drivePaths()) {
+    foreach (const QString &path, drivePaths())
         result.append(QDriveInfo(path));
-    }
     return result;
 }
 
@@ -79,35 +77,31 @@ void QDriveInfoPrivate::stat(uint requiredFlags)
 void QDriveInfoPrivate::statFS()
 {
     struct statfs statFS;
-    int result = 0;
-
-    result = statfs(data->rootPath.toUtf8().data(), &statFS);
+    int result = statfs(data->rootPath.toUtf8().data(), &statFS);
     if (result == -1) {
         data->valid = false;
         data->ready = false;
-        return;
-    }
+    } else {
+        data->availableSize = statFS.f_bavail * statFS.f_bsize;
+        data->freeSize = statFS.f_bfree * statFS.f_bsize;
+        data->totalSize = statFS.f_blocks * statFS.f_bsize;
 
-    data->availableSize = statFS.f_bavail*statFS.f_bsize;
-    data->freeSize = statFS.f_bfree*statFS.f_bsize;
-    data->totalSize = statFS.f_blocks*statFS.f_bsize;
-    data->valid = true;
-    data->ready = true;
+        data->valid = true;
+        data->ready = true;
+    }
 }
 
 void QDriveInfoPrivate::getMountEntry()
 {
-    struct mntent *mnt;
-    const char *table = MOUNTED;
-    FILE *fp;
-
-    fp = setmntent (table, "r");
-    if (fp == NULL)
+    FILE *fp = setmntent(_PATH_MOUNTED, "r");
+    if (!fp)
         return;
 
-    while ((mnt = getmntent (fp))) {
-        if (mnt->mnt_dir == data->rootPath) { // we found our entry
-            data->fileSystemName = QString(mnt->mnt_type);
+    struct mntent *mnt;
+    while ((mnt = getmntent(fp))) {
+        if (mnt->mnt_dir == data->rootPath) {
+            // we found our entry
+            data->fileSystemName = QString::fromLatin1(mnt->mnt_type);
             data->device = QString::fromLocal8Bit(mnt->mnt_fsname);
             break;
         }
@@ -120,26 +114,26 @@ static inline QDriveInfo::DriveType determineType(const QString &device)
 {
     QString dmFile;
 
-//    if(mountEntriesMap.value(driveVolume).contains("mapper")) {
-    if(device.contains("mapper")) {
+    if (device.contains(QLatin1String("mapper"))) {
         struct stat stat_buf;
         ::stat(device.toLocal8Bit(), &stat_buf);
 
-        dmFile = QString("/sys/block/dm-%1/removable").arg(stat_buf.st_rdev & 0377);
-
+        dmFile = QString::number(stat_buf.st_rdev & 0377);
+        dmFile = QLatin1String("/sys/block/dm-") + dmFile + QLatin1String("/removable");
     } else {
-
-        dmFile = device.section("/",2,3);
-        if (dmFile.left(3) == "mmc") { //assume this dev is removable sd/mmc card.
+        dmFile = device.section(QLatin1Char('/'), 2, 3);
+        if (dmFile.startsWith(QLatin1String("mmc"))) {
+            // assume this dev is removable sd/mmc card.
             return QDriveInfo::RemovableDrive;
         }
 
-        if(dmFile.length() > 3) { //if device has number, we need the 'parent' device
+        if (dmFile.length() > 3) {
+            // if device has number, we need the 'parent' device
             dmFile.chop(1);
-            if (dmFile.right(1) == "p") //get rid of partition number
+            if (dmFile.right(1) == QLatin1String("p")) // get rid of partition number
                 dmFile.chop(1);
         }
-        dmFile = "/sys/block/"+dmFile+"/removable";
+        dmFile = QLatin1String("/sys/block/") + dmFile + QLatin1String("/removable");
     }
 
     QFile file(dmFile);
@@ -148,12 +142,11 @@ static inline QDriveInfo::DriveType determineType(const QString &device)
     } else {
         QTextStream sysinfo(&file);
         QString line = sysinfo.readAll();
-        if(line.contains("1")) {
+        if (line.contains(QLatin1Char('1')))
             return QDriveInfo::RemovableDrive;
-        }
     }
 
-    if (device.startsWith("/dev"))
+    if (device.startsWith(QLatin1String("/dev")))
         return QDriveInfo::InternalDrive;
 
     return QDriveInfo::InvalidDrive;
@@ -179,13 +172,13 @@ void QDriveInfoPrivate::getType()
 // If not, i don't know other way to get labels without root privelegies
 void QDriveInfoPrivate::getName()
 {
-    QFileInfo fi(DISK_BY_LABEL);
+    QFileInfo fi(QLatin1String(_PATH_DISK_BY_LABEL));
     if (!fi.exists() && !fi.isDir()) // /dev/disk/by-label doesn't exists or invalid
         return;
 
     stat(CachedDeviceFlag); // we need device to get info
 
-    QDirIterator it(DISK_BY_LABEL, QDir::NoDotAndDotDot);
+    QDirIterator it(QLatin1String(_PATH_DISK_BY_LABEL), QDir::NoDotAndDotDot);
     while (it.hasNext()) {
         QString entry = it.next();
         QFileInfo fileInfo(entry);
