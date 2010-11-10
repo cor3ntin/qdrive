@@ -52,7 +52,6 @@ public:
     static QList<QDriveInfo> drives();
 
     void stat(uint requiredFlags);
-    void setRootPath(const QString &);
 
     QExplicitlySharedDataPointer<Data> data;
 

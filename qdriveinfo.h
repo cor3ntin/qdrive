@@ -1,19 +1,14 @@
 #ifndef QDRIVEINFO_H
 #define QDRIVEINFO_H
 
+#include "qdriveinfo_global.h"
+
 #include <QtCore/QString>
 
 class QDriveInfoPrivate;
-class QDriveInfo
+class QDRIVEINFO_EXPORT QDriveInfo
 {
-    Q_DECLARE_PRIVATE(QDriveInfo);
-
 public:
-    QDriveInfo();
-    explicit QDriveInfo(const QString &rootPath);
-    QDriveInfo(const QDriveInfo &);
-    QDriveInfo &operator=(const QDriveInfo &);
-    virtual ~QDriveInfo();
 
     enum DriveType {
         NoDrive = 0,
@@ -25,7 +20,16 @@ public:
         RamDrive
     };
 
-    static QList<QDriveInfo> drives();
+    QDriveInfo();
+    explicit QDriveInfo(const QString &rootPath);
+    QDriveInfo(const QDriveInfo &);
+
+    QDriveInfo &operator=(const QDriveInfo &);
+
+    QString rootPath() const;
+    void setRootPath(const QString &);
+
+    ~QDriveInfo();
 
     quint64 availableSize() const;
     quint64 freeSize() const;
@@ -37,15 +41,17 @@ public:
     bool    ready() const;
     bool    isValid() const;
 
-    QString rootPath() const;
-    void setRootPath(const QString &);
-
     DriveType type() const;
 
     void refresh();
 
+    static QList<QDriveInfo> drives();
+
 protected:
     QDriveInfoPrivate *d_ptr;
+
+private:
+    Q_DECLARE_PRIVATE(QDriveInfo);
 };
 
 #endif // QDRIVEINFO_H

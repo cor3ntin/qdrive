@@ -8,11 +8,14 @@ CONFIG += console
 CONFIG -= app_bundle
 TEMPLATE = app
 
+DEFINES += QDRIVEINFO_LIBRARY
+
 SOURCES += main.cpp \
     qdriveinfo.cpp
 HEADERS += \
     qdriveinfo.h \
-    qdriveinfo_p.h
+    qdriveinfo_p.h \
+    qdriveinfo_global.h
 
 win32: {
     HEADERS +=

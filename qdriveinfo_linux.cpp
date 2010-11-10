@@ -48,8 +48,6 @@ void QDriveInfoPrivate::stat(uint requiredFlags)
     if (data->getCachedFlag(requiredFlags))
         return;
 
-    data.detach();
-
     uint bitmask = 0;
 
     bitmask = CachedAvailableSizeFlag | CachedFreeSizeFlag | CachedSizeFlag |
