@@ -4,6 +4,7 @@
 #include "qdriveinfo.h"
 
 #include <QtCore/QExplicitlySharedDataPointer>
+#include <QtCore/QFile>
 
 #include <qplatformdefs.h>
 

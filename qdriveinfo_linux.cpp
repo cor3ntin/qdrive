@@ -6,7 +6,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <QtCore/QFile>
 #include <QtCore/QDirIterator>
 #include <QtCore/QTextStream>
 
@@ -25,7 +24,7 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
     if (fp) {
         struct mntent *mnt;
         while ((mnt = ::getmntent(fp)))
-            drives.append(QDriveInfo(QString::fromLocal8Bit(mnt->mnt_dir)));
+            drives.append(QDriveInfo(QFile::decodeName(mnt->mnt_dir)));
         ::endmntent(fp);
     }
 
@@ -68,7 +67,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
 void QDriveInfoPrivate::statFS()
 {
     struct statfs statfs_buf;
-    int result = ::statfs(data->rootPath.toUtf8().data(), &statfs_buf);
+    int result = ::statfs(QFile::encodeName(data->rootPath).constData(), &statfs_buf);
     if (result == -1) {
         data->valid = false;
         data->ready = false;
@@ -91,11 +90,11 @@ void QDriveInfoPrivate::getMountEntry()
 
         struct mntent *mnt;
         while ((mnt = ::getmntent(fp))) {
-            QString mountDir = QString::fromLocal8Bit(mnt->mnt_dir);
+            QString mountDir = QFile::decodeName(mnt->mnt_dir);
             // we try to find most suitable entry
             if (oldRootPath.startsWith(mountDir) && maxLength < (quint32)mountDir.length()) {
                 data->fileSystemName = QString::fromLatin1(mnt->mnt_type);
-                data->device = QString::fromLocal8Bit(mnt->mnt_fsname);
+                data->device = QFile::decodeName(mnt->mnt_fsname);
                 data->rootPath = mountDir;
                 maxLength = mountDir.length();
             }
@@ -110,7 +109,7 @@ static inline QDriveInfo::DriveType determineType(const QString &device)
 
     if (device.contains(QLatin1String("mapper"))) {
         QT_STATBUF stat_buf;
-        QT_STAT(device.toLocal8Bit(), &stat_buf);
+        QT_STAT(QFile::encodeName(device).constData(), &stat_buf);
 
         dmFile = QLatin1String("dm-") + QString::number(stat_buf.st_rdev & 0377);
     } else {
