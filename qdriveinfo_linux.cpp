@@ -86,12 +86,17 @@ void QDriveInfoPrivate::getMountEntry()
     FILE *fp = setmntent(_PATH_MOUNTED, "r");
     if (fp) {
         struct mntent *mnt;
+        int maxLength = 0;
+        QString oldRootPath = data->rootPath;
+
         while ((mnt = getmntent(fp))) {
-            if (mnt->mnt_dir == data->rootPath) {
-                // we found our entry
+            QString mountDir = QString::fromLocal8Bit(mnt->mnt_dir);
+            // we try to find most suitable entry
+            if (oldRootPath.startsWith(mountDir) && maxLength < mountDir.length()) {
                 data->fileSystemName = QString::fromLatin1(mnt->mnt_type);
                 data->device = QString::fromLocal8Bit(mnt->mnt_fsname);
-                break;
+                data->rootPath = mountDir;
+                maxLength = mountDir.length();
             }
         }
         endmntent(fp);

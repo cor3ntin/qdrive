@@ -32,7 +32,7 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
                 CFIndex length = CFStringGetLength(stringRef) + 1;
                 char *volname = NewPtr(length);
                 CFStringGetCString(stringRef, volname, length, kCFStringEncodingMacRoman);
-                drives.append(QString::fromLocal8Bit(volname));
+                drives.append(QDrive(QString::fromLocal8Bit(volname)));
                 CFRelease(stringRef);
                 DisposePtr(volname);
             }
