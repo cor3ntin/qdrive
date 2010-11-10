@@ -1,23 +1,16 @@
 #include "qdriveinfo.h"
 #include "qdriveinfo_p.h"
 
-QDriveInfoPrivate::QDriveInfoPrivate():
-        data(new Data)
-{
-    data->availableSize = 0;
-    data->freeSize = 0;
-    data->totalSize = 0;
-    data->ready = false;
-    data->valid = false;
-
-    data->cache_enabled = true;
-    data->cachedFlags = 0;
-}
-
-QDriveInfoPrivate::QDriveInfoPrivate(QDriveInfoPrivate *other):
-        data(other->data)
+QDriveInfoPrivate::QDriveInfoPrivate()
+    : data(new Data)
 {
 }
+
+QDriveInfoPrivate::QDriveInfoPrivate(QDriveInfoPrivate *other)
+    : data(other->data)
+{
+}
+
 
 /*!
     \class QDriveInfo
@@ -36,7 +29,6 @@ QDriveInfoPrivate::QDriveInfoPrivate(QDriveInfoPrivate *other):
 
     QDrive info caches information retreived about drives, but you can use refresh() to update
     infomation. Also, you can disable caching by calling setCaching(false).
-
 */
 
 /*!
@@ -44,8 +36,8 @@ QDriveInfoPrivate::QDriveInfoPrivate(QDriveInfoPrivate *other):
 
     \sa setRootPath()
 */
-QDriveInfo::QDriveInfo():
-        d_ptr(new QDriveInfoPrivate)
+QDriveInfo::QDriveInfo()
+    : d_ptr(new QDriveInfoPrivate)
 {
 }
 
@@ -55,8 +47,8 @@ QDriveInfo::QDriveInfo():
 
     \sa setRootPath()
 */
-QDriveInfo::QDriveInfo(const QString &rootPath):
-        d_ptr(new QDriveInfoPrivate)
+QDriveInfo::QDriveInfo(const QString &rootPath)
+    : d_ptr(new QDriveInfoPrivate)
 {
     setRootPath(rootPath);
 }
@@ -64,8 +56,8 @@ QDriveInfo::QDriveInfo(const QString &rootPath):
 /*!
     Constructs a new QDriveInfo that is a copy of the given \a other QDriveInfo.
 */
-QDriveInfo::QDriveInfo(const QDriveInfo &other) :
-        d_ptr(new QDriveInfoPrivate(other.d_ptr))
+QDriveInfo::QDriveInfo(const QDriveInfo &other)
+    : d_ptr(new QDriveInfoPrivate(other.d_ptr))
 {
 }
 

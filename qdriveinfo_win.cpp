@@ -142,7 +142,7 @@ QDriveInfo::DriveType QDriveInfoPrivate::determineType()
     switch (result) {
     case 0:
     case 1:
-        return QDriveInfo::NoDrive;
+        return QDriveInfo::InvalidDrive;
         break;
     case 2:
         return QDriveInfo::RemovableDrive;
@@ -160,5 +160,5 @@ QDriveInfo::DriveType QDriveInfoPrivate::determineType()
         break;
     };
 #endif
-    return QDriveInfo::NoDrive;
+    return QDriveInfo::InvalidDrive;
 }

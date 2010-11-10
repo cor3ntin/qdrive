@@ -170,7 +170,7 @@ void QDriveInfoPrivate::getType()
 // From Qt Mobility
 QDriveInfo::DriveType QDriveInfoPrivate::determineType(const QByteArray &device)
 {
-    QDriveInfo::DriveType drivetype = QDriveInfo::NoDrive;
+    QDriveInfo::DriveType drivetype = QDriveInfo::InvalidDrive;
 
     DADiskRef diskRef;
     DASessionRef sessionRef;
@@ -180,7 +180,7 @@ QDriveInfo::DriveType QDriveInfoPrivate::determineType(const QByteArray &device)
 
     sessionRef = DASessionCreate(NULL);
     if (sessionRef == NULL) {
-        return QDriveInfo::NoDrive;
+        return QDriveInfo::InvalidDrive;
     }
 
     diskRef = DADiskCreateFromBSDName(NULL,
@@ -190,7 +190,7 @@ QDriveInfo::DriveType QDriveInfoPrivate::determineType(const QByteArray &device)
                                       /*mountEntriesMap.key(driveVolume).toLatin1()*/);
     if (diskRef == NULL) {
         CFRelease(sessionRef);
-        return QDriveInfo::NoDrive;
+        return QDriveInfo::InvalidDrive;
     }
 
     descriptionDictionary = DADiskCopyDescription(diskRef);

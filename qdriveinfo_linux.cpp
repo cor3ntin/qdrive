@@ -166,8 +166,8 @@ QDriveInfo::DriveType QDriveInfoPrivate::determineType()
     }
     if (data->device.startsWith("/dev"))
         return QDriveInfo::InternalDrive;
-    else
-        return QDriveInfo::NoDrive;
+
+    return QDriveInfo::InvalidDrive;
 }
 
 // we need udev to be present in system to get label name

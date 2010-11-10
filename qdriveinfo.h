@@ -10,7 +10,7 @@ class QDRIVEINFO_EXPORT QDriveInfo
 {
 public:
     enum DriveType {
-        NoDrive = 0,
+        InvalidDrive = 0,
         InternalDrive,
         RemovableDrive,
         RemoteDrive,
@@ -37,8 +37,8 @@ public:
     QString fileSystemName() const;
     QString device() const;
     QString name() const;
-    bool    ready() const;
-    bool    isValid() const;
+    bool ready() const;
+    bool isValid() const;
 
     DriveType type() const;
 

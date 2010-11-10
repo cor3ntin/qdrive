@@ -28,6 +28,20 @@ public:
 
     struct Data : public QSharedData
     {
+        Data() : QSharedData(),
+            availableSize(0), freeSize(0), totalSize(0),
+            type(QDriveInfo::InvalidDrive), ready(false), valid(false),
+            cache_enabled(true), cachedFlags(0)
+        {}
+        Data(const Data &other) : QSharedData(other),
+            rootPath(other.rootPath),
+            availableSize(0), freeSize(0), totalSize(0),
+            type(QDriveInfo::InvalidDrive), ready(false), valid(false),
+            cache_enabled(other.cache_enabled), cachedFlags(0)
+        {}
+
+        QString rootPath;
+
         quint64 availableSize;
         quint64 freeSize;
         quint64 totalSize;
@@ -35,10 +49,9 @@ public:
         QString fileSystemName;
         QString device;
         QString name;
-        bool    ready;
-        bool    valid;
-        QString rootPath;
         QDriveInfo::DriveType type;
+        bool ready;
+        bool valid;
 
         bool cache_enabled;
         uint cachedFlags;

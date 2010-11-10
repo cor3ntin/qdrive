@@ -45,8 +45,8 @@ int main(int argc, char *argv[])
             qDebug() << "   " << "freeSize:" << f->freeSize()/1000/1000 << "MB";
             qDebug() << "   " << "availableSize:" << f->availableSize()/1000/1000 << "MB";
             switch(f->type()) {
-            case QDriveInfo::NoDrive:
-                qDebug() << "   " << "QDrive::NoDrive"; break;
+            case QDriveInfo::InvalidDrive:
+                qDebug() << "   " << "QDrive::InvalidDrive"; break;
             case QDriveInfo::InternalDrive:
                 qDebug() << "   " << "QDrive::InternalDrive"; break;
             case QDriveInfo::RemovableDrive:
