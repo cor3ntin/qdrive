@@ -33,13 +33,13 @@ public:
         Data() : QSharedData(),
             availableSize(0), freeSize(0), totalSize(0),
             type(QDriveInfo::InvalidDrive), ready(false), valid(false),
-            cache_enabled(true), cachedFlags(0)
+            cachedFlags(0)
         {}
         Data(const Data &other) : QSharedData(other),
             rootPath(other.rootPath),
             availableSize(0), freeSize(0), totalSize(0),
             type(QDriveInfo::InvalidDrive), ready(false), valid(false),
-            cache_enabled(other.cache_enabled), cachedFlags(0)
+            cachedFlags(0)
         {}
 
         inline void clear()
@@ -60,9 +60,9 @@ public:
         }
 
         inline bool getCachedFlag(uint c) const
-        { return cache_enabled ? (cachedFlags & c) : 0; }
+        { return (cachedFlags & c); }
         inline void setCachedFlag(uint c)
-        { if (cache_enabled) cachedFlags |= c; }
+        { cachedFlags |= c; }
 
         QString rootPath;
 
@@ -77,7 +77,6 @@ public:
         bool ready;
         bool valid;
 
-        bool cache_enabled;
         uint cachedFlags;
     };
     QExplicitlySharedDataPointer<Data> data;
