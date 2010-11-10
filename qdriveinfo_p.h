@@ -81,7 +81,7 @@ public:
 
     static QList<QDriveInfo> drives();
 
-    void stat(uint requiredFlags);
+    void doStat(uint requiredFlags);
 
     void getType();
 

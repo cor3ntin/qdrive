@@ -19,7 +19,7 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
     return drives;
 }
 
-void QDriveInfoPrivate::stat(uint requiredFlags)
+void QDriveInfoPrivate::doStat(uint requiredFlags)
 {
     if (data->getCachedFlag(requiredFlags))
         return;
@@ -142,7 +142,7 @@ static inline QDriveInfo::DriveType determineType(const QString &rootPath)
 
 void QDriveInfoPrivate::getType()
 {
-    stat(CachedRootPathFlag); // we need a root path to get info
+    doStat(CachedRootPathFlag); // we need a root path to get info
 
     data->type = determineType(data->rootPath);
 }

@@ -85,7 +85,7 @@ QDriveInfo &QDriveInfo::operator=(const QDriveInfo &other)
 */
 QString QDriveInfo::rootPath() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->stat(QDriveInfoPrivate::CachedRootPathFlag);
+    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedRootPathFlag);
     return d_func()->data->rootPath;
 }
 
@@ -107,7 +107,7 @@ void QDriveInfo::setRootPath(const QString &rootPath)
 */
 quint64 QDriveInfo::availableSize() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->stat(QDriveInfoPrivate::CachedAvailableSizeFlag);
+    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedAvailableSizeFlag);
     return d_func()->data->availableSize;
 }
 
@@ -119,7 +119,7 @@ quint64 QDriveInfo::availableSize() const
 */
 quint64 QDriveInfo::freeSize() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->stat(QDriveInfoPrivate::CachedFreeSizeFlag);
+    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedFreeSizeFlag);
     return d_func()->data->freeSize;
 }
 
@@ -130,7 +130,7 @@ quint64 QDriveInfo::freeSize() const
 */
 quint64 QDriveInfo::totalSize() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->stat(QDriveInfoPrivate::CachedSizeFlag);
+    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedSizeFlag);
     return d_func()->data->totalSize;
 }
 
@@ -142,7 +142,7 @@ quint64 QDriveInfo::totalSize() const
 */
 QString QDriveInfo::fileSystemName() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->stat(QDriveInfoPrivate::CachedFileSystemNameFlag);
+    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedFileSystemNameFlag);
     return d_func()->data->fileSystemName;
 }
 
@@ -153,7 +153,7 @@ QString QDriveInfo::fileSystemName() const
 */
 QString QDriveInfo::device() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->stat(QDriveInfoPrivate::CachedDeviceFlag);
+    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedDeviceFlag);
     return d_func()->data->device;
 }
 
@@ -167,7 +167,7 @@ QString QDriveInfo::device() const
 */
 QString QDriveInfo::name() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->stat(QDriveInfoPrivate::CachedNameFlag);
+    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedNameFlag);
     return d_func()->data->name;
 }
 
@@ -180,7 +180,7 @@ QString QDriveInfo::name() const
 */
 bool QDriveInfo::ready() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->stat(QDriveInfoPrivate::CachedReadyFlag);
+    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedReadyFlag);
     return d_func()->data->ready;
 }
 
@@ -191,7 +191,7 @@ bool QDriveInfo::ready() const
 */
 bool QDriveInfo::isValid() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->stat(QDriveInfoPrivate::CachedValidFlag);
+    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedValidFlag);
     return d_func()->data->valid;
 }
 
@@ -202,7 +202,7 @@ bool QDriveInfo::isValid() const
 */
 QDriveInfo::DriveType QDriveInfo::type() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->stat(QDriveInfoPrivate::CachedTypeFlag);
+    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedTypeFlag);
     return d_func()->data->type;
 }
 

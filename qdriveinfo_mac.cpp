@@ -46,7 +46,7 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
     return drives;
 }
 
-void QDriveInfoPrivate::stat(uint requiredFlags)
+void QDriveInfoPrivate::doStat(uint requiredFlags)
 {
     if (data->getCachedFlag(requiredFlags))
         return;
@@ -199,7 +199,7 @@ static inline QDriveInfo::DriveType determineType(const QString &device)
 
 void QDriveInfoPrivate::getType()
 {
-    stat(CachedDeviceFlag); // we need BSD device to determine drive type.
+    doStat(CachedDeviceFlag); // we need BSD device to determine drive type.
 
     data->type = determineType(data->device);
 }

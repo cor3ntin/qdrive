@@ -31,7 +31,7 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
     return drives;
 }
 
-void QDriveInfoPrivate::stat(uint requiredFlags)
+void QDriveInfoPrivate::doStat(uint requiredFlags)
 {
     if (data->getCachedFlag(requiredFlags))
         return;
@@ -143,7 +143,7 @@ static inline QDriveInfo::DriveType determineType(const QString &device)
 void QDriveInfoPrivate::getType()
 {
     // we need a device and filesystem name to get info
-    stat(CachedDeviceFlag | CachedFileSystemNameFlag);
+    doStat(CachedDeviceFlag | CachedFileSystemNameFlag);
 
     data->type = determineType(data->device);
     if (data->type == QDriveInfo::InvalidDrive) {
@@ -167,7 +167,7 @@ void QDriveInfoPrivate::getName()
     if (!fi.exists() || !fi.isDir()) // /dev/disk/by-label doesn't exists or invalid
         return;
 
-    stat(CachedDeviceFlag); // we need device to get info
+    doStat(CachedDeviceFlag); // we need device to get info
 
     QDirIterator it(QLatin1String(_PATH_DISK_BY_LABEL), QDir::NoDotAndDotDot);
     while (it.hasNext()) {
