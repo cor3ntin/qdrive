@@ -116,28 +116,20 @@ void QDriveInfoPrivate::getMountEntry()
     endmntent(fp);
 }
 
-void QDriveInfoPrivate::getType()
-{
-    stat(CachedDeviceFlag); // we need a device to get info
-
-    data->type = determineType();
-}
-
-// From Qt Mobility
-QDriveInfo::DriveType QDriveInfoPrivate::determineType()
+static inline QDriveInfo::DriveType determineType(const QString &device)
 {
     QString dmFile;
 
 //    if(mountEntriesMap.value(driveVolume).contains("mapper")) {
-    if(data->device.contains("mapper")) {
+    if(device.contains("mapper")) {
         struct stat stat_buf;
-        ::stat(data->device.toLocal8Bit(), &stat_buf);
+        ::stat(device.toLocal8Bit(), &stat_buf);
 
         dmFile = QString("/sys/block/dm-%1/removable").arg(stat_buf.st_rdev & 0377);
 
     } else {
 
-        dmFile = data->device.section("/",2,3);
+        dmFile = device.section("/",2,3);
         if (dmFile.left(3) == "mmc") { //assume this dev is removable sd/mmc card.
             return QDriveInfo::RemovableDrive;
         }
@@ -161,13 +153,22 @@ QDriveInfo::DriveType QDriveInfoPrivate::determineType()
         }
     }
 
-    if(data->rootPath.left(2) == "//") {
-        return QDriveInfo::RemoteDrive;
-    }
-    if (data->device.startsWith("/dev"))
+    if (device.startsWith("/dev"))
         return QDriveInfo::InternalDrive;
 
     return QDriveInfo::InvalidDrive;
+}
+
+void QDriveInfoPrivate::getType()
+{
+    stat(CachedDeviceFlag); // we need a device to get info
+
+    data->type = determineType(data->device);
+    if (data->type == QDriveInfo::InvalidDrive) {
+        // test for UNC shares
+        if (data->rootPath.startsWith(QLatin1String("//")))
+            data->type == QDriveInfo::RemoteDrive;
+    }
 }
 
 // we need udev to be present in system to get label name

@@ -130,15 +130,10 @@ void QDriveInfoPrivate::getDevice()
     data->device = QString::fromWCharArray(deviceBuffer);
 }
 
-void QDriveInfoPrivate::getType()
-{
-    data->type = determineType();
-}
-
-QDriveInfo::DriveType QDriveInfoPrivate::determineType()
+static inline QDriveInfo::DriveType determineType(const QString &rootPath)
 {
 #if !defined(Q_OS_WINCE)
-    uint result = GetDriveType((wchar_t *)data->rootPath.utf16());
+    uint result = GetDriveType((wchar_t *)rootPath.utf16());
     switch (result) {
     case DRIVE_REMOVABLE:
         return QDriveInfo::RemovableDrive;
@@ -161,6 +156,15 @@ QDriveInfo::DriveType QDriveInfoPrivate::determineType()
     default:
         break;
     };
+#else
+    Q_UNUSED(rootPath)
 #endif
     return QDriveInfo::InvalidDrive;
+}
+
+void QDriveInfoPrivate::getType()
+{
+    stat(CachedRootPathFlag); // we need a root path to get info
+
+    data->type = determineType(data->rootPath);
 }

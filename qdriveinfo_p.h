@@ -84,7 +84,6 @@ public:
     void stat(uint requiredFlags);
 
     void getType();
-    QDriveInfo::DriveType determineType();
 
 #ifdef Q_OS_LINUX
 #if defined(Q_WS_MAEMO_5) || defined(Q_WS_MAEMO_6)
