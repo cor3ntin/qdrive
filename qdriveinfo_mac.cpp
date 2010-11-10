@@ -73,7 +73,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
 void QDriveInfoPrivate::statFS()
 {
     struct statfs statfs_buf;
-    int result = statfs(data->rootPath.toUtf8().data(), &statfs_buf);
+    int result = ::statfs(data->rootPath.toUtf8().data(), &statfs_buf);
     if (result == -1) {
         data->valid = false;
         data->ready = false;
@@ -90,31 +90,21 @@ void QDriveInfoPrivate::statFS()
     }
 }
 
-static inline FSVolumeRefNum getVolumeRefNumForPath(char *path)
-{
-    FSRef ref;
-    FSPathMakeRef((UInt8*)path, &ref, 0);
-    FSCatalogInfo catalogInfo;
-    OSErr result = FSGetCatalogInfo(&ref,
-                                    kFSCatInfoVolume,
-                                    &catalogInfo,
-                                    NULL,
-                                    NULL,
-                                    NULL);
-    if (noErr == result)
-        return catalogInfo.volume;
-
-    return kFSInvalidVolumeRefNum;
-}
-
 void QDriveInfoPrivate::getVolumeInfo()
 {
     OSErr result = noErr;
-    FSVolumeRefNum thisVolumeRefNum = getVolumeRefNumForPath(data->rootPath.toUtf8().data());
+    FSRef ref;
+    FSPathMakeRef((UInt8*)data->rootPath.toUtf8().data(), &ref, 0);
+    FSCatalogInfo catalogInfo;
+
+    result = FSGetCatalogInfo(&ref, kFSCatInfoVolume, &catalogInfo, NULL, NULL, NULL);
+    if (result != noErr)
+        return;
+
     HFSUniStr255 volumeName;
     FSRef rootDirectory;
 
-    result = FSGetVolumeInfo(thisVolumeRefNum,
+    result = FSGetVolumeInfo(catalogInfo.volume,
                              0,
                              0,
                              kFSVolInfoFSInfo,

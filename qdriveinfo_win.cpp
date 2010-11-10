@@ -6,7 +6,7 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
     QList<QDriveInfo> drives;
 
     char driveName[] = "A:/";
-    quint32 driveBits = (quint32)GetLogicalDrives() & 0x3ffffff;
+    quint32 driveBits = (quint32)::GetLogicalDrives() & 0x3ffffff;
     while (driveBits) {
         if (driveBits & 1)
             drives.append(QDriveInfo(QLatin1String(driveName)));
@@ -59,17 +59,17 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
 
 void QDriveInfoPrivate::getVolumeInformation()
 {
-    UINT oldmode = SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
+    UINT oldmode = ::SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
 
     wchar_t nameBuf[MAX_PATH + 1];
     wchar_t fileSystemNameBuf[MAX_PATH + 1];
-    bool result = GetVolumeInformation((wchar_t *)data->rootPath.utf16(),
-                                       nameBuf, MAX_PATH,
-                                       0, 0, 0,
-                                       fileSystemNameBuf, MAX_PATH);
+    bool result = ::GetVolumeInformation((wchar_t *)data->rootPath.utf16(),
+                                         nameBuf, MAX_PATH,
+                                         0, 0, 0,
+                                         fileSystemNameBuf, MAX_PATH);
     if (!result) {
         data->ready = false;
-        data->valid = (GetLastError() == ERROR_NOT_READY);
+        data->valid = (::GetLastError() == ERROR_NOT_READY);
     } else {
         data->ready = true;
         data->valid = true;
@@ -78,39 +78,40 @@ void QDriveInfoPrivate::getVolumeInformation()
         data->fileSystemName = QString::fromWCharArray(fileSystemNameBuf);
     }
 
-    SetErrorMode(oldmode);
+    ::SetErrorMode(oldmode);
 }
 
 void QDriveInfoPrivate::getDiskFreeSpace()
 {
-    UINT oldmode = SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
+    UINT oldmode = ::SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
 
-    bool result = GetDiskFreeSpaceEx((wchar_t *)data->rootPath.utf16(),
-                                     (PULARGE_INTEGER)&data->availableSize,
-                                     (PULARGE_INTEGER)&data->totalSize,
-                                     (PULARGE_INTEGER)&data->freeSize);
+    ::GetDiskFreeSpaceEx((wchar_t *)data->rootPath.utf16(),
+                         (PULARGE_INTEGER)&data->availableSize,
+                         (PULARGE_INTEGER)&data->totalSize,
+                         (PULARGE_INTEGER)&data->freeSize);
 
-    SetErrorMode(oldmode);
+    ::SetErrorMode(oldmode);
 }
 
 void QDriveInfoPrivate::getDevice()
 {
-    UINT oldmode = SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
+    UINT oldmode = ::SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
 
     wchar_t deviceBuffer[MAX_PATH + 1];
-    bool result = GetVolumeNameForVolumeMountPoint((wchar_t *)data->rootPath.utf16(), deviceBuffer, MAX_PATH);
+    bool result = ::GetVolumeNameForVolumeMountPoint((wchar_t *)data->rootPath.utf16(),
+                                                     deviceBuffer, MAX_PATH);
     if (result)
         data->device = QString::fromWCharArray(deviceBuffer);
 
-    SetErrorMode(oldmode);
+    ::SetErrorMode(oldmode);
 }
 
 static inline QDriveInfo::DriveType determineType(const QString &rootPath)
 {
 #if !defined(Q_OS_WINCE)
-    UINT oldmode = SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
+    UINT oldmode = ::SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
 
-    uint result = GetDriveType((wchar_t *)rootPath.utf16());
+    UINT result = ::GetDriveType((wchar_t *)rootPath.utf16());
     switch (result) {
     case DRIVE_REMOVABLE:
         return QDriveInfo::RemovableDrive;
@@ -134,7 +135,7 @@ static inline QDriveInfo::DriveType determineType(const QString &rootPath)
         break;
     };
 
-    SetErrorMode(oldmode);
+    ::SetErrorMode(oldmode);
 #else
     Q_UNUSED(rootPath)
 #endif
@@ -152,7 +153,7 @@ void QDriveInfoPrivate::getPath()
 {
     // TODO: test when disk mounted in folder on other disk
     wchar_t buffer[MAX_PATH + 1];
-    bool result = GetVolumePathName((wchar_t *)data->rootPath.utf16(), buffer, MAX_PATH);
+    bool result = ::GetVolumePathName((wchar_t *)data->rootPath.utf16(), buffer, MAX_PATH);
     if (result)
         data->rootPath = QString::fromWCharArray(buffer);
 }

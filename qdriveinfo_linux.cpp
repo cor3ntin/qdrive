@@ -21,12 +21,12 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
 {
     QList<QDriveInfo> drives;
 
-    FILE *fp = setmntent(_PATH_MOUNTED, "r");
+    FILE *fp = ::setmntent(_PATH_MOUNTED, "r");
     if (fp) {
         struct mntent *mnt;
-        while ((mnt = getmntent(fp)))
+        while ((mnt = ::getmntent(fp)))
             drives.append(QDriveInfo(QString::fromLocal8Bit(mnt->mnt_dir)));
-        endmntent(fp);
+        ::endmntent(fp);
     }
 
     return drives;
@@ -68,7 +68,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
 void QDriveInfoPrivate::statFS()
 {
     struct statfs statfs_buf;
-    int result = statfs(data->rootPath.toUtf8().data(), &statfs_buf);
+    int result = ::statfs(data->rootPath.toUtf8().data(), &statfs_buf);
     if (result == -1) {
         data->valid = false;
         data->ready = false;
@@ -84,13 +84,13 @@ void QDriveInfoPrivate::statFS()
 
 void QDriveInfoPrivate::getMountEntry()
 {
-    FILE *fp = setmntent(_PATH_MOUNTED, "r");
+    FILE *fp = ::setmntent(_PATH_MOUNTED, "r");
     if (fp) {
         QString oldRootPath = data->rootPath;
         quint32 maxLength = 0;
 
         struct mntent *mnt;
-        while ((mnt = getmntent(fp))) {
+        while ((mnt = ::getmntent(fp))) {
             QString mountDir = QString::fromLocal8Bit(mnt->mnt_dir);
             // we try to find most suitable entry
             if (oldRootPath.startsWith(mountDir) && maxLength < (quint32)mountDir.length()) {
@@ -100,7 +100,7 @@ void QDriveInfoPrivate::getMountEntry()
                 maxLength = mountDir.length();
             }
         }
-        endmntent(fp);
+        ::endmntent(fp);
     }
 }
 
