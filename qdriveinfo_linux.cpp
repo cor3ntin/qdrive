@@ -10,7 +10,7 @@
 #include <QtCore/QDirIterator>
 #include <QDebug>
 
-#define MOUNTED "/etc/mtab"
+//#define MOUNTED "/etc/mtab"
 #define DISK_BY_LABEL "/dev/disk/by-label"
 
 QStringList drivePaths()
@@ -51,12 +51,9 @@ void QDriveInfoPrivate::stat(uint requiredFlags)
     data.detach();
 
     uint bitmask = 0;
-    if (requiredFlags & CachedReadyFlag) {
-        data->ready = true;
-        data->setCachedFlag(CachedReadyFlag);
-    }
 
-    bitmask = CachedAvailableSizeFlag | CachedFreeSizeFlag | CachedSizeFlag;
+    bitmask = CachedAvailableSizeFlag | CachedFreeSizeFlag | CachedSizeFlag |
+              CachedValidFlag | CachedReadyFlag;
     if (requiredFlags & bitmask) {
         statFS();
         data->setCachedFlag(bitmask);
@@ -84,11 +81,20 @@ void QDriveInfoPrivate::stat(uint requiredFlags)
 void QDriveInfoPrivate::statFS()
 {
     struct statfs statFS;
-    statfs(data->rootPath.toUtf8().data(), &statFS);
+    int result = 0;
+
+    result = statfs(data->rootPath.toUtf8().data(), &statFS);
+    if (result == -1) {
+        data->valid = false;
+        data->ready = false;
+        return;
+    }
 
     data->availableSize = statFS.f_bavail*statFS.f_bsize;
     data->freeSize = statFS.f_bfree*statFS.f_bsize;
     data->totalSize = statFS.f_blocks*statFS.f_bsize;
+    data->valid = true;
+    data->ready = true;
 }
 
 void QDriveInfoPrivate::getMountEntry()
@@ -153,7 +159,7 @@ QDriveInfo::DriveType QDriveInfoPrivate::determineType()
 
     QFile file(dmFile);
     if (!file.open(QIODevice::ReadOnly)) {
-        qWarning() << "Could not open sys file";
+//        qWarning() << "Could not open sys file";
     } else {
         QTextStream sysinfo(&file);
         QString line = sysinfo.readAll();

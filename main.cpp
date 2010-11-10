@@ -19,7 +19,10 @@ void f()
     qDebug() << info2.rootPath();
 
     info.setRootPath("/Volumes/Macintosh HD1");
-    qDebug() << info.isValid() << info.ready() << info.fileSystemName() << info.device();
+    qDebug() << info.isValid() << info.ready();
+    qDebug() << info.fileSystemName() << info.device()
+            << info.availableSize() << info.freeSize() << info.totalSize()
+            << info.name() << info.rootPath();
 }
 
 int main(int argc, char *argv[])
@@ -31,7 +34,7 @@ int main(int argc, char *argv[])
 
 //    qDebug() << QDrive::drivePaths();
     foreach (QDriveInfo drive, QDriveInfo::drives()) {
-//        qDebug() << "=======";
+        qDebug() << "=======";
         QDriveInfo *f = &drive;
         if (f->ready()) {
             qDebug() << "   " << "rootPath:" << f->rootPath();

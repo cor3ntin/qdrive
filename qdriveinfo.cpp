@@ -70,7 +70,7 @@ QDriveInfo &QDriveInfo::operator=(const QDriveInfo &other)
 {
     if (this != &other)
         d_ptr->data.operator=(other.d_ptr->data);
-    qDebug() << "QDriveInfo::operator=" << d_ptr->data->ref;
+//    qDebug() << "QDriveInfo::operator=" << d_ptr->data->ref;
     return *this;
 }
 
@@ -247,5 +247,5 @@ void QDriveInfoPrivate::setRootPath(const QString &rootPath)
 {
     data.detach();
     data->rootPath = rootPath;
-    qDebug() << "QDriveInfo::setRootPath" << data->ref;
+//    qDebug() << "QDriveInfo::setRootPath" << data->ref;
 }
