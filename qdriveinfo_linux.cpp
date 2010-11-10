@@ -154,13 +154,16 @@ static inline QDriveInfo::DriveType determineType(const QString &device)
 
 void QDriveInfoPrivate::getType()
 {
-    stat(CachedDeviceFlag); // we need a device to get info
+    // we need a device and filesystem name to get info
+    stat(CachedDeviceFlag | CachedFileSystemNameFlag);
 
     data->type = determineType(data->device);
     if (data->type == QDriveInfo::InvalidDrive) {
         // test for UNC shares
-        if (data->rootPath.startsWith(QLatin1String("//")))
+        if (data->rootPath.startsWith(QLatin1String("//")) ||
+            data->fileSystemName == QLatin1String("nfs")) {
             data->type == QDriveInfo::RemoteDrive;
+        }
     }
 }
 
