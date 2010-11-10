@@ -6,7 +6,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <qplatformdefs.h>
 #include <QtCore/QFile>
 #include <QtCore/QDirIterator>
 #include <QtCore/QTextStream>
@@ -87,10 +86,10 @@ void QDriveInfoPrivate::getMountEntry()
 {
     FILE *fp = setmntent(_PATH_MOUNTED, "r");
     if (fp) {
-        struct mntent *mnt;
-        quint32 maxLength = 0;
         QString oldRootPath = data->rootPath;
+        quint32 maxLength = 0;
 
+        struct mntent *mnt;
         while ((mnt = getmntent(fp))) {
             QString mountDir = QString::fromLocal8Bit(mnt->mnt_dir);
             // we try to find most suitable entry

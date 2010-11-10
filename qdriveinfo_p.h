@@ -1,9 +1,11 @@
 #ifndef QDRIVEINFO_P_H
 #define QDRIVEINFO_P_H
 
+#include "qdriveinfo.h"
+
 #include <QtCore/QExplicitlySharedDataPointer>
 
-#include "qdriveinfo.h"
+#include <qplatformdefs.h>
 
 class QDriveInfoPrivate
 {

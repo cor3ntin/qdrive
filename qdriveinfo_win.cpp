@@ -1,8 +1,6 @@
 #include "qdriveinfo.h"
 #include "qdriveinfo_p.h"
 
-#include <qplatformdefs.h>
-
 QList<QDriveInfo> QDriveInfoPrivate::drives()
 {
     QList<QDriveInfo> drives;
