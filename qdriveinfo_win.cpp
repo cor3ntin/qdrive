@@ -27,6 +27,8 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
               CachedNameFlag | CachedFileSystemNameFlag;
     if (requiredFlags & bitmask) {
         getVolumeInformation();
+        if (data->valid && !data->ready)
+            bitmask = CachedValidFlag;
         data->setCachedFlag(bitmask);
     }
 
