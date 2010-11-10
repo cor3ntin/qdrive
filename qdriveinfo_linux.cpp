@@ -6,8 +6,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <qplatformdefs.h>
 #include <QtCore/QFile>
 #include <QtCore/QDirIterator>
+#include <QtCore/QTextStream>
 
 #ifndef _PATH_MOUNTED
 #  define _PATH_MOUNTED "/etc/mtab"
@@ -45,7 +47,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
         data->setCachedFlag(bitmask);
     }
 
-    bitmask = CachedFileSystemNameFlag | CachedDeviceFlag;
+    bitmask = this->CachedRootPathFlag | CachedFileSystemNameFlag | CachedDeviceFlag;
     if (requiredFlags & bitmask) {
         getMountEntry();
         data->setCachedFlag(bitmask);
@@ -86,13 +88,13 @@ void QDriveInfoPrivate::getMountEntry()
     FILE *fp = setmntent(_PATH_MOUNTED, "r");
     if (fp) {
         struct mntent *mnt;
-        int maxLength = 0;
+        quint32 maxLength = 0;
         QString oldRootPath = data->rootPath;
 
         while ((mnt = getmntent(fp))) {
             QString mountDir = QString::fromLocal8Bit(mnt->mnt_dir);
             // we try to find most suitable entry
-            if (oldRootPath.startsWith(mountDir) && maxLength < mountDir.length()) {
+            if (oldRootPath.startsWith(mountDir) && maxLength < (quint32)mountDir.length()) {
                 data->fileSystemName = QString::fromLatin1(mnt->mnt_type);
                 data->device = QString::fromLocal8Bit(mnt->mnt_fsname);
                 data->rootPath = mountDir;
@@ -174,7 +176,7 @@ void QDriveInfoPrivate::getName()
     QDirIterator it(QLatin1String(_PATH_DISK_BY_LABEL), QDir::NoDotAndDotDot);
     while (it.hasNext()) {
         it.next();
-        QFileInfo fileInfo(it.currentFileInfo());
+        QFileInfo fileInfo(it.filePath());
         if (fileInfo.isSymLink() && data->device == fileInfo.symLinkTarget()) {
             data->name = fileInfo.fileName();
             break;
