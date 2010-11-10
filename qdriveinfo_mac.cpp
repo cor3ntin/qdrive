@@ -78,7 +78,7 @@ void QDriveInfoPrivate::stat(uint requiredFlags)
         data->setCachedFlag(bitmask);
     }
 
-    bitmask = CachedNameFlag;
+    bitmask = CachedNameFlag | CachedRootPathFlag;
     if (requiredFlags & bitmask) {
         getVolumeInfo();
         data->setCachedFlag(bitmask);
@@ -137,6 +137,7 @@ void QDriveInfoPrivate::getVolumeInfo()
     OSErr result = noErr;
     FSVolumeRefNum thisVolumeRefNum = getVolumeRefNumForPath(data->rootPath.toUtf8().data());
     HFSUniStr255 volumeName;
+    FSRef rootDirectory;
 
     result = FSGetVolumeInfo(thisVolumeRefNum,
                              0,
@@ -144,7 +145,7 @@ void QDriveInfoPrivate::getVolumeInfo()
                              kFSVolInfoFSInfo,
                              0,
                              &volumeName,
-                             0);
+                             &rootDirectory);
     if (result == noErr) {
         CFStringRef stringRef = FSCreateStringFromHFSUniStr(NULL, &volumeName);
         if (stringRef) {
@@ -158,6 +159,22 @@ void QDriveInfoPrivate::getVolumeInfo()
             CFRelease(stringRef);
             DisposePtr(volname);
         }
+
+        CFURLRef url = CFURLCreateFromFSRef(NULL, &rootDirectory);
+        stringRef = CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
+        if (stringRef)	{
+            CFIndex length = CFStringGetLength(stringRef) + 1;
+            char *volname = NewPtr(length);
+            CFStringGetCString(stringRef,
+                               volname,
+                               length,
+                               kCFStringEncodingMacRoman
+                               );
+            CFRelease(stringRef);
+            data->rootPath = QString::fromLocal8Bit(volname);
+            DisposePtr(volname);
+        }
+        CFRelease(url);
     }
 }
 

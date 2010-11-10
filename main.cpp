@@ -18,7 +18,7 @@ void f()
     qDebug() << info.rootPath();
     qDebug() << info2.rootPath();
 
-    info.setRootPath("/Volumes/Macintosh HD1");
+    info.setRootPath("/Volumes/Macintosh HD/etc/security");
     qDebug() << info.isValid() << info.ready();
     qDebug() << info.fileSystemName() << info.device()
             << info.availableSize() << info.freeSize() << info.totalSize()
@@ -29,8 +29,8 @@ int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-//    f();
-//    return a.exec();
+    f();
+    return a.exec();
 
 //    qDebug() << QDrive::drivePaths();
     foreach (QDriveInfo drive, QDriveInfo::drives()) {

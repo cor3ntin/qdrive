@@ -100,6 +100,7 @@ public:
     void getVolumeInformation();
     void getDiskFreeSpace();
     void getDevice();
+    void getType();
 #endif
 #ifdef Q_OS_MAC
     void statFS();

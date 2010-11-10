@@ -26,7 +26,7 @@ QStringList drivePaths()
 
     while ((mnt = getmntent (fp)))
     {
-        ret.append(QString(mnt->mnt_dir));
+        ret.append(QString::fromLocal8Bit(mnt->mnt_dir));
     }
 
     endmntent(fp);
@@ -107,7 +107,7 @@ void QDriveInfoPrivate::getMountEntry()
 
     while ((mnt = getmntent (fp))) {
         if (mnt->mnt_dir == data->rootPath) { // we found our entry
-            data->fileSystemName = QString(mnt->mnt_type);
+            data->fileSystemName = QString::fromLatin1(mnt->mnt_type);
             data->device = QString::fromLocal8Bit(mnt->mnt_fsname);
             break;
         }
