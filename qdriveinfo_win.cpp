@@ -60,7 +60,7 @@ void QDriveInfoPrivate::getVolumeInformation()
     UINT oldmode = SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
 
     wchar_t nameBuf[MAX_PATH + 1];
-    wchar_t fileSystemNameBuf[MAX_PATH];
+    wchar_t fileSystemNameBuf[MAX_PATH + 1];
     bool result = GetVolumeInformation((wchar_t *)data->rootPath.utf16(),
                                        nameBuf, MAX_PATH,
                                        0, 0, 0,
@@ -87,11 +87,6 @@ void QDriveInfoPrivate::getDiskFreeSpace()
                                      (PULARGE_INTEGER)&data->availableSize,
                                      (PULARGE_INTEGER)&data->totalSize,
                                      (PULARGE_INTEGER)&data->freeSize);
-    if (!result) {
-//        DWORD error = GetLastError();
-//        if (error == ERROR_NOT_READY)
-//            data->ready = false;
-    }
 
     SetErrorMode(oldmode);
 }

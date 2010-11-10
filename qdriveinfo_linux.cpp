@@ -153,7 +153,7 @@ void QDriveInfoPrivate::getType()
         // test for UNC shares
         if (data->rootPath.startsWith(QLatin1String("//")) ||
             data->fileSystemName == QLatin1String("nfs")) {
-            data->type == QDriveInfo::RemoteDrive;
+            data->type = QDriveInfo::RemoteDrive;
         }
     }
 }
