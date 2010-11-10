@@ -46,7 +46,7 @@ QStringList drivePaths()
                                    kCFStringEncodingMacRoman
                                    );
                 CFRelease(stringRef);
-                paths.append(QString(volname));
+                paths.append(QString::fromLocal8Bit(volname));
                 DisposePtr(volname);
             }
             CFRelease(url);
@@ -107,8 +107,8 @@ void QDriveInfoPrivate::statFS()
     data->freeSize = statFS.f_bfree*statFS.f_bsize;
     data->availableSize = statFS.f_bavail*statFS.f_bsize;
 
-    data->fileSystemName = QString::fromUtf8(statFS.f_fstypename);
-    data->device = QString::fromUtf8(statFS.f_mntfromname);
+    data->fileSystemName = QString::fromLatin1(statFS.f_fstypename);
+    data->device = QString::fromLocal8Bit(statFS.f_mntfromname);
 
     data->valid = true;
     data->ready = true;
@@ -154,7 +154,7 @@ void QDriveInfoPrivate::getVolumeInfo()
                                CFStringGetLength(stringRef) + 1,
                                kCFStringEncodingMacRoman
                                );
-            data->name = QString(volname);
+            data->name = QString::fromLocal8Bit(volname);
             CFRelease(stringRef);
             DisposePtr(volname);
         }
@@ -164,7 +164,7 @@ void QDriveInfoPrivate::getVolumeInfo()
 void QDriveInfoPrivate::getType()
 {
     stat(CachedDeviceFlag); // we need BSD device to determine drive type.
-    data->type = determineType(data->device.toLatin1());
+    data->type = determineType(data->device.toLocal8Bit());
 }
 
 // From Qt Mobility

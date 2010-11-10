@@ -108,7 +108,7 @@ void QDriveInfoPrivate::getMountEntry()
     while ((mnt = getmntent (fp))) {
         if (mnt->mnt_dir == data->rootPath) { // we found our entry
             data->fileSystemName = QString(mnt->mnt_type);
-            data->device = QString(mnt->mnt_fsname);
+            data->device = QString::fromLocal8Bit(mnt->mnt_fsname);
             break;
         }
     }
@@ -131,7 +131,7 @@ QDriveInfo::DriveType QDriveInfoPrivate::determineType()
 //    if(mountEntriesMap.value(driveVolume).contains("mapper")) {
     if(data->device.contains("mapper")) {
         struct stat stat_buf;
-        ::stat(data->device.toLatin1(), &stat_buf);
+        ::stat(data->device.toLocal8Bit(), &stat_buf);
 
         dmFile = QString("/sys/block/dm-%1/removable").arg(stat_buf.st_rdev & 0377);
 
