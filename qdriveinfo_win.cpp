@@ -49,13 +49,19 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
         getType();
         data->setCachedFlag(bitmask);
     }
+
+    bitmask = CachedRootPathFlag;
+    if (requiredFlags & bitmask) {
+        getPath();
+        data->setCachedFlag(bitmask);
+    }
 }
 
 void QDriveInfoPrivate::getVolumeInformation()
 {
     UINT oldmode = SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
 
-    wchar_t nameBuf[MAX_PATH];
+    wchar_t nameBuf[MAX_PATH + 1];
     wchar_t fileSystemNameBuf[MAX_PATH];
     bool result = GetVolumeInformation((wchar_t *)data->rootPath.utf16(),
                                        nameBuf, MAX_PATH,
@@ -96,7 +102,7 @@ void QDriveInfoPrivate::getDevice()
 {
     UINT oldmode = SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
 
-    wchar_t deviceBuffer[MAX_PATH];
+    wchar_t deviceBuffer[MAX_PATH + 1];
     bool result = GetVolumeNameForVolumeMountPoint((wchar_t *)data->rootPath.utf16(), deviceBuffer, MAX_PATH);
     if (result)
         data->device = QString::fromWCharArray(deviceBuffer);
@@ -145,4 +151,13 @@ void QDriveInfoPrivate::getType()
     doStat(CachedRootPathFlag); // we need a root path to get info
 
     data->type = determineType(data->rootPath);
+}
+
+void QDriveInfoPrivate::getPath()
+{
+    // TODO: test when disk mounted in folder on other disk
+    wchar_t buffer[MAX_PATH + 1];
+    bool result = GetVolumePathName((wchar_t *)data->rootPath.utf16(), buffer, MAX_PATH);
+    if (result)
+        data->rootPath = QString::fromWCharArray(buffer);
 }

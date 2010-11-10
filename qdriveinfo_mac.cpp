@@ -31,12 +31,9 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
             if (stringRef) {
                 CFIndex length = CFStringGetLength(stringRef) + 1;
                 char *volname = NewPtr(length);
-                CFStringGetCString(stringRef,
-                                   volname,
-                                   length,
-                                   kCFStringEncodingMacRoman);
-                CFRelease(stringRef);
+                CFStringGetCString(stringRef, volname, length, kCFStringEncodingMacRoman);
                 drives.append(QString::fromLocal8Bit(volname));
+                CFRelease(stringRef);
                 DisposePtr(volname);
             }
             CFRelease(url);
@@ -60,7 +57,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
         data->setCachedFlag(bitmask);
     }
 
-    bitmask = CachedNameFlag;
+    bitmask = CachedNameFlag | CachedRootPathFlag;
     if (requiredFlags & bitmask) {
         getVolumeInfo();
         data->setCachedFlag(bitmask);
@@ -93,7 +90,7 @@ void QDriveInfoPrivate::statFS()
     }
 }
 
-FSVolumeRefNum getVolumeRefNumForPath(char *path)
+static inline FSVolumeRefNum getVolumeRefNumForPath(char *path)
 {
     FSRef ref;
     FSPathMakeRef((UInt8*)path, &ref, 0);
@@ -115,6 +112,7 @@ void QDriveInfoPrivate::getVolumeInfo()
     OSErr result = noErr;
     FSVolumeRefNum thisVolumeRefNum = getVolumeRefNumForPath(data->rootPath.toUtf8().data());
     HFSUniStr255 volumeName;
+    FSRef rootDirectory;
 
     result = FSGetVolumeInfo(thisVolumeRefNum,
                              0,
@@ -122,19 +120,29 @@ void QDriveInfoPrivate::getVolumeInfo()
                              kFSVolInfoFSInfo,
                              0,
                              &volumeName,
-                             0);
+                             &rootDirectory);
     if (result == noErr) {
         CFStringRef stringRef = FSCreateStringFromHFSUniStr(NULL, &volumeName);
         if (stringRef) {
-            char *volname = NewPtr(CFStringGetLength(stringRef)+1);
-            CFStringGetCString(stringRef,
-                               volname,
-                               CFStringGetLength(stringRef) + 1,
-                               kCFStringEncodingMacRoman);
+            CFIndex length = CFStringGetLength(stringRef) + 1;
+            char *volname = NewPtr(length);
+            CFStringGetCString(stringRef, volname, length, kCFStringEncodingMacRoman);
             data->name = QString::fromLocal8Bit(volname);
             CFRelease(stringRef);
             DisposePtr(volname);
         }
+
+        CFURLRef url = CFURLCreateFromFSRef(NULL, &rootDirectory);
+        stringRef = CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
+        if (stringRef) {
+            CFIndex length = CFStringGetLength(stringRef) + 1;
+            char *volname = NewPtr(length);
+            CFStringGetCString(stringRef, volname, length, kCFStringEncodingMacRoman);
+            data->rootPath = QString::fromLocal8Bit(volname);
+            CFRelease(stringRef);
+            DisposePtr(volname);
+        }
+        CFRelease(url);
     }
 }
 
@@ -152,9 +160,7 @@ static inline QDriveInfo::DriveType determineType(const QString &device)
     if (sessionRef == NULL)
         return QDriveInfo::InvalidDrive;
 
-    diskRef = DADiskCreateFromBSDName(NULL,
-                                      sessionRef,
-                                      device.toLocal8Bit());
+    diskRef = DADiskCreateFromBSDName(NULL, sessionRef, device.toLocal8Bit());
     if (diskRef == NULL) {
         CFRelease(sessionRef);
         return QDriveInfo::InvalidDrive;

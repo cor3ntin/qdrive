@@ -106,8 +106,7 @@ static inline QDriveInfo::DriveType determineType(const QString &device)
         QT_STATBUF stat_buf;
         QT_STAT(device.toLocal8Bit(), &stat_buf);
 
-        dmFile = QString::number(stat_buf.st_rdev & 0377);
-        dmFile = QLatin1String("/sys/block/dm-") + dmFile + QLatin1String("/removable");
+        dmFile = QLatin1String("dm-") + QString::number(stat_buf.st_rdev & 0377);
     } else {
         dmFile = device.section(QLatin1Char('/'), 2, 3);
         if (dmFile.startsWith(QLatin1String("mmc"))) {
@@ -121,13 +120,11 @@ static inline QDriveInfo::DriveType determineType(const QString &device)
             if (dmFile.right(1) == QLatin1String("p")) // get rid of partition number
                 dmFile.chop(1);
         }
-        dmFile = QLatin1String("/sys/block/") + dmFile + QLatin1String("/removable");
     }
+    dmFile = QLatin1String("/sys/block/") + dmFile + QLatin1String("/removable");
 
     QFile file(dmFile);
-    if (!file.open(QIODevice::ReadOnly)) {
-//        qWarning() << "Could not open sys file";
-    } else {
+    if (file.open(QIODevice::ReadOnly)) {
         QTextStream sysinfo(&file);
         QString line = sysinfo.readAll();
         if (line.contains(QLatin1Char('1')))
