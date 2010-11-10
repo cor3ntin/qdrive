@@ -176,7 +176,7 @@ void QDriveInfoPrivate::getName()
     QDirIterator it(QLatin1String(_PATH_DISK_BY_LABEL), QDir::NoDotAndDotDot);
     while (it.hasNext()) {
         it.next();
-        QFileInfo fileInfo(it.filePath());
+        QFileInfo fileInfo(it.fileInfo());
         if (fileInfo.isSymLink() && data->device == fileInfo.symLinkTarget()) {
             data->name = fileInfo.fileName();
             break;
