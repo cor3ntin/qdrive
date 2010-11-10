@@ -40,6 +40,27 @@ public:
             cache_enabled(other.cache_enabled), cachedFlags(0)
         {}
 
+        inline void clear() {
+            availableSize = 0;
+            freeSize = 0;
+            totalSize = 0;
+
+            fileSystemName.clear();
+            device.clear();
+            name.clear();
+
+            type = QDriveInfo::InvalidDrive;
+            ready = false;
+            valid = false;
+
+            cachedFlags = 0;
+        }
+
+        inline bool getCachedFlag(uint c) const
+        { return cache_enabled ? (cachedFlags & c) : 0; }
+        inline void setCachedFlag(uint c)
+        { if (cache_enabled) cachedFlags |= c; }
+
         QString rootPath;
 
         quint64 availableSize;
@@ -55,11 +76,6 @@ public:
 
         bool cache_enabled;
         uint cachedFlags;
-
-        inline bool getCachedFlag(uint c) const
-        { return cache_enabled ? (cachedFlags & c) : 0; }
-        inline void setCachedFlag(uint c)
-        { if (cache_enabled) cachedFlags |= c; }
     };
 
     static QList<QDriveInfo> drives();

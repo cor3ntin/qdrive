@@ -211,7 +211,7 @@ QDriveInfo::DriveType QDriveInfo::type() const
 */
 void QDriveInfo::refresh()
 {
-    d_func()->data->cachedFlags = 0;
+    d_func()->data->clear();
 }
 
 /*!
