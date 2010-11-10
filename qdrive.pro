@@ -10,29 +10,15 @@ TEMPLATE = app
 
 DEFINES += QDRIVEINFO_LIBRARY
 
-SOURCES += main.cpp \
-    qdriveinfo.cpp
-HEADERS += \
-    qdriveinfo.h \
-    qdriveinfo_p.h \
-    qdriveinfo_global.h
+SOURCES += main.cpp
 
-win32: {
-    HEADERS +=
-    SOURCES += \
-            qdriveinfo_win.cpp
-}
+SOURCES += qdriveinfo.cpp
+HEADERS += qdriveinfo.h \
+           qdriveinfo_p.h
 
-unix: {
-    linux-*: {
-       HEADERS +=
-       SOURCES += \
-            qdriveinfo_linux.cpp
-    }
-    mac: {
-       HEADERS +=
-       SOURCES += \
-                qdriveinfo_mac.cpp
-       LIBS += -framework CoreServices -framework DiskArbitration -framework IOKit
-    }
+win32: SOURCES += qdriveinfo_win.cpp
+unix: linux-*: SOURCES += qdriveinfo_linux.cpp
+mac: {
+   SOURCES += qdriveinfo_mac.cpp
+   LIBS += -framework CoreServices -framework DiskArbitration -framework IOKit
 }
