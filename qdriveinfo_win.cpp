@@ -53,6 +53,8 @@ void QDriveInfoPrivate::stat(uint requiredFlags)
 
 void QDriveInfoPrivate::getVolumeInformation()
 {
+    UINT oldmode = SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
+
     wchar_t nameBuf[MAX_PATH];
     wchar_t fileSystemNameBuf[MAX_PATH];
     bool result = GetVolumeInformation((wchar_t *)data->rootPath.utf16(),
@@ -69,10 +71,14 @@ void QDriveInfoPrivate::getVolumeInformation()
         data->name = QString::fromWCharArray(nameBuf);
         data->fileSystemName = QString::fromWCharArray(fileSystemNameBuf);
     }
+
+    SetErrorMode(oldmode);
 }
 
 void QDriveInfoPrivate::getDiskFreeSpace()
 {
+    UINT oldmode = SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
+
     bool result = GetDiskFreeSpaceEx((wchar_t *)data->rootPath.utf16(),
                                      (PULARGE_INTEGER)&data->availableSize,
                                      (PULARGE_INTEGER)&data->totalSize,
@@ -82,19 +88,27 @@ void QDriveInfoPrivate::getDiskFreeSpace()
 //        if (error == ERROR_NOT_READY)
 //            data->ready = false;
     }
+
+    SetErrorMode(oldmode);
 }
 
 void QDriveInfoPrivate::getDevice()
 {
+    UINT oldmode = SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
+
     wchar_t deviceBuffer[MAX_PATH];
     bool result = GetVolumeNameForVolumeMountPoint((wchar_t *)data->rootPath.utf16(), deviceBuffer, MAX_PATH);
     if (result)
         data->device = QString::fromWCharArray(deviceBuffer);
+
+    SetErrorMode(oldmode);
 }
 
 static inline QDriveInfo::DriveType determineType(const QString &rootPath)
 {
 #if !defined(Q_OS_WINCE)
+    UINT oldmode = SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
+
     uint result = GetDriveType((wchar_t *)rootPath.utf16());
     switch (result) {
     case DRIVE_REMOVABLE:
@@ -118,6 +132,8 @@ static inline QDriveInfo::DriveType determineType(const QString &rootPath)
     default:
         break;
     };
+
+    SetErrorMode(oldmode);
 #else
     Q_UNUSED(rootPath)
 #endif
