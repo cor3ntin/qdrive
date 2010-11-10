@@ -69,7 +69,7 @@ public:
 #endif //Q_OS_LINUX
 
 #ifdef Q_OS_WIN
-    QStringList drivePaths();
+    static QStringList drivePaths();
     void getVolumeInformation();
     void getDiskFreeSpace();
     void getDevice();

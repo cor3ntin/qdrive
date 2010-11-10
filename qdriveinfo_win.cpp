@@ -41,7 +41,8 @@ void QDriveInfoPrivate::stat(uint requiredFlags)
     data.detach();
 
     uint bitmask = 0;
-    bitmask = CachedReadyFlag | CachedNameFlag | CachedFileSystemNameFlag;
+    bitmask = CachedValidFlag | CachedReadyFlag |
+              CachedNameFlag | CachedFileSystemNameFlag;
     if (requiredFlags & bitmask) {
         getVolumeInformation();
         data->setCachedFlag(bitmask);
@@ -81,15 +82,19 @@ void QDriveInfoPrivate::getVolumeInformation()
                                   );
     if (!result) {
         DWORD error = GetLastError();
-        if (error == ERROR_NOT_READY)
+        if (error == ERROR_NOT_READY) {
             data->ready = false;
+            data->valid = true; // can be valid, but not ready
+        } else
+            data->valid = false; // can be valid, but not ready
 //        qDebug() << "error" << error;
         return;
     }
 
-    data->ready = true;
     data->name = QString::fromWCharArray(nameArr);
     data->fileSystemName = QString::fromWCharArray(fileSystemNameArr);
+    data->ready = true;
+    data->valid = true;
 }
 
 void QDriveInfoPrivate::getDiskFreeSpace()
