@@ -161,7 +161,7 @@ void QDriveInfoPrivate::getType()
 void QDriveInfoPrivate::getName()
 {
     QFileInfo fi(QLatin1String(_PATH_DISK_BY_LABEL));
-    if (!fi.exists() || !fi.isDir()) // /dev/disk/by-label doesn't exists or invalid
+    if (!fi.exists() || !fi.isDir()) // "/dev/disk/by-label" doesn't exists or invalid
         return;
 
     doStat(CachedDeviceFlag); // we need device to get info
