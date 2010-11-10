@@ -21,11 +21,10 @@ public:
 
     QDriveInfo();
     explicit QDriveInfo(const QString &rootPath);
-    QDriveInfo(const QDriveInfo &);
-
-    QDriveInfo &operator=(const QDriveInfo &);
-
+    QDriveInfo(const QDriveInfo &other);
     ~QDriveInfo();
+
+    QDriveInfo &operator=(const QDriveInfo &other);
 
     QString rootPath() const;
     void setRootPath(const QString &);

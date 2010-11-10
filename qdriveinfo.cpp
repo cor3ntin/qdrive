@@ -62,6 +62,14 @@ QDriveInfo::QDriveInfo(const QDriveInfo &other)
 }
 
 /*!
+    Destroys the QDriveInfo and frees its resources.
+*/
+QDriveInfo::~QDriveInfo()
+{
+    delete d_ptr;
+}
+
+/*!
     Makes a copy of the given \a other QDriveInfo and assigns it to this QDriveInfo.
 */
 QDriveInfo &QDriveInfo::operator=(const QDriveInfo &other)
@@ -90,14 +98,6 @@ void QDriveInfo::setRootPath(const QString &rootPath)
 
     d->data.detach();
     d->data->rootPath = rootPath;
-}
-
-/*!
-    Destroys the QDriveInfo and frees its resources.
-*/
-QDriveInfo::~QDriveInfo()
-{
-    delete d_ptr;
 }
 
 /*!
