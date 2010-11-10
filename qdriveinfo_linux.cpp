@@ -105,8 +105,7 @@ void QDriveInfoPrivate::getMountEntry()
     if (fp == NULL)
         return;
 
-    while ((mnt = getmntent (fp)))
-    {
+    while ((mnt = getmntent (fp))) {
         if (mnt->mnt_dir == data->rootPath) { // we found our entry
             data->fileSystemName = QString(mnt->mnt_type);
             data->device = QString(mnt->mnt_fsname);
@@ -115,8 +114,6 @@ void QDriveInfoPrivate::getMountEntry()
     }
 
     endmntent(fp);
-
-//    setCachedFlag(CachedFileSystemNameFlag | CachedDeviceFlag);
 }
 
 void QDriveInfoPrivate::getType()
@@ -124,8 +121,6 @@ void QDriveInfoPrivate::getType()
     stat(CachedDeviceFlag); // we need a device to get info
 
     data->type = determineType();
-
-//    setCachedFlag(CachedTypeFlag);
 }
 
 // From Qt Mobility

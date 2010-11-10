@@ -71,7 +71,7 @@ void QDriveInfoPrivate::getVolumeInformation()
     wchar_t fileSystemNameArr[MAX_PATH] = L"";
     bool result;
 
-    result = GetVolumeInformation((WCHAR *)data->rootPath.utf16(),
+    result = GetVolumeInformation((wchar_t *)data->rootPath.utf16(),
                                   nameArr, MAX_PATH*sizeof(wchar_t),
                                   0,
                                   0,
@@ -100,7 +100,7 @@ void QDriveInfoPrivate::getDiskFreeSpace()
 //    qDebug("getDiskFreeSpace");
     bool result;
 
-    result = GetDiskFreeSpaceEx((WCHAR *)data->rootPath.utf16(),
+    result = GetDiskFreeSpaceEx((wchar_t *)data->rootPath.utf16(),
                                 (PULARGE_INTEGER)&(data->availableSize),
                                 (PULARGE_INTEGER)&(data->totalSize),
                                 (PULARGE_INTEGER)&(data->freeSize)
@@ -116,13 +116,10 @@ void QDriveInfoPrivate::getDiskFreeSpace()
 
 void QDriveInfoPrivate::getDevice()
 {
-//    wchar_t rootPathName[MAX_PATH] = L"";
-//    rootPath.toWCharArray(rootPathName);
-
     wchar_t deviceBuffer[MAX_PATH] = L"";
     bool result;
 
-    result = GetVolumeNameForVolumeMountPoint((WCHAR *)data->rootPath.utf16(),
+    result = GetVolumeNameForVolumeMountPoint((wchar_t *)data->rootPath.utf16(),
                                               deviceBuffer,
                                               MAX_PATH);
     if (!result) {
@@ -141,7 +138,7 @@ void QDriveInfoPrivate::getType()
 QDriveInfo::DriveType QDriveInfoPrivate::determineType()
 {
 #if !defined(Q_OS_WINCE)
-    uint result = GetDriveType((WCHAR *)data->rootPath.utf16());
+    uint result = GetDriveType((wchar_t *)data->rootPath.utf16());
     switch (result) {
     case 0:
     case 1:

@@ -9,7 +9,6 @@ class QDriveInfoPrivate;
 class QDRIVEINFO_EXPORT QDriveInfo
 {
 public:
-
     enum DriveType {
         NoDrive = 0,
         InternalDrive,
@@ -26,10 +25,10 @@ public:
 
     QDriveInfo &operator=(const QDriveInfo &);
 
+    ~QDriveInfo();
+
     QString rootPath() const;
     void setRootPath(const QString &);
-
-    ~QDriveInfo();
 
     quint64 availableSize() const;
     quint64 freeSize() const;
