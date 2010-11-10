@@ -215,6 +215,14 @@ QDriveInfo::DriveType QDriveInfo::type() const
     return d_func()->data->type;
 }
 
+/*!
+    Resets QDriveInfo inner cache.
+*/
+void QDriveInfo::refresh()
+{
+    d_func()->data->cachedFlags = 0;
+}
+
 //================================== QDriveInfoPrivate ==================================
 
 QDriveInfoPrivate::QDriveInfoPrivate():
@@ -224,6 +232,7 @@ QDriveInfoPrivate::QDriveInfoPrivate():
     data->freeSize = 0;
     data->totalSize = 0;
     data->ready = false;
+    data->valid = false;
 
     data->cache_enabled = true;
     data->cachedFlags = 0;

@@ -72,13 +72,9 @@ void QDriveInfoPrivate::stat(uint requiredFlags)
     data.detach();
 
     uint bitmask = 0;
-    if (requiredFlags & CachedReadyFlag) {
-        data->ready = true;
-        data->setCachedFlag(CachedReadyFlag);
-    }
 
     bitmask = CachedAvailableSizeFlag | CachedFreeSizeFlag | CachedSizeFlag |
-              CachedFileSystemNameFlag | CachedDeviceFlag;
+              CachedFileSystemNameFlag | CachedDeviceFlag | CachedValidFlag | CachedReadyFlag;
     if (requiredFlags & bitmask) {
         statFS();
         data->setCachedFlag(bitmask);
@@ -100,18 +96,24 @@ void QDriveInfoPrivate::stat(uint requiredFlags)
 void QDriveInfoPrivate::statFS()
 {
     struct statfs statFS;
+    int result;
 
-    statfs(data->rootPath.toUtf8().data(), &statFS);
+    result = statfs(data->rootPath.toUtf8().data(), &statFS);
+    if (result == -1) {
+        data->valid = false;
+        data->ready = false;
+        return;
+    }
 
     data->totalSize = statFS.f_blocks*statFS.f_bsize;
     data->freeSize = statFS.f_bfree*statFS.f_bsize;
     data->availableSize = statFS.f_bavail*statFS.f_bsize;
 
-//    setCachedFlag(CachedAvailableSizeFlag |
-//                  CachedFreeSizeFlag |
-//                  CachedSizeFlag);
     data->fileSystemName = QString::fromUtf8(statFS.f_fstypename);
     data->device = QString::fromUtf8(statFS.f_mntfromname);
+
+    data->valid = true;
+    data->ready = true;
 }
 
 FSVolumeRefNum getVolumeRefNumForPath(char *path)
@@ -137,15 +139,12 @@ void QDriveInfoPrivate::getVolumeInfo()
     OSErr result = noErr;
     FSVolumeRefNum thisVolumeRefNum = getVolumeRefNumForPath(data->rootPath.toUtf8().data());
     HFSUniStr255 volumeName;
-//    FSVolumeInfo volumeInfo;
-
-//    bzero((void *) &volumeInfo, sizeof(volumeInfo));
 
     result = FSGetVolumeInfo(thisVolumeRefNum,
                              0,
                              0,
                              kFSVolInfoFSInfo,
-                             0/*&volumeInfo*/,
+                             0,
                              &volumeName,
                              0);
     if (result == noErr) {
@@ -161,7 +160,6 @@ void QDriveInfoPrivate::getVolumeInfo()
             CFRelease(stringRef);
             DisposePtr(volname);
         }
-
     }
 }
 

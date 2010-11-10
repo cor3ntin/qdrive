@@ -42,6 +42,8 @@ public:
 
     DriveType type() const;
 
+    void refresh();
+
 protected:
     QDriveInfoPrivate *d_ptr;
 };

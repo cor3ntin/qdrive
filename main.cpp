@@ -18,8 +18,8 @@ void f()
     qDebug() << info.rootPath();
     qDebug() << info2.rootPath();
 
-    info.setRootPath("/Volumes/Macintosh HD");
-    qDebug() << info.fileSystemName() << info.device();
+    info.setRootPath("/Volumes/Macintosh HD1");
+    qDebug() << info.isValid() << info.ready() << info.fileSystemName() << info.device();
 }
 
 int main(int argc, char *argv[])
