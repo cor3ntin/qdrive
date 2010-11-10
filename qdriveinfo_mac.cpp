@@ -164,11 +164,11 @@ void QDriveInfoPrivate::getVolumeInfo()
 void QDriveInfoPrivate::getType()
 {
     stat(CachedDeviceFlag); // we need BSD device to determine drive type.
-    data->type = determineType(data->device.toLocal8Bit());
+    data->type = determineType();
 }
 
 // From Qt Mobility
-QDriveInfo::DriveType QDriveInfoPrivate::determineType(const QByteArray &device)
+QDriveInfo::DriveType QDriveInfoPrivate::determineType()
 {
     QDriveInfo::DriveType drivetype = QDriveInfo::InvalidDrive;
 
@@ -185,8 +185,7 @@ QDriveInfo::DriveType QDriveInfoPrivate::determineType(const QByteArray &device)
 
     diskRef = DADiskCreateFromBSDName(NULL,
                                       sessionRef,
-                                      device
-                                      /*data->device.toLatin1()*/
+                                      data->device.toLocal8Bit()
                                       /*mountEntriesMap.key(driveVolume).toLatin1()*/);
     if (diskRef == NULL) {
         CFRelease(sessionRef);

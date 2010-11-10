@@ -12,7 +12,6 @@ public:
     QDriveInfoPrivate(QDriveInfoPrivate *other);
 
     enum CachedFlags {
-        CachedNoFlags = 0x00,
         CachedAvailableSizeFlag = 0x01,
         CachedFreeSizeFlag = 0x02,
         CachedSizeFlag = 0x04,
@@ -40,7 +39,8 @@ public:
             cache_enabled(other.cache_enabled), cachedFlags(0)
         {}
 
-        inline void clear() {
+        inline void clear()
+        {
             availableSize = 0;
             freeSize = 0;
             totalSize = 0;
@@ -77,12 +77,14 @@ public:
         bool cache_enabled;
         uint cachedFlags;
     };
+    QExplicitlySharedDataPointer<Data> data;
 
     static QList<QDriveInfo> drives();
 
     void stat(uint requiredFlags);
 
-    QExplicitlySharedDataPointer<Data> data;
+    void getType();
+    QDriveInfo::DriveType determineType();
 
 #ifdef Q_OS_LINUX
 #if defined(Q_WS_MAEMO_5) || defined(Q_WS_MAEMO_6)
@@ -90,9 +92,7 @@ public:
 #else
     void statFS();
     void getMountEntry();
-    void getType();
     void getName();
-    QDriveInfo::DriveType determineType();
 #endif //Q_WS_MAEMO_5 & Q_WS_MAEMO_6
 #endif //Q_OS_LINUX
 
@@ -101,14 +101,10 @@ public:
     void getVolumeInformation();
     void getDiskFreeSpace();
     void getDevice();
-    void getType();
-    QDriveInfo::DriveType determineType();
 #endif
 #ifdef Q_OS_MAC
     void statFS();
     void getVolumeInfo();
-    void getType();
-    QDriveInfo::DriveType determineType(const QByteArray &device);
 #endif
 #ifdef Q_OS_SYMBIAN
 
