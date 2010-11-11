@@ -45,10 +45,11 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
 
 void QDriveInfoPrivate::doStat(uint requiredFlags)
 {
-    requiredFlags |= CachedValidFlag; // force drive validation
-
     if (data->getCachedFlag(requiredFlags))
         return;
+
+    if (!data->getCachedFlag(CachedValidFlag))
+        requiredFlags |= CachedValidFlag; // force drive validation
 
     uint bitmask = 0;
 
