@@ -81,7 +81,6 @@ void QDriveInfoPrivate::getVolumeInfo()
         data->freeSize = volumeInfo.iFree;
         data->totalSize = volumeInfo.iSize;
 
-        // TODO: check this code
         data->name = QString::fromUtf16((const ushort *)volumeInfo.iName.Ptr(), volumeInfo.iName.Length());
     }
 }
@@ -93,10 +92,8 @@ void QDriveInfoPrivate::getFileSystemName()
     TInt drive;
     if (RFs::CharToDrive(TChar(data->rootPath[0].toAscii()), drive) == KErrNone) {
         TFSName fileSystemName;
-        if (rfs.FileSystemName(fileSystemName, drive) == KErrNone) {
-            // TODO: check this code
+        if (rfs.FileSystemName(fileSystemName, drive) == KErrNone)
             data->fileSystemName = QString::fromUtf16((const ushort *)fileSystemName.Ptr(), fileSystemName.Length());
-        }
     }
 }
 
