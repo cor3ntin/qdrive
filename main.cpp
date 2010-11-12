@@ -78,6 +78,10 @@ int main(int argc, char *argv[])
     QList<QDriveInfo> macDrives = QList<QDriveInfo>()
         << QDriveInfo("/") << QDriveInfo("/Volumes/Macintosh HD") << QDriveInfo("/Volumes/Data HD");
     dumpDriveInfoList(macDrives, "Mac Drives");
+#elif defined(Q_OS_LINUX)
+    QList<QDriveInfo> macDrives = QList<QDriveInfo>()
+        << QDriveInfo("/") << QDriveInfo("/Volumes/H/") << QDriveInfo("/Volumes/Data/");
+    dumpDriveInfoList(macDrives, "Linux Drives");
 #endif
 
     QTimer::singleShot(1000, &a, SLOT(quit()));
