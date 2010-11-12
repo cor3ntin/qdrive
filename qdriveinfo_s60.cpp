@@ -93,7 +93,7 @@ void QDriveInfoPrivate::getVolumeInfo()
     data->freeSize = volumeInfo.iFree;
     data->totalSize = volumeInfo.iSize;
     // TODO: check this code
-    data->name = QString::fromWCharArray((wchar_t *)volumeInfo.iName.Ptr());
+    data->name = QString::fromWCharArray((wchar_t *)volumeInfo.iName.Ptr(), KMaxFileName);
 }
 
 void QDriveInfoPrivate::getFileSystemName()
@@ -114,7 +114,9 @@ void QDriveInfoPrivate::getFileSystemName()
     }
 
     // TODO: check this code
-    data->fileSystemName = QString::fromWCharArray((wchar_t *)fileSystemName.Ptr());
+    data->fileSystemName = QString::fromWCharArray((wchar_t *)fileSystemName.Ptr(),
+                                                   KMaxFSNameLength
+                                                   );
 }
 
 void QDriveInfoPrivate::getRootPath()
