@@ -43,7 +43,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
     uint bitmask = 0;
 
     bitmask = CachedAvailableSizeFlag | CachedFreeSizeFlag | CachedSizeFlag |
-              CachedNameFlag | CachedDeviceFlag | CachedValidFlag | CachedReadyFlag;
+              CachedNameFlag | CachedValidFlag | CachedReadyFlag;
     if (requiredFlags & bitmask) {
         getVolumeInfo();
         data->setCachedFlag(bitmask);
