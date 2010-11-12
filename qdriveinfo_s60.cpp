@@ -75,6 +75,9 @@ void QDriveInfoPrivate::getVolumeInfo()
     TVolumeInfo volumeInfo;
     RFs &rfs = qt_s60GetRFs();
 
+    if (data->rootPath.isEmpty())
+        return;
+
     result = RFs::CharToDrive(TChar(data->rootPath[0].toAscii()), drive);
     if (result != KErrNone) {
         return;
@@ -82,6 +85,7 @@ void QDriveInfoPrivate::getVolumeInfo()
 
     result = rfs.Volume(volumeInfo, drive);
     if (result != KErrNone) {
+        // do we really need this code?
         data->valid = false;
         data->ready = false;
         return;
@@ -100,6 +104,7 @@ void QDriveInfoPrivate::getFileSystemName()
 {
     TInt drive;
     TInt result;
+    TFSName fileSystemName;
     RFs &rfs = qt_s60GetRFs();
 
     result = RFs::CharToDrive(TChar(data->rootPath[0].toAscii()), drive);
@@ -107,7 +112,6 @@ void QDriveInfoPrivate::getFileSystemName()
         return;
     }
 
-    TFSName fileSystemName;
     result = rfs.FileSystemName(fileSystemName, drive);
     if (result != KErrNone) {
         return;
