@@ -30,7 +30,7 @@ void QDriveInfoPrivate::initRootPath()
         }
     }
 
-    data->rootPath.clear(); // invalid root path
+    data->rootPath.clear();
 }
 
 static inline QDriveInfo::DriveType typeForDrive(const QString &rootPath)

@@ -1,16 +1,36 @@
 #include "qdriveinfo_p.h"
 
+#include <QtCore/QDir>
+
+static inline bool isRelativePath(const QString &path)
+{
+    // drive, e.g. "a:", or UNC root, e.q. "//"
+    return !(path.startsWith(QLatin1Char('/'))
+             || (path.length() >= 2
+                 && ((path.at(0).isLetter() && path.at(1) == QLatin1Char(':'))
+                     || (path.at(0) == QLatin1Char('/') && path.at(1) == QLatin1Char('/')))));
+}
+
 void QDriveInfoPrivate::initRootPath()
 {
     if (data->rootPath.isEmpty())
         return;
 
+    if (isRelativePath(data->rootPath)) {
+        data->rootPath.clear();
+        return;
+    }
+
     // ### test when disk mounted in folder on other disk
+    QString path = QDir::toNativeSeparators(data->rootPath);
     wchar_t buffer[MAX_PATH + 1];
-    if (::GetVolumePathName((wchar_t *)data->rootPath.utf16(), buffer, MAX_PATH))
-        data->rootPath = QString::fromWCharArray(buffer);
-    else
-        data->rootPath.clear(); // invalid root path
+    if (::GetVolumePathName((wchar_t *)path.utf16(), buffer, MAX_PATH)) {
+        data->rootPath = QDir::fromNativeSeparators(QString::fromWCharArray(buffer));
+        if (!data->rootPath.endsWith(QLatin1Char('/')))
+            data->rootPath.append(QLatin1Char('/'));
+    } else {
+        data->rootPath.clear();
+    }
 }
 
 static inline QDriveInfo::DriveType determineType(const QString &rootPath)
@@ -103,9 +123,10 @@ void QDriveInfoPrivate::getVolumeInformation()
 {
     UINT oldmode = ::SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
 
+    QString path = QDir::toNativeSeparators(data->rootPath);
     wchar_t nameBuf[MAX_PATH + 1];
     wchar_t fileSystemNameBuf[MAX_PATH + 1];
-    bool result = ::GetVolumeInformation((wchar_t *)data->rootPath.utf16(),
+    bool result = ::GetVolumeInformation((wchar_t *)path.utf16(),
                                          nameBuf, MAX_PATH,
                                          0, 0, 0,
                                          fileSystemNameBuf, MAX_PATH);
@@ -127,7 +148,8 @@ void QDriveInfoPrivate::getDiskFreeSpace()
 {
     UINT oldmode = ::SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
 
-    ::GetDiskFreeSpaceEx((wchar_t *)data->rootPath.utf16(),
+    QString path = QDir::toNativeSeparators(data->rootPath);
+    ::GetDiskFreeSpaceEx((wchar_t *)path.utf16(),
                          (PULARGE_INTEGER)&data->availableSize,
                          (PULARGE_INTEGER)&data->totalSize,
                          (PULARGE_INTEGER)&data->freeSize);
@@ -137,13 +159,10 @@ void QDriveInfoPrivate::getDiskFreeSpace()
 
 void QDriveInfoPrivate::getDevice()
 {
-    UINT oldmode = ::SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
-
+    QString path = QDir::toNativeSeparators(data->rootPath);
     wchar_t deviceBuffer[MAX_PATH + 1];
-    if (::GetVolumeNameForVolumeMountPoint((wchar_t *)data->rootPath.utf16(), deviceBuffer, MAX_PATH))
+    if (::GetVolumeNameForVolumeMountPoint((wchar_t *)path.utf16(), deviceBuffer, MAX_PATH))
         data->device = QString::fromWCharArray(deviceBuffer);
-
-    ::SetErrorMode(oldmode);
 }
 
 QList<QDriveInfo> QDriveInfoPrivate::drives()
