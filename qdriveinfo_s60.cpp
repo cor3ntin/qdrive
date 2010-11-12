@@ -107,6 +107,9 @@ void QDriveInfoPrivate::getFileSystemName()
     TFSName fileSystemName;
     RFs &rfs = qt_s60GetRFs();
 
+    if (data->rootPath.isEmpty())
+        return;
+
     result = RFs::CharToDrive(TChar(data->rootPath[0].toAscii()), drive);
     if (result != KErrNone) {
         return;
