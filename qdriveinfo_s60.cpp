@@ -128,10 +128,10 @@ void QDriveInfoPrivate::getRootPath()
 
 static inline QDriveInfo::DriveType typeForDrive(const QString &rootPath)
 {
+    RFs &rfs = qt_s60GetRFs();
+
     TInt drive;
     if (RFs::CharToDrive(TChar(rootPath.at(0).toAscii()), drive) == KErrNone) {
-        RFs &rfs = qt_s60GetRFs();
-
         TDriveInfo driveInfo;
         if (rfs.Drive(driveInfo, drive) == KErrNone) {
             if (driveInfo.iType == EMediaRemote)
