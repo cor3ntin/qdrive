@@ -10,7 +10,7 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
 {
     QList<QDriveInfo> drives;
 
-    RFs &rfs = qt_s60GetRFs();;
+    RFs &rfs = qt_s60GetRFs();
     TInt result;
 
     TDriveList drivelist;
