@@ -98,7 +98,7 @@ public:
     void getVolumeInformation();
     void getDiskFreeSpace();
     void getDevice();
-    void getPath();
+    void getRootPath();
 #elif defined(Q_OS_MAC)
     void statFS();
     void getVolumeInfo();

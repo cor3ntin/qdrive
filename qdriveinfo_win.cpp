@@ -58,7 +58,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
 
     bitmask = CachedRootPathFlag;
     if (requiredFlags & bitmask) {
-        getPath();
+        getRootPath();
         data->setCachedFlag(bitmask);
     }
 }
@@ -155,11 +155,10 @@ void QDriveInfoPrivate::getType()
     data->type = determineType(data->rootPath);
 }
 
-void QDriveInfoPrivate::getPath()
+void QDriveInfoPrivate::getRootPath()
 {
     // TODO: test when disk mounted in folder on other disk
     wchar_t buffer[MAX_PATH + 1];
-    bool result = ::GetVolumePathName((wchar_t *)data->rootPath.utf16(), buffer, MAX_PATH);
-    if (result)
+    if (::GetVolumePathName((wchar_t *)data->rootPath.utf16(), buffer, MAX_PATH))
         data->rootPath = QString::fromWCharArray(buffer);
 }
