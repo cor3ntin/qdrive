@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 
 #if defined(Q_OS_MAC)
     QList<QDriveInfo> macDrives = QList<QDriveInfo>()
-        << QDriveInfo("/") << QDriveInfo("/Volumes/H/Downloads");
+        << QDriveInfo("/") << QDriveInfo("/Volumes/Macintosh HD") << QDriveInfo("/Volumes/Data HD");
     dumpDriveInfoList(macDrives, "Mac Drives");
 #endif
 

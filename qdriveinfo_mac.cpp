@@ -167,10 +167,12 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
 {
     QList<QDriveInfo> drives;
 
+    OSErr result = noErr;
     for (ItemCount volumeIndex = 1; result == noErr || result != nsvErr; volumeIndex++) {
         FSVolumeRefNum actualVolume;
         FSRef rootDirectory;
-        if (FSGetVolumeInfo(kFSInvalidVolumeRefNum, volumeIndex, &actualVolume, 0, 0, 0, &rootDirectory) == noErr) {
+        result = FSGetVolumeInfo(kFSInvalidVolumeRefNum, volumeIndex, &actualVolume, 0, 0, 0, &rootDirectory);
+        if (result == noErr) {
             CFURLRef url = CFURLCreateFromFSRef(NULL, &rootDirectory);
             CFStringRef stringRef = CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
             if (stringRef) {
