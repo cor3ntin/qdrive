@@ -93,7 +93,6 @@ public:
 #elif defined(Q_OS_WIN)
     void getVolumeInformation();
     void getDiskFreeSpace();
-    void getDevice();
 #elif defined(Q_OS_MAC)
     void statFS();
 #elif defined(Q_OS_SYMBIAN)

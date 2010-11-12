@@ -33,6 +33,16 @@ void QDriveInfoPrivate::initRootPath()
     }
 }
 
+static inline QString getDevice(const QString &rootPath)
+{
+    QString path = QDir::toNativeSeparators(rootPath);
+    wchar_t deviceBuffer[MAX_PATH + 1];
+    if (::GetVolumeNameForVolumeMountPoint((wchar_t *)path.utf16(), deviceBuffer, MAX_PATH))
+        return QString::fromWCharArray(deviceBuffer);
+
+    return QString();
+}
+
 static inline QDriveInfo::DriveType determineType(const QString &rootPath)
 {
 #if !defined(Q_OS_WINCE)
@@ -108,7 +118,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
 
     bitmask = CachedDeviceFlag;
     if (requiredFlags & bitmask) {
-        getDevice();
+        data->device = getDevice(data->rootPath);
         data->setCachedFlag(bitmask);
     }
 
@@ -155,14 +165,6 @@ void QDriveInfoPrivate::getDiskFreeSpace()
                          (PULARGE_INTEGER)&data->freeSize);
 
     ::SetErrorMode(oldmode);
-}
-
-void QDriveInfoPrivate::getDevice()
-{
-    QString path = QDir::toNativeSeparators(data->rootPath);
-    wchar_t deviceBuffer[MAX_PATH + 1];
-    if (::GetVolumeNameForVolumeMountPoint((wchar_t *)path.utf16(), deviceBuffer, MAX_PATH))
-        data->device = QString::fromWCharArray(deviceBuffer);
 }
 
 QList<QDriveInfo> QDriveInfoPrivate::drives()
