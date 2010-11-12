@@ -22,3 +22,7 @@ mac: {
    SOURCES += qdriveinfo_mac.cpp
    LIBS += -framework CoreServices -framework DiskArbitration -framework IOKit
 }
+symbian: {
+    SOURCES += qdriveinfo_s60.cpp
+    LIBS += -lefsrv
+}

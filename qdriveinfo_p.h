@@ -103,7 +103,9 @@ public:
     void statFS();
     void getVolumeInfo();
 #elif defined(Q_OS_SYMBIAN)
-    // ###
+    void getVolumeInfo();
+    void getFileSystemName();
+    void getRootPath();
 #endif
 };
 
