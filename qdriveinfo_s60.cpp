@@ -128,8 +128,9 @@ void QDriveInfoPrivate::getFileSystemName()
 
 void QDriveInfoPrivate::getRootPath()
 {
-    if (data->rootPath.length() == 1)
-        return; // ok it is drive letter
+    if (data->rootPath.length() == 1) {
+        data->rootPath.append(":/");
+    }
     else if (data->rootPath.length() == 2) {
         if (data->rootPath.at(1) == ':')
             data->rootPath.append('/');
