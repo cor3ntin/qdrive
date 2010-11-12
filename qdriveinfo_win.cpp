@@ -1,20 +1,52 @@
-#include "qdriveinfo.h"
 #include "qdriveinfo_p.h"
 
-QList<QDriveInfo> QDriveInfoPrivate::drives()
+void QDriveInfoPrivate::initRootPath()
 {
-    QList<QDriveInfo> drives;
+    if (data->rootPath.isEmpty())
+        return;
 
-    char driveName[] = "A:/";
-    quint32 driveBits = (quint32)::GetLogicalDrives() & 0x3ffffff;
-    while (driveBits) {
-        if (driveBits & 1)
-            drives.append(QDriveInfo(QLatin1String(driveName)));
-        driveName[0]++;
-        driveBits = driveBits >> 1;
-    }
+    // ### test when disk mounted in folder on other disk
+    wchar_t buffer[MAX_PATH + 1];
+    if (::GetVolumePathName((wchar_t *)data->rootPath.utf16(), buffer, MAX_PATH))
+        data->rootPath = QString::fromWCharArray(buffer);
+    else
+        data->rootPath.clear(); // invalid root path
+}
 
-    return drives;
+static inline QDriveInfo::DriveType determineType(const QString &rootPath)
+{
+#if !defined(Q_OS_WINCE)
+    UINT oldmode = ::SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
+
+    UINT result = ::GetDriveType((wchar_t *)rootPath.utf16());
+    switch (result) {
+    case DRIVE_REMOVABLE:
+        return QDriveInfo::RemovableDrive;
+
+    case DRIVE_FIXED:
+        return QDriveInfo::InternalDrive;
+
+    case DRIVE_REMOTE:
+        return QDriveInfo::RemoteDrive;
+
+    case DRIVE_CDROM:
+        return QDriveInfo::CdromDrive;
+
+    case DRIVE_RAMDISK:
+        return QDriveInfo::RamDrive;
+
+    case DRIVE_UNKNOWN:
+    case DRIVE_NO_ROOT_DIR:
+    // fall through
+    default:
+        break;
+    };
+
+    ::SetErrorMode(oldmode);
+#else
+    Q_UNUSED(rootPath)
+#endif
+    return QDriveInfo::InvalidDrive;
 }
 
 void QDriveInfoPrivate::doStat(uint requiredFlags)
@@ -22,10 +54,20 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
     if (data->getCachedFlag(requiredFlags))
         return;
 
+    if (!data->getCachedFlag(CachedRootPathFlag)) {
+        initRootPath();
+        data->setCachedFlag(CachedRootPathFlag);
+    }
+
+    if (data->rootPath.isEmpty() || (data->getCachedFlag(CachedValidFlag) && !data->valid))
+        return;
+
     if (!data->getCachedFlag(CachedValidFlag))
         requiredFlags |= CachedValidFlag; // force drive validation
 
+
     uint bitmask = 0;
+
     bitmask = CachedValidFlag | CachedReadyFlag |
               CachedNameFlag | CachedFileSystemNameFlag;
     if (requiredFlags & bitmask) {
@@ -33,10 +75,10 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
         if (data->valid && !data->ready)
             bitmask = CachedValidFlag;
         data->setCachedFlag(bitmask);
-    }
 
-    if (!data->valid)
-        return;
+        if (!data->valid)
+            return;
+    }
 
     bitmask = CachedAvailableSizeFlag | CachedFreeSizeFlag | CachedSizeFlag;
     if (requiredFlags & bitmask) {
@@ -52,13 +94,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
 
     bitmask = CachedTypeFlag;
     if (requiredFlags & bitmask) {
-        getType();
-        data->setCachedFlag(bitmask);
-    }
-
-    bitmask = CachedRootPathFlag;
-    if (requiredFlags & bitmask) {
-        getRootPath();
+        data->type = determineType(data->rootPath);
         data->setCachedFlag(bitmask);
     }
 }
@@ -104,61 +140,24 @@ void QDriveInfoPrivate::getDevice()
     UINT oldmode = ::SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
 
     wchar_t deviceBuffer[MAX_PATH + 1];
-    bool result = ::GetVolumeNameForVolumeMountPoint((wchar_t *)data->rootPath.utf16(),
-                                                     deviceBuffer, MAX_PATH);
-    if (result)
+    if (::GetVolumeNameForVolumeMountPoint((wchar_t *)data->rootPath.utf16(), deviceBuffer, MAX_PATH))
         data->device = QString::fromWCharArray(deviceBuffer);
 
     ::SetErrorMode(oldmode);
 }
 
-static inline QDriveInfo::DriveType determineType(const QString &rootPath)
+QList<QDriveInfo> QDriveInfoPrivate::drives()
 {
-#if !defined(Q_OS_WINCE)
-    UINT oldmode = ::SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
+    QList<QDriveInfo> drives;
 
-    UINT result = ::GetDriveType((wchar_t *)rootPath.utf16());
-    switch (result) {
-    case DRIVE_REMOVABLE:
-        return QDriveInfo::RemovableDrive;
+    char driveName[] = "A:/";
+    quint32 driveBits = quint32(::GetLogicalDrives()) & 0x3ffffff;
+    while (driveBits) {
+        if (driveBits & 1)
+            drives.append(QDriveInfo(QLatin1String(driveName)));
+        driveName[0]++;
+        driveBits = driveBits >> 1;
+    }
 
-    case DRIVE_FIXED:
-        return QDriveInfo::InternalDrive;
-
-    case DRIVE_REMOTE:
-        return QDriveInfo::RemoteDrive;
-
-    case DRIVE_CDROM:
-        return QDriveInfo::CdromDrive;
-
-    case DRIVE_RAMDISK:
-        return QDriveInfo::RamDrive;
-
-    case DRIVE_UNKNOWN:
-    case DRIVE_NO_ROOT_DIR:
-    // fall through
-    default:
-        break;
-    };
-
-    ::SetErrorMode(oldmode);
-#else
-    Q_UNUSED(rootPath)
-#endif
-    return QDriveInfo::InvalidDrive;
-}
-
-void QDriveInfoPrivate::getType()
-{
-    doStat(CachedRootPathFlag); // we need a root path to get info
-
-    data->type = determineType(data->rootPath);
-}
-
-void QDriveInfoPrivate::getRootPath()
-{
-    // TODO: test when disk mounted in folder on other disk
-    wchar_t buffer[MAX_PATH + 1];
-    if (::GetVolumePathName((wchar_t *)data->rootPath.utf16(), buffer, MAX_PATH))
-        data->rootPath = QString::fromWCharArray(buffer);
+    return drives;
 }

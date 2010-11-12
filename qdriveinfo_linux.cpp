@@ -1,4 +1,3 @@
-#include "qdriveinfo.h"
 #include "qdriveinfo_p.h"
 
 #include <mntent.h>
@@ -16,79 +15,11 @@
 #  define _PATH_DISK_BY_LABEL "/dev/disk/by-label"
 #endif
 
-QList<QDriveInfo> QDriveInfoPrivate::drives()
+void QDriveInfoPrivate::initRootPath()
 {
-    QList<QDriveInfo> drives;
-
-    FILE *fp = ::setmntent(_PATH_MOUNTED, "r");
-    if (fp) {
-        struct mntent *mnt;
-        while ((mnt = ::getmntent(fp)))
-            drives.append(QDriveInfo(QFile::decodeName(mnt->mnt_dir)));
-        ::endmntent(fp);
-    }
-
-    return drives;
-}
-
-void QDriveInfoPrivate::doStat(uint requiredFlags)
-{
-    if (data->getCachedFlag(requiredFlags))
+    if (data->rootPath.isEmpty())
         return;
 
-    if (!data->getCachedFlag(CachedValidFlag))
-        requiredFlags |= CachedValidFlag; // force drive validation
-
-    uint bitmask = 0;
-
-    bitmask = CachedAvailableSizeFlag | CachedFreeSizeFlag | CachedSizeFlag |
-              CachedValidFlag | CachedReadyFlag;
-    if (requiredFlags & bitmask) {
-        statFS();
-        data->setCachedFlag(bitmask);
-    }
-
-    if (!data->valid)
-        return;
-
-    bitmask = this->CachedRootPathFlag | CachedFileSystemNameFlag | CachedDeviceFlag;
-    if (requiredFlags & bitmask) {
-        getMountEntry();
-        data->setCachedFlag(bitmask);
-    }
-
-    bitmask = CachedTypeFlag;
-    if (requiredFlags & bitmask) {
-        getType();
-        data->setCachedFlag(bitmask);
-    }
-
-    bitmask = CachedNameFlag;
-    if (requiredFlags & bitmask) {
-        getName();
-        data->setCachedFlag(bitmask);
-    }
-}
-
-void QDriveInfoPrivate::statFS()
-{
-    struct statfs statfs_buf;
-    int result = ::statfs(QFile::encodeName(data->rootPath).constData(), &statfs_buf);
-    if (result == -1) {
-        data->valid = false;
-        data->ready = false;
-    } else {
-        data->valid = true;
-        data->ready = true;
-
-        data->availableSize = statfs_buf.f_bavail * statfs_buf.f_bsize;
-        data->freeSize = statfs_buf.f_bfree * statfs_buf.f_bsize;
-        data->totalSize = statfs_buf.f_blocks * statfs_buf.f_bsize;
-    }
-}
-
-void QDriveInfoPrivate::getMountEntry()
-{
     FILE *fp = ::setmntent(_PATH_MOUNTED, "r");
     if (fp) {
         QString oldRootPath = data->rootPath;
@@ -148,42 +79,109 @@ static inline QDriveInfo::DriveType determineType(const QString &device)
     return QDriveInfo::InvalidDrive;
 }
 
-void QDriveInfoPrivate::getType()
-{
-    // we need a device and filesystem name to get info
-    doStat(CachedDeviceFlag | CachedFileSystemNameFlag);
-
-    data->type = determineType(data->device);
-    if (data->type == QDriveInfo::InvalidDrive) {
-        // test for UNC shares
-        if (data->rootPath.startsWith(QLatin1String("//")) ||
-            data->fileSystemName == QLatin1String("nfs")) {
-            data->type = QDriveInfo::RemoteDrive;
-        }
-    }
-}
-
 // we need udev to be present in system to get label name
 // Unfortunately, i don't know proper way to get labels except this. Maybe libudev can provide
 // this information. TODO: explore it
 // If we have udev installed in the system, proper symlinks are created by it, so we don't
 // need to link to libudev
 // If not, i don't know other way to get labels without root privelegies
-void QDriveInfoPrivate::getName()
+static inline QString getName(const QString &device)
 {
     QFileInfo fi(QLatin1String(_PATH_DISK_BY_LABEL));
-    if (!fi.exists() || !fi.isDir()) // "/dev/disk/by-label" doesn't exists or invalid
-        return;
-
-    doStat(CachedDeviceFlag); // we need device to get info
+    if (!fi.exists() || !fi.isDir()) {
+        // "/dev/disk/by-label" doesn't exists or invalid
+        return QString();
+    }
 
     QDirIterator it(QLatin1String(_PATH_DISK_BY_LABEL), QDir::NoDotAndDotDot);
     while (it.hasNext()) {
         it.next();
         QFileInfo fileInfo(it.fileInfo());
-        if (fileInfo.isSymLink() && data->device == fileInfo.symLinkTarget()) {
-            data->name = fileInfo.fileName();
-            break;
+        if (fileInfo.isSymLink() && device == fileInfo.symLinkTarget()) {
+            return fileInfo.fileName();
         }
     }
+
+    return QString();
+}
+
+void QDriveInfoPrivate::doStat(uint requiredFlags)
+{
+    if (data->getCachedFlag(requiredFlags))
+        return;
+
+    if (!data->getCachedFlag(CachedRootPathFlag)) {
+        initRootPath();
+        data->setCachedFlag(CachedRootPathFlag | CachedFileSystemNameFlag | CachedDeviceFlag);
+    }
+
+    if (data->rootPath.isEmpty() || (data->getCachedFlag(CachedValidFlag) && !data->valid))
+        return;
+
+    if (!data->getCachedFlag(CachedValidFlag))
+        requiredFlags |= CachedValidFlag; // force drive validation
+
+
+    uint bitmask = 0;
+
+    bitmask = CachedAvailableSizeFlag | CachedFreeSizeFlag | CachedSizeFlag |
+              CachedValidFlag | CachedReadyFlag;
+    if (requiredFlags & bitmask) {
+        statFS();
+        data->setCachedFlag(bitmask);
+
+        if (!data->valid)
+            return;
+    }
+
+    bitmask = CachedTypeFlag;
+    if (requiredFlags & bitmask) {
+        data->type = determineType(data->device);
+        if (data->type == QDriveInfo::InvalidDrive) {
+            // test for UNC shares
+            if (data->rootPath.startsWith(QLatin1String("//"))
+                || data->fileSystemName == QLatin1String("nfs")) {
+                data->type = QDriveInfo::RemoteDrive;
+            }
+        }
+        data->setCachedFlag(bitmask);
+    }
+
+    bitmask = CachedNameFlag;
+    if (requiredFlags & bitmask) {
+        data->name = getName(data->device);
+        data->setCachedFlag(bitmask);
+    }
+}
+
+void QDriveInfoPrivate::statFS()
+{
+    struct statfs statfs_buf;
+    int result = ::statfs(QFile::encodeName(data->rootPath).constData(), &statfs_buf);
+    if (result == -1) {
+        data->valid = false;
+        data->ready = false;
+    } else {
+        data->valid = true;
+        data->ready = true;
+
+        data->availableSize = statfs_buf.f_bavail * statfs_buf.f_bsize;
+        data->freeSize = statfs_buf.f_bfree * statfs_buf.f_bsize;
+        data->totalSize = statfs_buf.f_blocks * statfs_buf.f_bsize;
+    }
+}
+
+QList<QDriveInfo> QDriveInfoPrivate::drives()
+{
+    QList<QDriveInfo> drives;
+
+    FILE *fp = ::setmntent(_PATH_MOUNTED, "r");
+    if (fp) {
+        struct mntent *mnt;
+        while ((mnt = ::getmntent(fp)))
+            drives.append(QDriveInfo(QFile::decodeName(mnt->mnt_dir)));
+        ::endmntent(fp);
+    }
+
+    return drives;
 }

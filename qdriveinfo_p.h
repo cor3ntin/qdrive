@@ -81,32 +81,27 @@ public:
     };
     QExplicitlySharedDataPointer<Data> data;
 
-    static QList<QDriveInfo> drives();
-
+    void initRootPath();
     void doStat(uint requiredFlags);
-    void getType();
 
 #if defined(Q_OS_LINUX)
 #  if defined(Q_WS_MAEMO_5) || defined(Q_WS_MAEMO_6)
     // ###
 #  else
     void statFS();
-    void getMountEntry();
-    void getName();
 #  endif
 #elif defined(Q_OS_WIN)
     void getVolumeInformation();
     void getDiskFreeSpace();
     void getDevice();
-    void getRootPath();
 #elif defined(Q_OS_MAC)
     void statFS();
-    void getVolumeInfo();
 #elif defined(Q_OS_SYMBIAN)
     void getVolumeInfo();
     void getFileSystemName();
-    void getRootPath();
 #endif
+
+    static QList<QDriveInfo> drives();
 };
 
 #endif // QDRIVEINFO_P_H

@@ -37,7 +37,7 @@ public:
     QString fileSystemName() const;
     QString device() const;
     QString name() const;
-    bool ready() const;
+    bool isReady() const;
     bool isValid() const;
 
     DriveType type() const;

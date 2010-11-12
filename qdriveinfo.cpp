@@ -178,7 +178,7 @@ QString QDriveInfo::name() const
 
     \sa isValid()
 */
-bool QDriveInfo::ready() const
+bool QDriveInfo::isReady() const
 {
     const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedReadyFlag);
     return d_func()->data->ready;
@@ -187,7 +187,7 @@ bool QDriveInfo::ready() const
 /*!
     Returns true if QDriveInfo specified by rootPath exists and mounted correctly.
 
-    \sa ready()
+    \sa isReady()
 */
 bool QDriveInfo::isValid() const
 {
