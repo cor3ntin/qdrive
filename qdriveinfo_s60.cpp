@@ -11,21 +11,16 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
     QList<QDriveInfo> drives;
 
     RFs &rfs = qt_s60GetRFs();
-    TInt result;
 
     TDriveList drivelist;
-
-    result = rfs.DriveList(drivelist);
-    if (result != KErrNone) {
-        return drives;
-    }
-
-    for (int i = 0; i < KMaxDrives; ++i) {
-        if (drivelist[i] != 0) {
-            TChar driveChar;
-            result = RFs::DriveToChar(i, driveChar);
-            if (result == KErrNone)
-                drives.append(QDriveInfo(QChar(driveChar)));
+    if (rfs.DriveList(drivelist) == KErrNone) {
+        for (int i = 0; i < KMaxDrives; ++i) {
+            if (drivelist[i] != 0) {
+                TChar driveChar;
+                result = RFs::DriveToChar(i, driveChar);
+                if (result == KErrNone)
+                    drives.append(QDriveInfo(QChar(driveChar).toUpper() + QLatin1String(":/")));
+            }
         }
     }
 
@@ -36,6 +31,11 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
 {
     if (data->getCachedFlag(requiredFlags))
         return;
+
+    if (!data->getCachedFlag(CachedRootPathFlag)) {
+        getRootPath();
+        data->setCachedFlag(CachedRootPathFlag);
+    }
 
     if (!data->getCachedFlag(CachedValidFlag))
         requiredFlags |= CachedValidFlag; // force drive validation
@@ -60,119 +60,90 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
         getType();
         data->setCachedFlag(bitmask);
     }
-
-    bitmask = CachedRootPathFlag;
-    if (requiredFlags & bitmask) {
-        getRootPath();
-        data->setCachedFlag(bitmask);
-    }
 }
 
 void QDriveInfoPrivate::getVolumeInfo()
 {
-    TInt drive;
-    TInt result;
-    TVolumeInfo volumeInfo;
     RFs &rfs = qt_s60GetRFs();
 
-    if (data->rootPath.isEmpty())
-        return;
-
-    result = RFs::CharToDrive(TChar(data->rootPath[0].toAscii()), drive);
-    if (result != KErrNone) {
-        return;
-    }
-
-    result = rfs.Volume(volumeInfo, drive);
-    if (result != KErrNone) {
+    TInt drive;
+    TVolumeInfo volumeInfo;
+    if (RFs::CharToDrive(TChar(data->rootPath[0].toAscii()), drive) == KErrNone
+        && rfs.Volume(volumeInfo, drive) != KErrNone) {
         // do we really need this code?
         data->valid = false;
         data->ready = false;
-        return;
-    }
-    data->valid = true;
-    data->ready = true;
+    } else {
+        data->valid = true;
+        data->ready = true;
 
-    data->availableSize = volumeInfo.iFree;
-    data->freeSize = volumeInfo.iFree;
-    data->totalSize = volumeInfo.iSize;
-    // TODO: check this code
-    data->name = QString::fromWCharArray((wchar_t *)volumeInfo.iName.Ptr(), KMaxFileName);
+        data->availableSize = volumeInfo.iFree;
+        data->freeSize = volumeInfo.iFree;
+        data->totalSize = volumeInfo.iSize;
+
+        // TODO: check this code
+        data->name = QString::fromUtf16((const ushort *)volumeInfo.iName.Ptr(), volumeInfo.iName.Length());
+    }
 }
 
 void QDriveInfoPrivate::getFileSystemName()
 {
-    TInt drive;
-    TInt result;
-    TFSName fileSystemName;
     RFs &rfs = qt_s60GetRFs();
 
-    if (data->rootPath.isEmpty())
-        return;
-
-    result = RFs::CharToDrive(TChar(data->rootPath[0].toAscii()), drive);
-    if (result != KErrNone) {
-        return;
+    TInt drive;
+    if (RFs::CharToDrive(TChar(data->rootPath[0].toAscii()), drive) == KErrNone) {
+        TFSName fileSystemName;
+        if (rfs.FileSystemName(fileSystemName, drive) == KErrNone) {
+            // TODO: check this code
+            data->fileSystemName = QString::fromUtf16((const ushort *)fileSystemName.Ptr(), fileSystemName.Length());
+        }
     }
-
-    result = rfs.FileSystemName(fileSystemName, drive);
-    if (result != KErrNone) {
-        return;
-    }
-
-    // TODO: check this code
-    data->fileSystemName = QString::fromWCharArray((wchar_t *)fileSystemName.Ptr(),
-                                                   KMaxFSNameLength
-                                                   );
 }
 
 void QDriveInfoPrivate::getRootPath()
 {
-    if (data->rootPath.length() == 1) {
-        data->rootPath.append(":/");
+    if (data->rootPath.isEmpty())
+        return;
+
+    // try to convert to X:/
+
+    data->rootPath[0] = data->rootPath.at(0).toUpper();
+    if (data->rootPath.at(0).unicode() >= 'A' && data->rootPath.at(0).unicode() <= 'Z') {
+        if (data->rootPath.length() == 1) {
+            data->rootPath.append(QLatin1String(":/"));
+            return;
+        }
+        if (data->rootPath.length() >= 2 && data->rootPath.at(1) == QLatin1Char(':')) {
+            if (data->rootPath.length() == 2) {
+                data->rootPath.append(QLatin1Char('/'));
+                return;
+            }
+            if (data->rootPath.at(2) == QLatin1Char('/'))
+                return;
+        }
     }
-    else if (data->rootPath.length() == 2) {
-        if (data->rootPath.at(1) == ':')
-            data->rootPath.append('/');
-    }
-    else if (data->rootPath.length() >= 3) {
-        if (data->rootPath.at(1) == ':' &&
-            data->rootPath.at(2) == '/'
-            )
-            data->rootPath = data->rootPath.left(3); // Convert to X:/
-    } else
-        data->rootPath = ""; // invalid rootPath
+
+    data->rootPath.clear(); // invalid root path
 }
 
-// From Qt Mobility
-inline static QDriveInfo::DriveType typeForDrive(const QString &driveVolume)
+static inline QDriveInfo::DriveType typeForDrive(const QString &rootPath)
 {
-    if (driveVolume.size() != 1) {
-        return QDriveInfo::InvalidDrive;
-    }
-
     TInt drive;
-    if (RFs::CharToDrive(TChar(driveVolume[0].toAscii()), drive) != KErrNone) {
-        return QDriveInfo::InvalidDrive;
-    }
+    if (RFs::CharToDrive(TChar(rootPath.at(0).toAscii()), drive) == KErrNone) {
+        RFs &rfs = qt_s60GetRFs();
 
-    TDriveInfo driveInfo;
-    RFs &rfs = qt_s60GetRFs();
+        TDriveInfo driveInfo;
+        if (rfs.Drive(driveInfo, drive) == KErrNone) {
+            if (driveInfo.iType == EMediaRemote)
+                return QDriveInfo::RemoteDrive;
+            if (driveInfo.iType == EMediaCdRom)
+                return QDriveInfo::CdromDrive;
 
-    if (rfs.Drive(driveInfo, drive) != KErrNone) {
-        return QDriveInfo::InvalidDrive;
-    }
-
-    if (driveInfo.iType == EMediaRemote) {
-        return QDriveInfo::RemoteDrive;
-    } else if (driveInfo.iType == EMediaCdRom) {
-        return QDriveInfo::CdromDrive;
-    }
-
-    if (driveInfo.iDriveAtt & KDriveAttInternal) {
-        return QDriveInfo::InternalDrive;
-    } else if (driveInfo.iDriveAtt & KDriveAttRemovable) {
-        return QDriveInfo::RemovableDrive;
+            if (driveInfo.iDriveAtt & KDriveAttInternal)
+                return QDriveInfo::InternalDrive;
+            if (driveInfo.iDriveAtt & KDriveAttRemovable)
+                return QDriveInfo::RemovableDrive;
+        }
     }
 
     return QDriveInfo::InvalidDrive;
