@@ -114,6 +114,7 @@ void QDriveInfo::setRootPath(const QString &rootPath)
     Q_D(QDriveInfo);
 
     d->data.detach();
+    d->data->clear();
     d->data->rootPath = rootPath;
 }
 
