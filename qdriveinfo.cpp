@@ -15,20 +15,51 @@ QDriveInfoPrivate::QDriveInfoPrivate(QDriveInfoPrivate *other)
 /*!
     \class QDriveInfo
     \reentrant
-    \brief The QDriveInfo class provides information about filesystems mounted in system.
+    \brief QDriveInfo provides provides information about currently mounted drives or volumes.
 
     \ingroup io
     \ingroup shared
 
-    QDriveInfo provides information about currently mounted filesystems (or 'drives' on Windows).
+    QDriveInfo provides provides information about currently mounted drives or volumes.
     It gives you information about drive's space, it's mount point, label, filesystem name and type.
 
     You can create QDriveInfo and pass path to drive's mount point as a constructor parameter,
     or you can set it via setRootPath() method. Also, you can get all filesystems mounted in
     system using drives() method.
 
-    QDriveInfo always caches information retreived about drives, but you can use refresh() to update
-    infomation.
+    QDriveInfo always caches the retreived information but you can call refresh() to invalidate the cache.
+*/
+
+/*!
+    \enum QDriveInfo::DriveType
+    This enum describes the type of drive or volume
+
+    \value InvalidDrive          Drive type undetermined.
+    \value InternalDrive         Is internal mass storage drive like a harddrive.
+    \value RemovableDrive        Is a removable disk like flash or MMC.
+    \value RemoteDrive           Is a network drive.
+    \value CdromDrive            Is a cd rom drive.
+    \value InternalFlashDrive    Is an internal flash disk, or Phone Memory.
+    \value RamDrive              Is a virtual drive made in RAM memory.
+*/
+
+/*!
+    \enum QDriveInfo::Capability
+    Specifies the system capabilities of the drive or volume this QDriveInfo instance represents.
+    The possible values are:
+
+    \value CaseSensitiveFileNames     The specified volume supports case sensitivity for file names.
+                                      Some environments cannot create files whose names differ only by case even if
+                                      the file system was designed to support case sensitivity for file names.
+                                      For example, the NTFS file system itself supports case sensitivity for file names
+                                      but the Win32 environment subsystem does not for compatibility reasons,
+                                      but being mounted on Unix NTFS can have case-sensitivity.
+    \value AccessControlListsSupport  The specified volume preserves and enforces access control lists (ACL).
+                                      For example, the NTFS, XFS and BTRFS file systems preserves and enforces ACLs,
+                                      and the FATand UDF file system does not.
+    \value ReadOnlyVolume             The specified volume is read-only.
+    \value HardlinksSupport           The specified volume supports hard links.
+    \value SymlinksSupport            The specified volume supports symbolic links (aka soft links).
 */
 
 /*!

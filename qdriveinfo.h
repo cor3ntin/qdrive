@@ -22,7 +22,7 @@ public:
 
     enum Capability {
         CaseSensitiveFileNames = 0x00000001,
-        PersistentAccessControlLists = 0x00000002,
+        AccessControlListsSupport = 0x00000002,
         ReadOnlyVolume = 0x00000004,
         HardlinksSupport = 0x00000008,
         SymlinksSupport = 0x00000010,
