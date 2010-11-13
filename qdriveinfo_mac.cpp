@@ -161,13 +161,14 @@ void QDriveInfoPrivate::statFS()
         data->fileSystemName = QString::fromLatin1(statfs_buf.f_fstypename);
         data->device = QFile::decodeName(statfs_buf.f_mntfromname);
 
+        // try to determine flags
         if (statfs_buf.f_flags & MNT_RDONLY)
             data->capabilities |= QDriveInfo::ReadOnlyVolume;
+
         FSRef ref;
         FSPathMakeRef((UInt8*)QFile::encodeName(data->rootPath).constData(), &ref, 0);
 
         FSCatalogInfo catalogInfo;
-        catalogInfo.nodeFlags = 111;
         if (FSGetCatalogInfo(&ref, kFSCatInfoVolume, &catalogInfo, 0, 0, 0) != noErr)
             return;
 
