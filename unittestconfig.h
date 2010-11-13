@@ -1,0 +1,4 @@
+#ifndef UNITTESTCONFIG_H
+#define UNITTESTCONFIG_H
+
+#endif // UNITTESTCONFIG_H
