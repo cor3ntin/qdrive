@@ -54,6 +54,7 @@ void dumpDriveInfoList(const QList<QDriveInfo> &drives, const QString &title)
                 case QDriveInfo::RamDrive:
                     qDebug() << "   " << "QDrive::RamDrive"; break;
                 }
+                qDebug() << "   " << "Capabilities:" << drive.capabilities();
             } else {
                 qDebug() << "    " <<  drive.rootPath() << "is not ready";
             }
