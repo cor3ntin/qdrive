@@ -156,7 +156,7 @@ void QDriveInfoPrivate::getVolumeInformation()
             data->capabilities |= QDriveInfo::AccessControlListsSupport;
         if (fileSystemFlags & FILE_READ_ONLY_VOLUME)
             data->capabilities |= QDriveInfo::ReadOnlyVolume;
-        if ((fileSystemFlags & FILE_SUPPORTS_HARD_LINKS) || data->fileSystemName == QLatin1String("NTFS"))
+        if ((fileSystemFlags & FILE_SUPPORTS_HARD_LINKS) || data->fileSystemName.toUpper() == QLatin1String("NTFS"))
             data->capabilities |= QDriveInfo::HardlinksSupport;
         if ((fileSystemFlags & FILE_SUPPORTS_REPARSE_POINTS) && QSysInfo::WindowsVersion >= QSysInfo::WV_VISTA)
             data->capabilities |= QDriveInfo::SymlinksSupport;

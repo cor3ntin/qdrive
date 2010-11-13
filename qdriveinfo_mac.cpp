@@ -161,26 +161,24 @@ void QDriveInfoPrivate::statFS()
         data->fileSystemName = QString::fromLatin1(statfs_buf.f_fstypename);
         data->device = QFile::decodeName(statfs_buf.f_mntfromname);
 
-        // try to determine flags
         if (statfs_buf.f_flags & MNT_RDONLY)
             data->capabilities |= QDriveInfo::ReadOnlyVolume;
 
         FSRef ref;
         FSPathMakeRef((UInt8*)QFile::encodeName(data->rootPath).constData(), &ref, 0);
-
         FSCatalogInfo catalogInfo;
-        if (FSGetCatalogInfo(&ref, kFSCatInfoVolume, &catalogInfo, 0, 0, 0) != noErr)
-            return;
+        if (FSGetCatalogInfo(&ref, kFSCatInfoVolume, &catalogInfo, 0, 0, 0) == noErr) {
+            GetVolParmsInfoBuffer infoBuffer;
+            FSGetVolumeParms(catalogInfo.volume, &infoBuffer, sizeof(infoBuffer));
+            if (infoBuffer.vMExtendedAttributes & bIsCaseSensitive)
+                data->capabilities |= QDriveInfo::CaseSensitiveFileNames;
+            if (infoBuffer.vMExtendedAttributes & bSupportsSymbolicLinks)
+                data->capabilities |= QDriveInfo::SymlinksSupport;
 
-        GetVolParmsInfoBuffer infoBuffer;
-        FSGetVolumeParms(catalogInfo.volume, &infoBuffer, sizeof(infoBuffer));
-        // foo, hardcoded. TODO: add all OTHER filesystems. Good luck.
-        if (data->fileSystemName == "hfs")
-            data->capabilities |= QDriveInfo::HardlinksSupport;
-        if (infoBuffer.vMExtendedAttributes & bSupportsSymbolicLinks)
-            data->capabilities |= QDriveInfo::SymlinksSupport;
-        if (infoBuffer.vMExtendedAttributes & bIsCaseSensitive)
-            data->capabilities |= QDriveInfo::CaseSensitiveFileNames;
+            // ### check if an alternative way exists
+            if (data->fileSystemName.toLower() == QLatin1String("hfs"))
+                data->capabilities |= QDriveInfo::HardlinksSupport;
+        }
     }
 }
 

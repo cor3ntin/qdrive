@@ -59,7 +59,7 @@ static inline QDriveInfo::DriveType determineType(const QString &device)
         if (dmFile.length() > 3) {
             // if device has number, we need the 'parent' device
             dmFile.chop(1);
-            if (dmFile.right(1) == QLatin1String("p")) // get rid of partition number
+            if (dmFile.at(dmFile.length() - 1) == QLatin1Char('p')) // get rid of partition number
                 dmFile.chop(1);
         }
     }
@@ -87,19 +87,12 @@ static inline QDriveInfo::DriveType determineType(const QString &device)
 // If not, i don't know other way to get labels without root privelegies
 static inline QString getName(const QString &device)
 {
-    QFileInfo fi(QLatin1String(_PATH_DISK_BY_LABEL));
-    if (!fi.exists() || !fi.isDir()) {
-        // "/dev/disk/by-label" doesn't exists or invalid
-        return QString();
-    }
-
     QDirIterator it(QLatin1String(_PATH_DISK_BY_LABEL), QDir::NoDotAndDotDot);
     while (it.hasNext()) {
         it.next();
         QFileInfo fileInfo(it.fileInfo());
-        if (fileInfo.isSymLink() && device == fileInfo.symLinkTarget()) {
+        if (fileInfo.isSymLink() && fileInfo.symLinkTarget() == device)
             return fileInfo.fileName();
-        }
     }
 
     return QString();
@@ -140,7 +133,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
         if (data->type == QDriveInfo::InvalidDrive) {
             // test for UNC shares
             if (data->rootPath.startsWith(QLatin1String("//"))
-                || data->fileSystemName == QLatin1String("nfs")) {
+                || data->fileSystemName.toLower() == QLatin1String("nfs")) {
                 data->type = QDriveInfo::RemoteDrive;
             }
         }
