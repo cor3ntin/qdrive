@@ -20,21 +20,23 @@ QDriveInfoPrivate::QDriveInfoPrivate(QDriveInfoPrivate *other)
     \ingroup io
     \ingroup shared
 
-    QDriveInfo provides information about currently present filesystems (or 'drives' on Windows).
-    It gives you information about drive's space, it's mount point, filesystem type.
+    QDriveInfo provides information about currently mounted filesystems (or 'drives' on Windows).
+    It gives you information about drive's space, it's mount point, label, filesystem name and type.
 
-    You can create QDriveInfo and pass path to drives mount point as a constructor parameter,
+    You can create QDriveInfo and pass path to drive's mount point as a constructor parameter,
     or you can set it via setRootPath() method. Also, you can get all filesystems mounted in
-    system using drives() method().
+    system using drives() method.
 
-    QDrive info caches information retreived about drives, but you can use refresh() to update
-    infomation. Also, you can disable caching by calling setCaching(false).
+    QDriveInfo always caches information retreived about drives, but you can use refresh() to update
+    infomation.
 */
 
 /*!
     Constructs an empty QDriveInfo object.
 
-    \sa setRootPath()
+    This object is not ready, invalid and all it's parameters are empty.
+
+    \sa setRootPath(), ready(), valid()
 */
 QDriveInfo::QDriveInfo()
     : d_ptr(new QDriveInfoPrivate)
@@ -44,6 +46,8 @@ QDriveInfo::QDriveInfo()
 /*!
     Constructs a new QDriveInfo that gives information about the drive, mounted at
     \a rootPath.
+
+    You can check if \a rootPath is correct using valid() method.
 
     \sa setRootPath()
 */
@@ -81,7 +85,15 @@ QDriveInfo &QDriveInfo::operator=(const QDriveInfo &other)
 
 /*!
     Returns mount path of the filesystem, presented by QDriveInfo.
+
     On Windows, usually returns drive letter, in case drive is not mounted to specific folder.
+
+    Note, that value, returned by this function, is the real mount point of a drive and may it not be
+    equal to value passed to constructor or to setRootPath() function. By example, if you have only
+    root drive in system and you pass '/folder' to constructor, this funtion will return '/'.
+
+    On Symbian, root path, passed to constructor or setRootPath() function, is always truncated to
+    'X:/' where X is drive letter.
 */
 QString QDriveInfo::rootPath() const
 {
@@ -91,6 +103,11 @@ QString QDriveInfo::rootPath() const
 
 /*!
     Sets QDriveInfo to filesystem, mounted at \a rootPath.
+
+    You can also pass a folder on the drive, in that case root path will be truncated to real mount
+    point of the drive (if exists).
+
+    \sa rootPath()
 */
 void QDriveInfo::setRootPath(const QString &rootPath)
 {
@@ -101,7 +118,9 @@ void QDriveInfo::setRootPath(const QString &rootPath)
 }
 
 /*!
-    Returns size (in bytes) available for current user.
+    Returns size (in bytes) available for current user (not root).
+
+    This size can be less than available size (exept for Symbian OS where these sizes are always equal).
 
     \sa freeSize(), totalSize()
 */
@@ -136,9 +155,10 @@ quint64 QDriveInfo::totalSize() const
 
 /*!
     Returns the name of filesystem.
-    This is not a platform-ndependent function, and filesystem names can vary from different
-    operation systems. For example, on Windows filesystem named as 'NTFS' and on Linux
-    as 'ntfs-3g'
+
+    This is not a platform-independent function, and filesystem names can vary between different
+    operation systems. For example, on Windows filesystem can be named as 'NTFS' and on Linux
+    as 'ntfs-3g' or 'fuseblk'.
 */
 QString QDriveInfo::fileSystemName() const
 {
@@ -148,8 +168,16 @@ QString QDriveInfo::fileSystemName() const
 
 /*!
     Returns the device for this drive.
-    On Unix filesystems, this may return something like '/dev/sda0' for local drives.
-    On Windows, returns UNC path, starting with \\?\ for local drives.
+
+    The result of this function is platform-dependent and usually should not be used. However,
+    you can retrieve this value for some platform-specific notes. By example, you can get device
+    on Unix and try to read from it manually.
+
+    On Unix filesystems (including Mac OS), this returns something like '/dev/sda0' for local drives.
+
+    On Windows, returns UNC path, starting with \\?\ for local drives (i.e. volume GUID).
+
+    On Symbian OS this function returns nothing.
 */
 QString QDriveInfo::device() const
 {
@@ -159,11 +187,13 @@ QString QDriveInfo::device() const
 
 /*!
     Returns human-readable name of a filesystem, usually called as 'label'.
-    Not all filesystems support this feature.
-    Also, on Linux this function require udev be present in system. If there is no udev,
-    returns empty string.
 
-    Also, empty string is returned if no label set.
+    Not all filesystems support this feature, so normally value, returned by this function could
+    be empty. Also, empty string is returned if no label set for drive.
+
+    Unfortunately, due to implementation, on Linux this function requires udev to be present in system.
+    If there is no udev, returns empty string.
+
 */
 QString QDriveInfo::name() const
 {
@@ -173,6 +203,7 @@ QString QDriveInfo::name() const
 
 /*!
     Returns true is current filesystem is ready for work.
+
     This function can return false only on Windows for floppy or cdrom drives.
     Note, that you can't retreive any information about device if it is not ready.
 
@@ -196,7 +227,7 @@ bool QDriveInfo::isValid() const
 }
 
 /*!
-    Returns type of filesystem (ie remote, removable and so on).
+    Returns the type of filesystem (ie remote drive, removable and so on).
 
     \sa QDriveInfo::DriveType
 */
@@ -208,6 +239,11 @@ QDriveInfo::DriveType QDriveInfo::type() const
 
 /*!
     Resets QDriveInfo inner cache.
+
+    QDriveInfo caches information about drives to speed up performance. Some information can be retrieved
+    by only 1 native funciton call, so, if you call totalSize(), QDriveInfo will also cache information
+    for availableSize() and freeSize(). Also, QDriveInfo won't update information for future calls and
+    you have to manually reset cache when needed.
 */
 void QDriveInfo::refresh()
 {
@@ -216,6 +252,11 @@ void QDriveInfo::refresh()
 
 /*!
     Returns list of QDriveInfo's that corresponds to list of currently mounted filesystems.
+
+    On Windows, this returnes drives presented in 'My Computer' folder. On Unix operation systems,
+    returns list of all mounted filesystems (exept for Mac, where devfs is ignored). In Linux, you
+    will get a lot of pseudo filesystems by calling this function, but you can filter them using
+    type() (they always have InvalidDrive type) or by checking totalSize() (always equal to 0).
 */
 QList<QDriveInfo> QDriveInfo::drives()
 {
