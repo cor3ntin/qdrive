@@ -25,20 +25,23 @@ public:
         CachedReadyFlag = 0x80,
         CachedDeviceFlag = 0x100,
         CachedTypeFlag = 0x200,
-        CachedValidFlag = 0x400
+        CachedCapabilitiesFlag = 0x400,
+        CachedValidFlag = 0x800
     };
 
     struct Data : public QSharedData
     {
         Data() : QSharedData(),
             availableSize(0), freeSize(0), totalSize(0),
-            type(QDriveInfo::InvalidDrive), ready(false), valid(false),
+            type(QDriveInfo::InvalidDrive), capabilities(0),
+            ready(false), valid(false),
             cachedFlags(0)
         {}
         Data(const Data &other) : QSharedData(other),
             rootPath(other.rootPath),
             availableSize(0), freeSize(0), totalSize(0),
-            type(QDriveInfo::InvalidDrive), ready(false), valid(false),
+            type(QDriveInfo::InvalidDrive), capabilities(0),
+            ready(false), valid(false),
             cachedFlags(0)
         {}
 
@@ -53,6 +56,7 @@ public:
             name.clear();
 
             type = QDriveInfo::InvalidDrive;
+            capabilities = 0;
             ready = false;
             valid = false;
 
@@ -74,6 +78,7 @@ public:
         QString device;
         QString name;
         QDriveInfo::DriveType type;
+        int capabilities;
         bool ready;
         bool valid;
 

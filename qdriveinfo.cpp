@@ -239,6 +239,15 @@ QDriveInfo::DriveType QDriveInfo::type() const
 }
 
 /*!
+    Returns the capabilities supported by the current drive.
+*/
+QDriveInfo::Capabilities QDriveInfo::capabilities() const
+{
+    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedCapabilitiesFlag);
+    return QDriveInfo::Capabilities(d_func()->data->capabilities);
+}
+
+/*!
     Resets QDriveInfo inner cache.
 
     QDriveInfo caches information about drives to speed up performance. Some information can be retrieved
