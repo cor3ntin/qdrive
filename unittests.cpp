@@ -31,7 +31,6 @@ private slots:
             drivePaths2.append(info.rootPath());
         }
         drivePaths2.sort();
-        qDebug() << drivePaths2;
         QVERIFY(drivePaths == drivePaths2);
     }
 };
