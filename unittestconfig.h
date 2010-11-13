@@ -10,4 +10,7 @@
 // next 2 values are retrieved for df utility
 #define TOTALSIZE 195050360
 #define BLOCKSIZE 512
+
+#define DRIVEPATHS QStringList() << "/" << "/Volumes/Data HD" << "/home" << "/net";
+
 #endif // UNITTESTCONFIG_H

@@ -24,7 +24,15 @@ private slots:
 #if defined(Q_OS_MAC)
         QVERIFY(info.totalSize()/BLOCKSIZE == TOTALSIZE); // we devide onto block size
 #endif
-//        info.totalSize()
+        QStringList drivePaths = DRIVEPATHS;
+        drivePaths.sort();
+        QStringList drivePaths2;
+        foreach (QDriveInfo info, QDriveInfo::drives()) {
+            drivePaths2.append(info.rootPath());
+        }
+        drivePaths2.sort();
+        qDebug() << drivePaths2;
+        QVERIFY(drivePaths == drivePaths2);
     }
 };
 
