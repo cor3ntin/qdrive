@@ -127,7 +127,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
     uint bitmask = 0;
 
     bitmask = CachedDeviceFlag | CachedFileSystemNameFlag |
-              CachedTotalSizeFlag | CachedBytesFreeFlag | CachedBytesAvailableFlag |
+              CachedBytesTotalFlag | CachedBytesFreeFlag | CachedBytesAvailableFlag |
               CachedCapabilitiesFlag | CachedReadyFlag | CachedValidFlag;
     if (requiredFlags & bitmask) {
         getVolumeInfo();
