@@ -85,7 +85,7 @@ QDriveInfo::QDriveInfo()
 QDriveInfo::QDriveInfo(const QString &rootPath)
     : d_ptr(new QDriveInfoPrivate)
 {
-    setRootPath(rootPath);
+    d_ptr->data->rootPath = rootPath;
 }
 
 /*!
@@ -168,6 +168,9 @@ QString QDriveInfo::rootPath() const
 void QDriveInfo::setRootPath(const QString &rootPath)
 {
     Q_D(QDriveInfo);
+
+    if (d->data->rootPath == rootPath)
+        return;
 
     d->data.detach();
     d->data->clear();
