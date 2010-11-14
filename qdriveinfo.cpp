@@ -110,8 +110,33 @@ QDriveInfo::~QDriveInfo()
 QDriveInfo &QDriveInfo::operator=(const QDriveInfo &other)
 {
     if (this != &other)
-        d_ptr->data.operator=(other.d_ptr->data);
+        d_ptr->data = other.d_ptr->data;
     return *this;
+}
+
+/*!
+    \fn bool QDriveInfo::operator!=(const QDriveInfo &other) const
+
+    Returns true if this QDriveInfo object refers to a different drive or volume
+    than the one specified by \a other; otherwise returns false.
+
+    \sa operator==()
+*/
+
+/*!
+    Returns true if this QDriveInfo object refers to a drive or volume
+    that is the same as \a other; otherwise returns false.
+
+    Note that the result of comparing two invalid QDriveInfo objects
+    is always positive.
+
+    \sa operator!=()
+*/
+bool QDriveInfo::operator==(const QDriveInfo &other) const
+{
+    if (d_ptr == other.d_ptr || d_ptr->data == other.d_ptr->data)
+        return true;
+    return device() == other.device();
 }
 
 /*!

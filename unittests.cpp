@@ -20,6 +20,7 @@ private Q_SLOTS:
     void refresh();
     void drives_data();
     void drives();
+    void equals();
 };
 
 void tst_QDriveInfo::initTestCase()
@@ -255,6 +256,21 @@ void tst_QDriveInfo::drives()
         }
     }
     QVERIFY(drives.isEmpty());
+}
+
+void tst_QDriveInfo::equals()
+{
+    foreach (const QDriveInfo &info, QDriveInfo::drives()) {
+        QDriveInfo info2 = info;
+        QDriveInfo info3(info);
+        QDriveInfo info4(info.rootPath());
+        QDriveInfo info5(info.device());
+
+        QVERIFY(info2 == info);
+        QVERIFY(info3 == info);
+        QVERIFY(info4 == info);
+        QVERIFY(info5 != info); // ### QVERIFY(info5 == info);
+    }
 }
 
 QTEST_APPLESS_MAIN(tst_QDriveInfo)

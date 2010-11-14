@@ -36,6 +36,10 @@ public:
 
     QDriveInfo &operator=(const QDriveInfo &other);
 
+    bool operator==(const QDriveInfo &other) const;
+    inline bool operator!=(const QDriveInfo &other) const
+    { return !(operator==(other)); }
+
     QString rootPath() const;
     void setRootPath(const QString &);
 
