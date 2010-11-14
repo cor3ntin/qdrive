@@ -41,7 +41,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
 
 
     uint bitmask = CachedFileSystemNameFlag | CachedNameFlag |
-                   CachedTotalSizeFlag | CachedFreeSizeFlag | CachedAvailableSizeFlag |
+                   CachedBytesTotalFlag | CachedBytesFreeFlag | CachedBytesAvailableFlag |
                    CachedTypeFlag | CachedCapabilitiesFlag |
                    CachedReadyFlag | CachedValidFlag;
     if (requiredFlags & bitmask) {
@@ -66,9 +66,9 @@ void QDriveInfoPrivate::getVolumeInfo()
         if (rfs.FileSystemSubType(drive, fileSystemNameBuf) == KErrNone)
             data->fileSystemName = QString::fromUtf16((const ushort *)fileSystemNameBuf.Ptr(), fileSystemNameBuf.Length()).toLatin1();
 
-        data->totalSize = volumeInfo.iSize;
-        data->freeSize = volumeInfo.iFree;
-        data->availableSize = volumeInfo.iFree;
+        data->bytesTotal = volumeInfo.iSize;
+        data->bytesFree = volumeInfo.iFree;
+        data->bytesAvailable = volumeInfo.iFree;
 
         switch (volumeInfo.iDrive.iType) {
         case EMediaFlash:

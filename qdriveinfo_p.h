@@ -19,9 +19,9 @@ public:
         CachedDeviceFlag = 0x002,
         CachedFileSystemNameFlag = 0x004,
         CachedNameFlag = 0x008,
-        CachedTotalSizeFlag = 0x010,
-        CachedFreeSizeFlag = 0x020,
-        CachedAvailableSizeFlag = 0x040,
+        CachedBytesTotalFlag = 0x010,
+        CachedBytesFreeFlag = 0x020,
+        CachedBytesAvailableFlag = 0x040,
         CachedTypeFlag = 0x100,
         CachedCapabilitiesFlag = 0x200,
         CachedReadyFlag = 0x400,
@@ -31,14 +31,14 @@ public:
     struct Data : public QSharedData
     {
         Data() : QSharedData(),
-            totalSize(0), freeSize(0), availableSize(0),
+            bytesTotal(0), bytesFree(0), bytesAvailable(0),
             type(QDriveInfo::InvalidDrive), capabilities(0),
             ready(false), valid(false),
             cachedFlags(0)
         {}
         Data(const Data &other) : QSharedData(other),
             rootPath(other.rootPath),
-            totalSize(0), freeSize(0), availableSize(0),
+            bytesTotal(0), bytesFree(0), bytesAvailable(0),
             type(QDriveInfo::InvalidDrive), capabilities(0),
             ready(false), valid(false),
             cachedFlags(0)
@@ -50,9 +50,9 @@ public:
             fileSystemName.clear();
             name.clear();
 
-            totalSize = 0;
-            freeSize = 0;
-            availableSize = 0;
+            bytesTotal = 0;
+            bytesFree = 0;
+            bytesAvailable = 0;
 
             type = QDriveInfo::InvalidDrive;
             capabilities = 0;
@@ -72,9 +72,9 @@ public:
         QByteArray fileSystemName;
         QString name;
 
-        quint64 totalSize;
-        quint64 freeSize;
-        quint64 availableSize;
+        quint64 bytesTotal;
+        quint64 bytesFree;
+        quint64 bytesAvailable;
 
         QDriveInfo::DriveType type;
         uint capabilities;

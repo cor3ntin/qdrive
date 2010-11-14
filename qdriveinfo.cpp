@@ -154,35 +154,35 @@ void QDriveInfo::setRootPath(const QString &rootPath)
 
     This size can be less than available size (exept for Symbian OS where these sizes are always equal).
 
-    \sa freeSize(), totalSize()
+    \sa bytesTotal(), bytesFree()
 */
-quint64 QDriveInfo::availableSize() const
+quint64 QDriveInfo::bytesAvailable() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedAvailableSizeFlag);
-    return d_func()->data->availableSize;
+    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedBytesAvailableFlag);
+    return d_func()->data->bytesAvailable;
 }
 
 /*!
     Returns free size (in bytes) available on drive. Note, that if there is some kind
-    of qoutas on the filesystem, this value can be bigger than availableSize()
+    of qoutas on the filesystem, this value can be bigger than bytesAvailable()
 
-    \sa availableSize(), totalSize()
+    \sa bytesTotal(), bytesAvailable()
 */
-quint64 QDriveInfo::freeSize() const
+quint64 QDriveInfo::bytesFree() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedFreeSizeFlag);
-    return d_func()->data->freeSize;
+    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedBytesFreeFlag);
+    return d_func()->data->bytesFree;
 }
 
 /*!
     Returns maximum drive size in bytes.
 
-    \sa availableSize(), freeSize()
+    \sa bytesFree(), bytesAvailable()
 */
-quint64 QDriveInfo::totalSize() const
+quint64 QDriveInfo::bytesTotal() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedTotalSizeFlag);
-    return d_func()->data->totalSize;
+    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedBytesTotalFlag);
+    return d_func()->data->bytesTotal;
 }
 
 /*!
@@ -282,8 +282,8 @@ QDriveInfo::Capabilities QDriveInfo::capabilities() const
     Resets QDriveInfo inner cache.
 
     QDriveInfo caches information about drives to speed up performance. Some information can be retrieved
-    by only 1 native funciton call, so, if you call totalSize(), QDriveInfo will also cache information
-    for availableSize() and freeSize(). Also, QDriveInfo won't update information for future calls and
+    by only 1 native funciton call, so, if you call bytesTotal(), QDriveInfo will also cache information
+    for bytesAvailable() and bytesFree(). Also, QDriveInfo won't update information for future calls and
     you have to manually reset cache when needed.
 */
 void QDriveInfo::refresh()
@@ -297,7 +297,7 @@ void QDriveInfo::refresh()
     On Windows, this returnes drives presented in 'My Computer' folder. On Unix operation systems,
     returns list of all mounted filesystems (exept for Mac, where devfs is ignored). In Linux, you
     will get a lot of pseudo filesystems by calling this function, but you can filter them using
-    type() (they always have InvalidDrive type) or by checking totalSize() (always equal to 0).
+    type() (they always have InvalidDrive type) or by checking bytesTotal() (always equal to 0).
 */
 QList<QDriveInfo> QDriveInfo::drives()
 {

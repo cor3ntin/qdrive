@@ -43,9 +43,9 @@ public:
     QByteArray fileSystemName() const;
     QString name() const;
 
-    quint64 totalSize() const;
-    quint64 freeSize() const;
-    quint64 availableSize() const;
+    quint64 bytesTotal() const;
+    quint64 bytesFree() const;
+    quint64 bytesAvailable() const;
 
     bool isReady() const;
     bool isValid() const;

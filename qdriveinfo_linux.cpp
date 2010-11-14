@@ -123,7 +123,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
 
     uint bitmask = 0;
 
-    bitmask = CachedTotalSizeFlag | CachedFreeSizeFlag | CachedAvailableSizeFlag |
+    bitmask = CachedTotalSizeFlag | CachedBytesFreeFlag | CachedBytesAvailableFlag |
               CachedCapabilitiesFlag | CachedReadyFlag | CachedValidFlag;
     if (requiredFlags & bitmask) {
         getVolumeInfo();
@@ -165,9 +165,9 @@ void QDriveInfoPrivate::getVolumeInfo()
         data->valid = true;
         data->ready = true;
 
-        data->totalSize = statvfs_buf.f_blocks * statvfs_buf.f_bsize;
-        data->freeSize = statvfs_buf.f_bfree * statvfs_buf.f_bsize;
-        data->availableSize = statvfs_buf.f_bavail * statvfs_buf.f_bsize;
+        data->bytesTotal = statvfs_buf.f_blocks * statvfs_buf.f_bsize;
+        data->bytesFree = statvfs_buf.f_bfree * statvfs_buf.f_bsize;
+        data->bytesAvailable = statvfs_buf.f_bavail * statvfs_buf.f_bsize;
 
         if (statvfs_buf.f_flag & ST_RDONLY)
             data->capabilities |= QDriveInfo::ReadOnlyVolume;

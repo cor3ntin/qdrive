@@ -110,7 +110,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
             return;
     }
 
-    bitmask = CachedTotalSizeFlag | CachedFreeSizeFlag | CachedAvailableSizeFlag;
+    bitmask = CachedBytesTotalFlag | CachedBytesFreeFlag | CachedBytesAvailableFlag;
     if (requiredFlags & bitmask) {
         getDiskFreeSpace();
         data->setCachedFlag(bitmask);
@@ -171,9 +171,9 @@ void QDriveInfoPrivate::getDiskFreeSpace()
 
     QString path = QDir::toNativeSeparators(data->rootPath);
     ::GetDiskFreeSpaceEx((wchar_t *)path.utf16(),
-                         (PULARGE_INTEGER)&data->availableSize,
-                         (PULARGE_INTEGER)&data->totalSize,
-                         (PULARGE_INTEGER)&data->freeSize);
+                         (PULARGE_INTEGER)&data->bytesAvailable,
+                         (PULARGE_INTEGER)&data->bytesTotal,
+                         (PULARGE_INTEGER)&data->bytesFree);
 
     ::SetErrorMode(oldmode);
 }
