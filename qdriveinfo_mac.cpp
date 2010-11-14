@@ -47,7 +47,7 @@ void QDriveInfoPrivate::initRootPath()
     }
 }
 
-static inline QDriveInfo::DriveType determineType(const QString &device)
+static inline QDriveInfo::DriveType determineType(const QByteArray &device)
 {
     QDriveInfo::DriveType drivetype = QDriveInfo::InvalidDrive;
 
@@ -61,7 +61,7 @@ static inline QDriveInfo::DriveType determineType(const QString &device)
     if (sessionRef == NULL)
         return QDriveInfo::InvalidDrive;
 
-    diskRef = DADiskCreateFromBSDName(NULL, sessionRef, QFile::encodeName(device).constData());
+    diskRef = DADiskCreateFromBSDName(NULL, sessionRef, device.constData());
     if (diskRef == NULL) {
         CFRelease(sessionRef);
         return QDriveInfo::InvalidDrive;
@@ -152,8 +152,8 @@ void QDriveInfoPrivate::getVolumeInfo()
         data->valid = true;
         data->ready = true;
 
-        data->fileSystemName = QString::fromLatin1(statfs_buf.f_fstypename);
-        data->device = QFile::decodeName(statfs_buf.f_mntfromname);
+        data->device = QByteArray(statfs_buf.f_mntfromname);
+        data->fileSystemName = QByteArray(statfs_buf.f_fstypename);
 
         data->totalSize = statfs_buf.f_blocks * statfs_buf.f_bsize;
         data->freeSize = statfs_buf.f_bfree * statfs_buf.f_bsize;
@@ -175,13 +175,10 @@ void QDriveInfoPrivate::getVolumeInfo()
         }
 
         // ### check if an alternative way exists
-        QString fsName = data->fileSystemName.toLower();
-        if (!fsName.startsWith(QLatin1String("fat"))
-            && fsName != QLatin1String("hfs") && fsName != QLatin1String("hpfs")) {
-            if (!fsName.startsWith(QLatin1String("reiser"))
-                && !fsName.contains(QLatin1String("9660")) && !fsName.contains(QLatin1String("joliet"))) {
+        QByteArray fsName = data->fileSystemName.toLower();
+        if (!fsName.startsWith("fat") && fsName != "hfs" && fsName != "hpfs") {
+            if (!fsName.startsWith("reiser") && !fsName.contains("9660") && !fsName.contains("joliet"))
                 data->capabilities |= QDriveInfo::AccessControlListsSupport;
-            }
             data->capabilities |= QDriveInfo::HardlinksSupport;
         }
     }

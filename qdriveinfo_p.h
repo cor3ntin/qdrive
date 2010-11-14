@@ -68,8 +68,8 @@ public:
         { cachedFlags |= c; }
 
         QString rootPath;
-        QString device;
-        QString fileSystemName;
+        QByteArray device;
+        QByteArray fileSystemName;
         QString name;
 
         quint64 totalSize;

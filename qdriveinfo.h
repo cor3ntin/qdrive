@@ -43,8 +43,8 @@ public:
     quint64 freeSize() const;
     quint64 totalSize() const;
 
-    QString fileSystemName() const;
-    QString device() const;
+    QByteArray fileSystemName() const;
+    QByteArray device() const;
     QString name() const;
     bool isReady() const;
     bool isValid() const;

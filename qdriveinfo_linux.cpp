@@ -5,6 +5,7 @@
 
 #include <errno.h>
 #include <mntent.h>
+#include <sys/stat.h>
 #include <sys/statvfs.h>
 
 #ifndef _PATH_MOUNTED
@@ -32,25 +33,30 @@ void QDriveInfoPrivate::initRootPath()
             if (oldRootPath.startsWith(mountDir) && maxLength < (quint32)mountDir.length()) {
                 maxLength = mountDir.length();
                 data->rootPath = mountDir;
-                data->device = QFile::decodeName(mnt->mnt_fsname);
-                data->fileSystemName = QString::fromLatin1(mnt->mnt_type);
+                data->device = QByteArray(mnt->mnt_fsname);
+                data->fileSystemName = QByteArray(mnt->mnt_type);
             }
         }
         ::endmntent(fp);
     }
 }
 
-static inline QDriveInfo::DriveType determineType(const QString &device)
+static inline QDriveInfo::DriveType determineType(const QByteArray &device)
 {
     QString dmFile;
 
-    if (device.contains(QLatin1String("mapper"))) {
+    if (device.contains("mapper")) {
         QT_STATBUF stat_buf;
-        QT_STAT(QFile::encodeName(device).constData(), &stat_buf);
-
-        dmFile = QLatin1String("dm-") + QString::number(stat_buf.st_rdev & 0377);
+        int result;
+        do {
+            result = QT_STAT(device.constData(), &stat_buf);
+        } while (result != 0 && errno == EINTR);
+        if (result == 0)
+            dmFile = QLatin1String("dm-") + QString::number(stat_buf.st_rdev & 0377);
+        else
+            return QDriveInfo::InvalidDrive;
     } else {
-        dmFile = device.section(QLatin1Char('/'), 2, 3);
+        dmFile = QString(device).section(QLatin1Char('/'), 2, 3);
         if (dmFile.startsWith(QLatin1String("mmc"))) {
             // assume this dev is removable sd/mmc card.
             return QDriveInfo::RemovableDrive;
@@ -59,8 +65,8 @@ static inline QDriveInfo::DriveType determineType(const QString &device)
         if (dmFile.length() > 3) {
             // if device has number, we need the 'parent' device
             dmFile.chop(1);
-            if (dmFile.at(dmFile.length() - 1) == QLatin1Char('p')) // get rid of partition number
-                dmFile.chop(1);
+            if (dmFile.endsWith(QLatin1Char('p')))
+                dmFile.chop(1); // get rid of partition number
         }
     }
     dmFile = QLatin1String("/sys/block/") + dmFile + QLatin1String("/removable");
@@ -73,7 +79,7 @@ static inline QDriveInfo::DriveType determineType(const QString &device)
             return QDriveInfo::RemovableDrive;
     }
 
-    if (device.startsWith(QLatin1String("/dev")))
+    if (device.startsWith("/dev"))
         return QDriveInfo::InternalDrive;
 
     return QDriveInfo::InvalidDrive;
@@ -85,13 +91,13 @@ static inline QDriveInfo::DriveType determineType(const QString &device)
 // If we have udev installed in the system, proper symlinks are created by it, so we don't
 // need to link to libudev
 // If not, i don't know other way to get labels without root privelegies
-static inline QString getName(const QString &device)
+static inline QString getName(const QByteArray &device)
 {
     QDirIterator it(QLatin1String(_PATH_DISK_BY_LABEL), QDir::NoDotAndDotDot);
     while (it.hasNext()) {
         it.next();
         QFileInfo fileInfo(it.fileInfo());
-        if (fileInfo.isSymLink() && fileInfo.symLinkTarget() == device)
+        if (fileInfo.isSymLink() && fileInfo.symLinkTarget().toLatin1() == device)
             return fileInfo.fileName();
     }
 
@@ -139,7 +145,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
         if (data->type == QDriveInfo::InvalidDrive) {
             // test for UNC shares
             if (data->rootPath.startsWith(QLatin1String("//"))
-                || data->fileSystemName.toLower() == QLatin1String("nfs")) {
+                || data->fileSystemName.toLower() == "nfs") {
                 data->type = QDriveInfo::RemoteDrive;
             }
         }
@@ -166,13 +172,10 @@ void QDriveInfoPrivate::getVolumeInfo()
             data->capabilities |= QDriveInfo::ReadOnlyVolume;
 
         // ### check if an alternative way exists
-        QString fsName = data->fileSystemName.toLower();
-        if (!fsName.startsWith(QLatin1String("fat"))
-            && fsName != QLatin1String("hfs") && fsName != QLatin1String("hpfs")) {
-            if (!fsName.startsWith(QLatin1String("reiser"))
-                && !fsName.contains(QLatin1String("9660")) && !fsName.contains(QLatin1String("joliet"))) {
+        QByteArray fsName = data->fileSystemName.toLower();
+        if (!fsName.startsWith("fat") && fsName != "hfs" && fsName != "hpfs") {
+            if (!fsName.startsWith("reiser") && !fsName.contains("9660") && !fsName.contains("joliet"))
                 data->capabilities |= QDriveInfo::AccessControlListsSupport;
-            }
             data->capabilities |= QDriveInfo::CaseSensitiveFileNames;
             data->capabilities |= QDriveInfo::HardlinksSupport;
             data->capabilities |= QDriveInfo::SymlinksSupport;

@@ -33,14 +33,14 @@ void QDriveInfoPrivate::initRootPath()
     }
 }
 
-static inline QString getDevice(const QString &rootPath)
+static inline QByteArray getDevice(const QString &rootPath)
 {
     QString path = QDir::toNativeSeparators(rootPath);
     wchar_t deviceBuffer[MAX_PATH + 1];
     if (::GetVolumeNameForVolumeMountPoint((wchar_t *)path.utf16(), deviceBuffer, MAX_PATH))
-        return QString::fromWCharArray(deviceBuffer);
+        return QString::fromWCharArray(deviceBuffer).toLatin1();
 
-    return QString();
+    return QByteArray();
 }
 
 static inline QDriveInfo::DriveType determineType(const QString &rootPath)
@@ -149,14 +149,14 @@ void QDriveInfoPrivate::getVolumeInfo()
         data->ready = true;
         data->valid = true;
 
+        data->fileSystemName = QString::fromWCharArray(fileSystemNameBuf).toLatin1();
         data->name = QString::fromWCharArray(nameBuf);
-        data->fileSystemName = QString::fromWCharArray(fileSystemNameBuf);
 
         if (fileSystemFlags & FILE_PERSISTENT_ACLS)
             data->capabilities |= QDriveInfo::AccessControlListsSupport;
         if (fileSystemFlags & FILE_READ_ONLY_VOLUME)
             data->capabilities |= QDriveInfo::ReadOnlyVolume;
-        if ((fileSystemFlags & FILE_SUPPORTS_HARD_LINKS) || data->fileSystemName.toUpper() == QLatin1String("NTFS"))
+        if ((fileSystemFlags & FILE_SUPPORTS_HARD_LINKS) || data->fileSystemName.toUpper() == "NTFS")
             data->capabilities |= QDriveInfo::HardlinksSupport;
         if ((fileSystemFlags & FILE_SUPPORTS_REPARSE_POINTS) && QSysInfo::WindowsVersion >= QSysInfo::WV_VISTA)
             data->capabilities |= QDriveInfo::SymlinksSupport;

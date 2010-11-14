@@ -192,7 +192,7 @@ quint64 QDriveInfo::totalSize() const
     operation systems. For example, on Windows filesystem can be named as 'NTFS' and on Linux
     as 'ntfs-3g' or 'fuseblk'.
 */
-QString QDriveInfo::fileSystemName() const
+QByteArray QDriveInfo::fileSystemName() const
 {
     const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedFileSystemNameFlag);
     return d_func()->data->fileSystemName;
@@ -211,7 +211,7 @@ QString QDriveInfo::fileSystemName() const
 
     On Symbian OS this function returns nothing.
 */
-QString QDriveInfo::device() const
+QByteArray QDriveInfo::device() const
 {
     const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedDeviceFlag);
     return d_func()->data->device;

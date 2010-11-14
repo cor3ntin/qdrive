@@ -62,9 +62,9 @@ void QDriveInfoPrivate::getVolumeInfo()
         data->ready = true;
 
         data->name = QString::fromUtf16((const ushort *)volumeInfo.iName.Ptr(), volumeInfo.iName.Length());
-        TFSName fileSystemName;
-        if (rfs.FileSystemSubType(drive, fileSystemName) == KErrNone)
-            data->fileSystemName = QString::fromUtf16((const ushort *)fileSystemName.Ptr(), fileSystemName.Length());
+        TFSName fileSystemNameBuf;
+        if (rfs.FileSystemSubType(drive, fileSystemNameBuf) == KErrNone)
+            data->fileSystemName = QString::fromUtf16((const ushort *)fileSystemNameBuf.Ptr(), fileSystemNameBuf.Length()).toLatin1();
 
         data->totalSize = volumeInfo.iSize;
         data->freeSize = volumeInfo.iFree;
