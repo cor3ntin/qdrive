@@ -23,9 +23,9 @@ public:
     enum Capability {
         CaseSensitiveFileNames = 0x00000001,
         AccessControlListsSupport = 0x00000002,
-        ReadOnlyVolume = 0x00000004,
-        HardlinksSupport = 0x00000008,
-        SymlinksSupport = 0x00000010,
+        HardlinksSupport = 0x00000004,
+        SymlinksSupport = 0x00000008,
+        ReadOnlyVolume = 0x00000010
     };
     Q_DECLARE_FLAGS(Capabilities, Capability)
 
