@@ -145,7 +145,8 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
         if (data->type == QDriveInfo::InvalidDrive) {
             // test for UNC shares
             if (data->rootPath.startsWith(QLatin1String("//"))
-                || data->fileSystemName.toLower() == "nfs") {
+                || data->fileSystemName == "nfs"
+                || data->fileSystemName == "cifs" || data->fileSystemName.startsWith("smb")) {
                 data->type = QDriveInfo::RemoteDrive;
             }
         }
@@ -173,7 +174,8 @@ void QDriveInfoPrivate::getVolumeInfo()
 
         // ### check if an alternative way exists
         QByteArray fsName = data->fileSystemName.toLower();
-        if (!fsName.startsWith("fat") && fsName != "hfs" && fsName != "hpfs") {
+        if (!fsName.startsWith("fat") && !fsName.startsWith("smb")
+            && fsName != "hfs" && fsName != "hpfs" && fsName != "nfs" && fsName != "cifs") {
             if (!fsName.startsWith("reiser") && !fsName.contains("9660") && !fsName.contains("joliet"))
                 data->capabilities |= QDriveInfo::AccessControlListsSupport;
             data->capabilities |= QDriveInfo::CaseSensitiveFileNames;

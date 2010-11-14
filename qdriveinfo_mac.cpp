@@ -176,7 +176,8 @@ void QDriveInfoPrivate::getVolumeInfo()
 
         // ### check if an alternative way exists
         QByteArray fsName = data->fileSystemName.toLower();
-        if (!fsName.startsWith("fat") && fsName != "hfs" && fsName != "hpfs") {
+        if (!fsName.startsWith("fat") && !fsName.startsWith("smb")
+            && fsName != "hfs" && fsName != "hpfs" && fsName != "nfs" && fsName != "cifs") {
             if (!fsName.startsWith("reiser") && !fsName.contains("9660") && !fsName.contains("joliet"))
                 data->capabilities |= QDriveInfo::AccessControlListsSupport;
             data->capabilities |= QDriveInfo::HardlinksSupport;
