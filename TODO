@@ -1,1 +1,15 @@
-*
+todo:
+* polish API docs
+* find out an alternative way to retreive capabilities on mac and linux
+* implement controller (watching, notifications, global cache)
+
+todo (?):
+* split removables drivetype to device types
+* root drive API
+* controller capabilities API
+* add/eject/remove drives via controller's API
+
+done:
+* pre-cache data obtained in drives()
+* operator ==
+* capabilities API
