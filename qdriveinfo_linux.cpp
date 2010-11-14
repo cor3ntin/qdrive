@@ -3,10 +3,9 @@
 #include <QtCore/QDirIterator>
 #include <QtCore/QTextStream>
 
+#include <errno.h>
 #include <mntent.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/vfs.h>
+#include <sys/statvfs.h>
 
 #ifndef _PATH_MOUNTED
 #  define _PATH_MOUNTED "/etc/mtab"
@@ -149,20 +148,20 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
 
 void QDriveInfoPrivate::getVolumeInfo()
 {
-    struct statfs statfs_buf;
+    struct statvfs statvfs_buf;
     int result;
     do {
-        result = ::statfs(QFile::encodeName(data->rootPath).constData(), &statfs_buf);
+        result = ::statvfs(QFile::encodeName(data->rootPath).constData(), &statvfs_buf);
     } while (result != 0 && errno == EINTR);
     if (result == 0) {
         data->valid = true;
         data->ready = true;
 
-        data->totalSize = statfs_buf.f_blocks * statfs_buf.f_bsize;
-        data->freeSize = statfs_buf.f_bfree * statfs_buf.f_bsize;
-        data->availableSize = statfs_buf.f_bavail * statfs_buf.f_bsize;
+        data->totalSize = statvfs_buf.f_blocks * statvfs_buf.f_bsize;
+        data->freeSize = statvfs_buf.f_bfree * statvfs_buf.f_bsize;
+        data->availableSize = statvfs_buf.f_bavail * statvfs_buf.f_bsize;
 
-        if (statfs_buf.f_flag & ST_RDONLY)
+        if (statvfs_buf.f_flag & ST_RDONLY)
             data->capabilities |= QDriveInfo::ReadOnlyVolume;
 
         // ### check if an alternative way exists
