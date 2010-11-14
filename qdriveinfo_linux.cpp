@@ -21,18 +21,19 @@ void QDriveInfoPrivate::initRootPath()
 
     FILE *fp = ::setmntent(_PATH_MOUNTED, "r");
     if (fp) {
-        QString oldRootPath = data->rootPath;
         quint32 maxLength = 0;
+        QString oldRootPath = data->rootPath;
+        data->rootPath.clear();
 
         struct mntent *mnt;
         while ((mnt = ::getmntent(fp))) {
             QString mountDir = QFile::decodeName(mnt->mnt_dir);
             // we try to find most suitable entry
             if (oldRootPath.startsWith(mountDir) && maxLength < (quint32)mountDir.length()) {
-                data->fileSystemName = QString::fromLatin1(mnt->mnt_type);
-                data->device = QFile::decodeName(mnt->mnt_fsname);
-                data->rootPath = mountDir;
                 maxLength = mountDir.length();
+                data->rootPath = mountDir;
+                data->device = QFile::decodeName(mnt->mnt_fsname);
+                data->fileSystemName = QString::fromLatin1(mnt->mnt_type);
             }
         }
         ::endmntent(fp);
