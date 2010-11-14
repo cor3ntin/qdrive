@@ -269,7 +269,11 @@ void tst_QDriveInfo::equals()
         QVERIFY(info2 == info);
         QVERIFY(info3 == info);
         QVERIFY(info4 == info);
+#if defined(Q_OS_WIN)
         QVERIFY(info5 != info); // ### QVERIFY(info5 == info);
+#else
+        QVERIFY(info5 == info);
+#endif
     }
 }
 
