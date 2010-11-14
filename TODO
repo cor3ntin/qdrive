@@ -4,6 +4,7 @@ todo:
 * implement controller (watching, notifications, global cache)
 
 todo (?):
+* drop netshares support
 * split removables drivetype to device types
 * root drive API
 * controller capabilities API

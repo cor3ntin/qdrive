@@ -51,6 +51,7 @@ void tst_QDriveInfo::constructor_data()
     QString guid_for_d("\\\\?\\Volume{e9204280-a0d1-11df-93bf-806d6172696f}\\");
     QString guid_for_i("\\\\?\\Volume{2c15bbb2-bf3c-11df-8730-0004619ece73}\\");
     QDriveInfo::Capabilities caps_for_ntfs = (QDriveInfo::AccessControlListsSupport | QDriveInfo::HardlinksSupport);
+    QDriveInfo::Capabilities caps_for_udf = QDriveInfo::ReadOnlyVolume;
 
     QTest::newRow("invalid_P:")
         << "P:" << false << false << "P:/" << "" << "" << "" << QDriveInfo::InvalidDrive << QDriveInfo::Capabilities(0);
@@ -65,7 +66,7 @@ void tst_QDriveInfo::constructor_data()
         << "D:\\windows\\.." << true << true << "D:/" << guid_for_d << "NTFS" << "old win" << QDriveInfo::InternalDrive << caps_for_ntfs;
 
     QTest::newRow("I:\\")
-        << "I:\\" << true << false << "I:/" << guid_for_i << "" << "" << QDriveInfo::CdromDrive << QDriveInfo::Capabilities(0);
+        << "I:\\" << true << true << "I:/" << guid_for_i << "UDF" << "GRMCULF(X)RER(O)_EN-RU_DVD" << QDriveInfo::CdromDrive << caps_for_udf;
 
     QTest::newRow("net share")
         << "//192.168.7.55/Users/" << true << true << "//192.168.7.55/Users/" << "" << "NTFS" << "" << QDriveInfo::RemoteDrive << caps_for_ntfs;
@@ -254,7 +255,7 @@ void tst_QDriveInfo::drives()
                 QVERIFY(info.isReady());
                 QVERIFY(!(info.capabilities() & QDriveInfo::ReadOnlyVolume));
             } else {
-                QVERIFY((info.capabilities() & QDriveInfo::ReadOnlyVolume) == info.isReady());
+                QCOMPARE(info.capabilities() == QDriveInfo::ReadOnlyVolume, info.isReady());
             }
         }
     }
