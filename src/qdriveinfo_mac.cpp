@@ -24,6 +24,7 @@ void QDriveInfoPrivate::initRootPath()
     FSRef rootDirectory;
     if (FSGetVolumeInfo(catalogInfo.volume, 0, 0, kFSVolInfoFSInfo, 0, &volumeName, &rootDirectory) == noErr) {
         CFURLRef url = CFURLCreateFromFSRef(NULL, &rootDirectory);
+        CFStringRef stringRef;
         stringRef = CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
         if (stringRef) {
             CFIndex length = CFStringGetLength(stringRef) + 1;
@@ -35,7 +36,7 @@ void QDriveInfoPrivate::initRootPath()
         }
         CFRelease(url);
 
-        CFStringRef stringRef = FSCreateStringFromHFSUniStr(NULL, &volumeName);
+        stringRef = FSCreateStringFromHFSUniStr(NULL, &volumeName);
         if (stringRef) {
             CFIndex length = CFStringGetLength(stringRef) + 1;
             char *volname = NewPtr(length);
