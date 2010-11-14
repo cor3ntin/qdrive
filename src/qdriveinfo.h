@@ -48,8 +48,7 @@ public:
     QDriveInfo &operator=(const QDriveInfo &other);
 
     bool operator==(const QDriveInfo &other) const;
-    inline bool operator!=(const QDriveInfo &other) const
-    { return !(operator==(other)); }
+    inline bool operator!=(const QDriveInfo &other) const;
 
     QString rootPath() const;
     void setRootPath(const QString &);
@@ -62,6 +61,7 @@ public:
     quint64 bytesFree() const;
     quint64 bytesAvailable() const;
 
+    inline bool isReadOnly() const;
     bool isReady() const;
     bool isValid() const;
 
@@ -79,6 +79,12 @@ protected:
 private:
     Q_DECLARE_PRIVATE(QDriveInfo);
 };
+
+inline bool QDriveInfo::operator!=(const QDriveInfo &other) const
+{ return !(operator==(other)); }
+
+inline bool QDriveInfo::isReadOnly() const
+{ return (capabilities() & QDriveInfo::ReadOnlyVolume); }
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QDriveInfo::Capabilities)
 
