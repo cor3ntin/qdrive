@@ -109,7 +109,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
     if (data->getCachedFlag(requiredFlags))
         return;
 
-    if (!data->getCachedFlag(CachedRootPathFlag)) {
+    if (!data->getCachedFlag(CachedRootPathFlag | CachedFileSystemNameFlag | CachedDeviceFlag)) {
         initRootPath();
         data->setCachedFlag(CachedRootPathFlag | CachedFileSystemNameFlag | CachedDeviceFlag);
     }
@@ -192,8 +192,14 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
     FILE *fp = ::setmntent(_PATH_MOUNTED, "r");
     if (fp) {
         struct mntent *mnt;
-        while ((mnt = ::getmntent(fp)))
-            drives.append(QDriveInfo(QFile::decodeName(mnt->mnt_dir)));
+        while ((mnt = ::getmntent(fp))) {
+            QDriveInfo drive;
+            drive.d_ptr->data->rootPath = QFile::decodeName(mnt->mnt_dir);
+            drive.d_ptr->data->device = QByteArray(mnt->mnt_fsname);
+            drive.d_ptr->data->fileSystemName = QByteArray(mnt->mnt_type);
+            drive.d_ptr->data->setCachedFlag(CachedRootPathFlag | CachedFileSystemNameFlag | CachedDeviceFlag);
+            drives.append(drive);
+        }
         ::endmntent(fp);
     }
 

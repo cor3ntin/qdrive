@@ -28,7 +28,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
     if (data->getCachedFlag(requiredFlags))
         return;
 
-    if (!data->getCachedFlag(CachedRootPathFlag)) {
+    if (!data->getCachedFlag(CachedRootPathFlag | CachedDeviceFlag)) {
         initRootPath();
         data->setCachedFlag(CachedRootPathFlag | CachedDeviceFlag);
     }
@@ -107,13 +107,18 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
 
     RFs rfs = qt_s60GetRFs();
 
+    char driveName[] = "A:/";
+    TChar driveChar;
     TDriveList drivelist;
     if (rfs.DriveList(drivelist) == KErrNone) {
         for (int i = EDriveA; i < EDriveZ; ++i) {
-            if (drivelist[i]) {
-                TChar driveChar;
-                if (RFs::DriveToChar(i, driveChar) == KErrNone)
-                    drives.append(QDriveInfo(QChar(driveChar).toUpper() + QLatin1String(":/")));
+            if (drivelist[i] && RFs::DriveToChar(i, driveChar) == KErrNone) {
+                driveName[0] = driveChar;
+                QDriveInfo drive;
+                drive.d_ptr->data->rootPath = QLatin1String(driveName);
+                drive.d_ptr->data->device = QByteArray(1, i);
+                drive.d_ptr->data->setCachedFlag(CachedRootPathFlag | CachedDeviceFlag);
+                drives.append(drive);
             }
         }
     }

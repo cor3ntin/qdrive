@@ -23,16 +23,6 @@ void QDriveInfoPrivate::initRootPath()
     HFSUniStr255 volumeName;
     FSRef rootDirectory;
     if (FSGetVolumeInfo(catalogInfo.volume, 0, 0, kFSVolInfoFSInfo, 0, &volumeName, &rootDirectory) == noErr) {
-        CFStringRef stringRef = FSCreateStringFromHFSUniStr(NULL, &volumeName);
-        if (stringRef) {
-            CFIndex length = CFStringGetLength(stringRef) + 1;
-            char *volname = NewPtr(length);
-            CFStringGetCString(stringRef, volname, length, kCFStringEncodingMacRoman);
-            data->name = QFile::decodeName(volname);
-            CFRelease(stringRef);
-            DisposePtr(volname);
-        }
-
         CFURLRef url = CFURLCreateFromFSRef(NULL, &rootDirectory);
         stringRef = CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
         if (stringRef) {
@@ -44,6 +34,16 @@ void QDriveInfoPrivate::initRootPath()
             DisposePtr(volname);
         }
         CFRelease(url);
+
+        CFStringRef stringRef = FSCreateStringFromHFSUniStr(NULL, &volumeName);
+        if (stringRef) {
+            CFIndex length = CFStringGetLength(stringRef) + 1;
+            char *volname = NewPtr(length);
+            CFStringGetCString(stringRef, volname, length, kCFStringEncodingMacRoman);
+            data->name = QFile::decodeName(volname);
+            CFRelease(stringRef);
+            DisposePtr(volname);
+        }
     }
 }
 
@@ -109,7 +109,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
     if (data->getCachedFlag(requiredFlags))
         return;
 
-    if (!data->getCachedFlag(CachedRootPathFlag)) {
+    if (!data->getCachedFlag(CachedRootPathFlag | CachedNameFlag)) {
         initRootPath();
         data->setCachedFlag(CachedRootPathFlag | CachedNameFlag);
     }
@@ -201,7 +201,12 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
                 CFIndex length = CFStringGetLength(stringRef) + 1;
                 char *volname = NewPtr(length);
                 CFStringGetCString(stringRef, volname, length, kCFStringEncodingMacRoman);
-                drives.append(QDriveInfo(QFile::decodeName(volname)));
+                {
+                    QDriveInfo drive;
+                    drive.d_ptr->data->rootPath = QFile::decodeName(volname);
+                    drive.d_ptr->data->setCachedFlag(CachedRootPathFlag);
+                    drives.append(drive);
+                }
                 CFRelease(stringRef);
                 DisposePtr(volname);
             }

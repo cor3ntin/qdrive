@@ -185,8 +185,12 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
     char driveName[] = "A:/";
     quint32 driveBits = quint32(::GetLogicalDrives()) & 0x3ffffff;
     while (driveBits) {
-        if (driveBits & 1)
-            drives.append(QDriveInfo(QLatin1String(driveName)));
+        if (driveBits & 1) {
+            QDriveInfo drive;
+            drive.d_ptr->data->rootPath = QLatin1String(driveName);
+            drive.d_ptr->data->setCachedFlag(CachedRootPathFlag);
+            drives.append(drive);
+        }
         driveName[0]++;
         driveBits = driveBits >> 1;
     }
