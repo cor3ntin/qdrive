@@ -2,6 +2,7 @@
 
 #include <QDriveInfo>
 
+Q_DECLARE_METATYPE(QDriveInfo)
 Q_DECLARE_METATYPE(QDriveInfo::DriveType)
 Q_DECLARE_METATYPE(QDriveInfo::Capabilities)
 
@@ -20,11 +21,13 @@ private Q_SLOTS:
     void refresh();
     void drives_data();
     void drives();
+    void equals_data();
     void equals();
 };
 
 void tst_QDriveInfo::initTestCase()
 {
+    qRegisterMetaType<QDriveInfo>();
     qRegisterMetaType<QDriveInfo::DriveType>();
     qRegisterMetaType<QDriveInfo::Capabilities>();
 }
@@ -258,23 +261,31 @@ void tst_QDriveInfo::drives()
     QVERIFY(drives.isEmpty());
 }
 
+void tst_QDriveInfo::equals_data()
+{
+    QTest::addColumn<QDriveInfo>("info");
+
+    QTest::newRow("invalid") << QDriveInfo();
+
+    foreach (const QDriveInfo &info, QDriveInfo::drives())
+        QTest::newRow(info.device()) << info;
+}
+
 void tst_QDriveInfo::equals()
 {
-    foreach (const QDriveInfo &info, QDriveInfo::drives()) {
-        QDriveInfo info2 = info;
-        QDriveInfo info3(info);
-        QDriveInfo info4(info.rootPath());
-        QDriveInfo info5(info.device());
+    QFETCH(QDriveInfo, info);
 
-        QVERIFY(info2 == info);
-        QVERIFY(info3 == info);
-        QVERIFY(info4 == info);
-#if defined(Q_OS_WIN)
-        QVERIFY(info5 != info); // ### QVERIFY(info5 == info);
-#else
-        QVERIFY(info5 == info);
+    QDriveInfo info2 = info;
+    QDriveInfo info3(info);
+    QDriveInfo info4(info.rootPath());
+    QDriveInfo info5(info.device());
+
+    QVERIFY(info2 == info);
+    QVERIFY(info3 == info);
+    QVERIFY(info4 == info);
+#if 0
+    QVERIFY(info5 != info); // ### QVERIFY(info5 == info);
 #endif
-    }
 }
 
 QTEST_APPLESS_MAIN(tst_QDriveInfo)
