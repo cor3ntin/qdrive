@@ -26,6 +26,6 @@ mac: {
    LIBS += -framework CoreServices -framework DiskArbitration -framework IOKit
 }
 symbian: {
-    SOURCES += qdriveinfo_s60.cpp
+    SOURCES += qdriveinfo_symbian.cpp
     LIBS += -lefsrv
 }
