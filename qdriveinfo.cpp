@@ -181,7 +181,7 @@ quint64 QDriveInfo::freeSize() const
 */
 quint64 QDriveInfo::totalSize() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedSizeFlag);
+    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedTotalSizeFlag);
     return d_func()->data->totalSize;
 }
 

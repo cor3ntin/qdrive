@@ -1,12 +1,12 @@
 #include "qdriveinfo_p.h"
 
-#include <mntent.h>
-#include <sys/statfs.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
 #include <QtCore/QDirIterator>
 #include <QtCore/QTextStream>
+
+#include <mntent.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/vfs.h>
 
 #ifndef _PATH_MOUNTED
 #  define _PATH_MOUNTED "/etc/mtab"
@@ -117,14 +117,20 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
 
     uint bitmask = 0;
 
-    bitmask = CachedAvailableSizeFlag | CachedFreeSizeFlag | CachedSizeFlag |
-              CachedValidFlag | CachedReadyFlag;
+    bitmask = CachedTotalSizeFlag | CachedFreeSizeFlag | CachedAvailableSizeFlag |
+              CachedCapabilitiesFlag | CachedReadyFlag | CachedValidFlag;
     if (requiredFlags & bitmask) {
-        statFS();
+        getVolumeInfo();
         data->setCachedFlag(bitmask);
 
         if (!data->valid)
             return;
+    }
+
+    bitmask = CachedNameFlag;
+    if (requiredFlags & bitmask) {
+        data->name = getName(data->device);
+        data->setCachedFlag(bitmask);
     }
 
     bitmask = CachedTypeFlag;
@@ -139,28 +145,38 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
         }
         data->setCachedFlag(bitmask);
     }
-
-    bitmask = CachedNameFlag;
-    if (requiredFlags & bitmask) {
-        data->name = getName(data->device);
-        data->setCachedFlag(bitmask);
-    }
 }
 
-void QDriveInfoPrivate::statFS()
+void QDriveInfoPrivate::getVolumeInfo()
 {
     struct statfs statfs_buf;
-    int result = ::statfs(QFile::encodeName(data->rootPath).constData(), &statfs_buf);
-    if (result == -1) {
-        data->valid = false;
-        data->ready = false;
-    } else {
+    int result;
+    do {
+        result = ::statfs(QFile::encodeName(data->rootPath).constData(), &statfs_buf);
+    } while (result != 0 && errno == EINTR);
+    if (result == 0) {
         data->valid = true;
         data->ready = true;
 
-        data->availableSize = statfs_buf.f_bavail * statfs_buf.f_bsize;
-        data->freeSize = statfs_buf.f_bfree * statfs_buf.f_bsize;
         data->totalSize = statfs_buf.f_blocks * statfs_buf.f_bsize;
+        data->freeSize = statfs_buf.f_bfree * statfs_buf.f_bsize;
+        data->availableSize = statfs_buf.f_bavail * statfs_buf.f_bsize;
+
+        if (statfs_buf.f_flag & ST_RDONLY)
+            data->capabilities |= QDriveInfo::ReadOnlyVolume;
+
+        // ### check if an alternative way exists
+        QString fsName = data->fileSystemName.toLower();
+        if (!fsName.startsWith(QLatin1String("fat"))
+            && fsName != QLatin1String("hfs") && fsName != QLatin1String("hpfs")) {
+            if (!fsName.startsWith(QLatin1String("reiser"))
+                && !fsName.contains(QLatin1String("9660")) && !fsName.contains(QLatin1String("joliet"))) {
+                data->capabilities |= QDriveInfo::AccessControlListsSupport;
+            }
+            data->capabilities |= QDriveInfo::CaseSensitiveFileNames;
+            data->capabilities |= QDriveInfo::HardlinksSupport;
+            data->capabilities |= QDriveInfo::SymlinksSupport;
+        }
     }
 }
 

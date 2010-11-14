@@ -15,31 +15,30 @@ public:
     QDriveInfoPrivate(QDriveInfoPrivate *other);
 
     enum CachedFlags {
-        CachedAvailableSizeFlag = 0x01,
-        CachedFreeSizeFlag = 0x02,
-        CachedSizeFlag = 0x04,
-        CachedTotalFreeSizeFlag = 0x08,
-        CachedFileSystemNameFlag = 0x10,
-        CachedNameFlag = 0x20,
-        CachedRootPathFlag = 0x40,
-        CachedReadyFlag = 0x80,
-        CachedDeviceFlag = 0x100,
-        CachedTypeFlag = 0x200,
-        CachedCapabilitiesFlag = 0x400,
+        CachedRootPathFlag = 0x001,
+        CachedDeviceFlag = 0x002,
+        CachedFileSystemNameFlag = 0x004,
+        CachedNameFlag = 0x008,
+        CachedTotalSizeFlag = 0x010,
+        CachedFreeSizeFlag = 0x020,
+        CachedAvailableSizeFlag = 0x040,
+        CachedTypeFlag = 0x100,
+        CachedCapabilitiesFlag = 0x200,
+        CachedReadyFlag = 0x400,
         CachedValidFlag = 0x800
     };
 
     struct Data : public QSharedData
     {
         Data() : QSharedData(),
-            availableSize(0), freeSize(0), totalSize(0),
+            totalSize(0), freeSize(0), availableSize(0),
             type(QDriveInfo::InvalidDrive), capabilities(0),
             ready(false), valid(false),
             cachedFlags(0)
         {}
         Data(const Data &other) : QSharedData(other),
             rootPath(other.rootPath),
-            availableSize(0), freeSize(0), totalSize(0),
+            totalSize(0), freeSize(0), availableSize(0),
             type(QDriveInfo::InvalidDrive), capabilities(0),
             ready(false), valid(false),
             cachedFlags(0)
@@ -47,13 +46,13 @@ public:
 
         inline void clear()
         {
-            availableSize = 0;
-            freeSize = 0;
-            totalSize = 0;
-
-            fileSystemName.clear();
             device.clear();
+            fileSystemName.clear();
             name.clear();
+
+            totalSize = 0;
+            freeSize = 0;
+            availableSize = 0;
 
             type = QDriveInfo::InvalidDrive;
             capabilities = 0;
@@ -69,16 +68,16 @@ public:
         { cachedFlags |= c; }
 
         QString rootPath;
-
-        quint64 availableSize;
-        quint64 freeSize;
-        quint64 totalSize;
-
-        QString fileSystemName;
         QString device;
+        QString fileSystemName;
         QString name;
+
+        quint64 totalSize;
+        quint64 freeSize;
+        quint64 availableSize;
+
         QDriveInfo::DriveType type;
-        int capabilities;
+        uint capabilities;
         bool ready;
         bool valid;
 
@@ -89,23 +88,13 @@ public:
     void initRootPath();
     void doStat(uint requiredFlags);
 
-#if defined(Q_OS_LINUX)
-#  if defined(Q_WS_MAEMO_5) || defined(Q_WS_MAEMO_6)
-    // ###
-#  else
-    void statFS();
-#  endif
-#elif defined(Q_OS_WIN)
-    void getVolumeInformation();
-    void getDiskFreeSpace();
-#elif defined(Q_OS_MAC)
-    void statFS();
-#elif defined(Q_OS_SYMBIAN)
-    void getVolumeInfo();
-    void getFileSystemName();
-#endif
-
     static QList<QDriveInfo> drives();
+
+protected:
+    void getVolumeInfo();
+#if defined(Q_OS_WIN)
+    void getDiskFreeSpace();
+#endif
 };
 
 #endif // QDRIVEINFO_P_H

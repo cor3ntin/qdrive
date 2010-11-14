@@ -1,12 +1,10 @@
 #include "qdriveinfo_p.h"
 
-//#include <sys/param.h>
-#include <sys/mount.h>
-
 #include <CoreServices/CoreServices.h>
-//#include <IOKit/storage/IOCDBlockStorageDriver.h>
 #include <IOKit/storage/IOCDMedia.h>
 #include <IOKit/storage/IODVDMedia.h>
+
+#include <sys/mount.h>
 
 void QDriveInfoPrivate::initRootPath()
 {
@@ -87,10 +85,10 @@ static inline QDriveInfo::DriveType determineType(const QString &device)
         io_service_t mediaService;
         mediaService = DADiskCopyIOMedia(wholeDisk);
         if (mediaService) {
-            if (IOObjectConformsTo(mediaService, kIOCDMediaClass))
+            if (IOObjectConformsTo(mediaService, kIOCDMediaClass)
+                || IOObjectConformsTo(mediaService, kIODVDMediaClass)) {
                 drivetype = QDriveInfo::CdromDrive;
-            else if (IOObjectConformsTo(mediaService, kIODVDMediaClass))
-                drivetype = QDriveInfo::CdromDrive;
+            }
             IOObjectRelease(mediaService);
         }
         CFRelease(wholeDisk);
@@ -126,10 +124,11 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
 
     uint bitmask = 0;
 
-    bitmask = CachedAvailableSizeFlag | CachedFreeSizeFlag | CachedSizeFlag | CachedFileSystemNameFlag |
-              CachedDeviceFlag | CachedValidFlag | CachedReadyFlag | CachedCapabilitiesFlag;
+    bitmask = CachedDeviceFlag | CachedFileSystemNameFlag |
+              CachedTotalSizeFlag | CachedFreeSizeFlag | CachedAvailableSizeFlag |
+              CachedCapabilitiesFlag | CachedReadyFlag | CachedValidFlag;
     if (requiredFlags & bitmask) {
-        statFS();
+        getVolumeInfo();
         data->setCachedFlag(bitmask);
 
         if (!data->valid)
@@ -143,23 +142,20 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
     }
 }
 
-void QDriveInfoPrivate::statFS()
+void QDriveInfoPrivate::getVolumeInfo()
 {
     struct statfs statfs_buf;
     int result = ::statfs(QFile::encodeName(data->rootPath).constData(), &statfs_buf);
     if (result == -1) {
-        data->valid = false;
-        data->ready = false;
-    } else {
         data->valid = true;
         data->ready = true;
+
+        data->fileSystemName = QString::fromLatin1(statfs_buf.f_fstypename);
+        data->device = QFile::decodeName(statfs_buf.f_mntfromname);
 
         data->totalSize = statfs_buf.f_blocks * statfs_buf.f_bsize;
         data->freeSize = statfs_buf.f_bfree * statfs_buf.f_bsize;
         data->availableSize = statfs_buf.f_bavail * statfs_buf.f_bsize;
-
-        data->fileSystemName = QString::fromLatin1(statfs_buf.f_fstypename);
-        data->device = QFile::decodeName(statfs_buf.f_mntfromname);
 
         if (statfs_buf.f_flags & MNT_RDONLY)
             data->capabilities |= QDriveInfo::ReadOnlyVolume;
@@ -174,10 +170,17 @@ void QDriveInfoPrivate::statFS()
                 data->capabilities |= QDriveInfo::CaseSensitiveFileNames;
             if (infoBuffer.vMExtendedAttributes & bSupportsSymbolicLinks)
                 data->capabilities |= QDriveInfo::SymlinksSupport;
+        }
 
-            // ### check if an alternative way exists
-            if (data->fileSystemName.toLower() == QLatin1String("hfs"))
-                data->capabilities |= QDriveInfo::HardlinksSupport;
+        // ### check if an alternative way exists
+        QString fsName = data->fileSystemName.toLower();
+        if (!fsName.startsWith(QLatin1String("fat"))
+            && fsName != QLatin1String("hfs") && fsName != QLatin1String("hpfs")) {
+            if (!fsName.startsWith(QLatin1String("reiser"))
+                && !fsName.contains(QLatin1String("9660")) && !fsName.contains(QLatin1String("joliet"))) {
+                data->capabilities |= QDriveInfo::AccessControlListsSupport;
+            }
+            data->capabilities |= QDriveInfo::HardlinksSupport;
         }
     }
 }

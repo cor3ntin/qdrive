@@ -98,10 +98,10 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
 
     uint bitmask = 0;
 
-    bitmask = CachedValidFlag | CachedReadyFlag |
-              CachedNameFlag | CachedFileSystemNameFlag | CachedCapabilitiesFlag;
+    bitmask = CachedFileSystemNameFlag | CachedNameFlag |
+              CachedCapabilitiesFlag | CachedReadyFlag | CachedValidFlag;
     if (requiredFlags & bitmask) {
-        getVolumeInformation();
+        getVolumeInfo();
         if (data->valid && !data->ready)
             bitmask = CachedValidFlag;
         data->setCachedFlag(bitmask);
@@ -110,7 +110,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
             return;
     }
 
-    bitmask = CachedAvailableSizeFlag | CachedFreeSizeFlag | CachedSizeFlag;
+    bitmask = CachedTotalSizeFlag | CachedFreeSizeFlag | CachedAvailableSizeFlag;
     if (requiredFlags & bitmask) {
         getDiskFreeSpace();
         data->setCachedFlag(bitmask);
@@ -129,7 +129,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
     }
 }
 
-void QDriveInfoPrivate::getVolumeInformation()
+void QDriveInfoPrivate::getVolumeInfo()
 {
     UINT oldmode = ::SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
 
