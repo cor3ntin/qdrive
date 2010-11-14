@@ -63,7 +63,7 @@ public:
         }
 
         inline bool getCachedFlag(uint c) const
-        { return (cachedFlags & c); }
+        { return !((cachedFlags & c) ^ c); }
         inline void setCachedFlag(uint c)
         { cachedFlags |= c; }
 

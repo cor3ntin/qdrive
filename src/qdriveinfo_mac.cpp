@@ -149,7 +149,7 @@ void QDriveInfoPrivate::getVolumeInfo()
 {
     struct statfs statfs_buf;
     int result = ::statfs(QFile::encodeName(data->rootPath).constData(), &statfs_buf);
-    if (result == -1) {
+    if (result != -1) {
         data->valid = true;
         data->ready = true;
 
