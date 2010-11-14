@@ -39,13 +39,14 @@ public:
     QString rootPath() const;
     void setRootPath(const QString &);
 
-    quint64 availableSize() const;
-    quint64 freeSize() const;
-    quint64 totalSize() const;
-
-    QByteArray fileSystemName() const;
     QByteArray device() const;
+    QByteArray fileSystemName() const;
     QString name() const;
+
+    quint64 totalSize() const;
+    quint64 freeSize() const;
+    quint64 availableSize() const;
+
     bool isReady() const;
     bool isValid() const;
 
