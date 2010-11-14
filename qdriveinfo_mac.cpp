@@ -14,6 +14,8 @@ void QDriveInfoPrivate::initRootPath()
     FSRef ref;
     FSPathMakeRef((UInt8*)QFile::encodeName(data->rootPath).constData(), &ref, 0);
 
+    data->rootPath.clear();
+
     FSCatalogInfo catalogInfo;
     if (FSGetCatalogInfo(&ref, kFSCatInfoVolume, &catalogInfo, 0, 0, 0) != noErr)
         return;
