@@ -1,10 +1,29 @@
 #include <QtTest>
 
 #include <QDriveInfo>
+#include <QHash>
+#include <QList>
+
+struct DriveInfo
+{
+    QString rootPath;
+    QByteArray device;
+    QByteArray fileSystemName;
+    QString name;
+
+    QDriveInfo::DriveType type;
+    uint capabilities;
+
+    bool isReady;
+    bool isValid;
+    bool isRoot;
+};
+
+Q_DECLARE_METATYPE(DriveInfo)
 
 Q_DECLARE_METATYPE(QDriveInfo)
 Q_DECLARE_METATYPE(QDriveInfo::DriveType)
-Q_DECLARE_METATYPE(QDriveInfo::Capabilities)
+
 
 class tst_QDriveInfo: public QObject
 {
@@ -12,6 +31,12 @@ class tst_QDriveInfo: public QObject
 
 private Q_SLOTS:
     void initTestCase();
+    void common_data();
+
+    void equals_data();
+    void equals();
+
+    void rootDrive();
 
     void constructor_data();
     void constructor();
@@ -19,247 +44,110 @@ private Q_SLOTS:
     void setRootPath();
     void refresh_data();
     void refresh();
+
     void drives_data();
     void drives();
-    void equals_data();
-    void equals();
+
+private:
+    QHash<QString, DriveInfo> testDrives;
 };
 
 void tst_QDriveInfo::initTestCase()
 {
+    qRegisterMetaType<DriveInfo>();
     qRegisterMetaType<QDriveInfo>();
-    qRegisterMetaType<QDriveInfo::DriveType>();
-    qRegisterMetaType<QDriveInfo::Capabilities>();
-}
 
-void tst_QDriveInfo::constructor_data()
-{
-    QTest::addColumn<QString>("path");
-    QTest::addColumn<bool>("isValid");
-    QTest::addColumn<bool>("isReady");
-    QTest::addColumn<QString>("rootPath");
-    QTest::addColumn<QString>("device");
-    QTest::addColumn<QString>("fileSystemName");
-    QTest::addColumn<QString>("name");
-    QTest::addColumn<QDriveInfo::DriveType>("type");
-    QTest::addColumn<QDriveInfo::Capabilities>("capabilities");
-
-    QTest::newRow("invalid")
-        << "" << false << false << "" << "" << "" << "" << QDriveInfo::InvalidDrive << QDriveInfo::Capabilities(0);
+    // invalid
+    DriveInfo invalidDrive = { "", "", "", "", QDriveInfo::InvalidDrive, 0, false, false, false };
+    testDrives.insert("invalid", invalidDrive);
 
 #if defined(Q_OS_WIN)
-    QString guid_for_d("\\\\?\\Volume{e9204280-a0d1-11df-93bf-806d6172696f}\\");
-    QString guid_for_i("\\\\?\\Volume{2c15bbb2-bf3c-11df-8730-0004619ece73}\\");
     QDriveInfo::Capabilities caps_for_ntfs = (QDriveInfo::AccessControlListsSupport | QDriveInfo::HardlinksSupport);
     QDriveInfo::Capabilities caps_for_udf = QDriveInfo::ReadOnlyVolume;
 
-    QTest::newRow("invalid_P:")
-        << "P:" << false << false << "P:/" << "" << "" << "" << QDriveInfo::InvalidDrive << QDriveInfo::Capabilities(0);
-    QTest::newRow("invalid_PP:/")
-        << "PP:/" << false << false << "" << "" << "" << "" << QDriveInfo::InvalidDrive << QDriveInfo::Capabilities(0);
+    // local drives
+    DriveInfo localDriveC = { "C:/", "\\\\?\\Volume{ddf26dc2-90e4-11df-acb1-806d6172696f}\\", "NTFS", "",
+                              QDriveInfo::InternalDrive, caps_for_ntfs, true, true, true };
+    testDrives.insert("C", localDriveC);
+    DriveInfo localDriveD = { "D:/", "\\\\?\\Volume{e9204280-a0d1-11df-93bf-806d6172696f}\\", "NTFS", "old win",
+                              QDriveInfo::InternalDrive, caps_for_ntfs, true, true, false };
+    testDrives.insert("D", localDriveD);
+    DriveInfo localDriveE = { "E:/", "\\\\?\\Volume{e920427e-a0d1-11df-93bf-806d6172696f}\\", "NTFS", "",
+                              QDriveInfo::InternalDrive, caps_for_ntfs, true, true, false };
+    testDrives.insert("E", localDriveE);
+    DriveInfo localDriveF = { "F:/", "\\\\?\\Volume{e920427f-a0d1-11df-93bf-806d6172696f}\\", "NTFS", "",
+                              QDriveInfo::InternalDrive, caps_for_ntfs, true, true, false };
+    testDrives.insert("F", localDriveF);
+    DriveInfo localDriveH = { "H:/", "\\\\?\\Volume{ddf26dc3-90e4-11df-acb1-806d6172696f}\\", "NTFS", "",
+                              QDriveInfo::InternalDrive, caps_for_ntfs, true, true, false };
+    testDrives.insert("H", localDriveH);
 
-    QTest::newRow("d:\\")
-        << "d:\\" << true << true << "d:/" << guid_for_d << "NTFS" << "old win" << QDriveInfo::InternalDrive << caps_for_ntfs;
-    QTest::newRow("D:\\windows\\")
-        << "D:\\windows\\" << true << true << "D:/" << guid_for_d << "NTFS" << "old win" << QDriveInfo::InternalDrive << caps_for_ntfs;
-    QTest::newRow("D:\\windows\\..")
-        << "D:\\windows\\.." << true << true << "D:/" << guid_for_d << "NTFS" << "old win" << QDriveInfo::InternalDrive << caps_for_ntfs;
+    // cdroms
+    DriveInfo cdDriveI = { "I:/", "\\\\?\\Volume{2c15bbb2-bf3c-11df-8730-0004619ece73}\\", "UDF", "GRMCULF(X)RER(O)_EN-RU_DVD",
+                              QDriveInfo::CdromDrive, caps_for_udf, true, true, false };
+    testDrives.insert("I", cdDriveI);
 
-    QTest::newRow("I:\\")
-        << "I:\\" << true << true << "I:/" << guid_for_i << "UDF" << "GRMCULF(X)RER(O)_EN-RU_DVD" << QDriveInfo::CdromDrive << caps_for_udf;
-
-    QTest::newRow("net share")
-        << "//192.168.7.55/Users/" << true << true << "//192.168.7.55/Users/" << "" << "NTFS" << "" << QDriveInfo::RemoteDrive << caps_for_ntfs;
+    // flash drives
+    DriveInfo localDriveL = { "L:/", "\\\\?\\Volume{6df0fd95-90d8-11df-977e-0004614df815}\\", "NTFS", "",
+                              QDriveInfo::RemovableDrive, caps_for_ntfs, true, true, false };
+    testDrives.insert("L", localDriveL);
 #elif defined(Q_OS_MAC)
     QDriveInfo::Capabilities caps_for_hfs = (QDriveInfo::AccessControlListsSupport | QDriveInfo::HardlinksSupport);
 
-    QTest::newRow("/")
-        << "/Volumes/Macintosh HD" << true << true << "/" << "/dev/disk0s2" << "hfs" << "Macintosh HD" << QDriveInfo::InvalidDrive << caps_for_hfs;
-    QTest::newRow("/Volumes/Macintosh HD")
-        << "/Volumes/Macintosh HD" << true << true << "/" << "/dev/disk0s2" << "hfs" << "Macintosh HD" << QDriveInfo::InvalidDrive << caps_for_hfs;
-    QTest::newRow("/Volumes/Data HD")
-        << "/Volumes/Data HD" << true << true << "/" << "/dev/disk0s2" << "hfs" << "Macintosh HD" << QDriveInfo::InvalidDrive << caps_for_hfs;
+    // local drives
+    DriveInfo rootDrive = { "/", "/dev/disk0s2", "hfs", "Macintosh HD",
+                            QDriveInfo::InternalDrive, caps_for_hfs, true, true, true };
+    testDrives.insert("root", rootDrive);
 
+    // net shares
     // ###
-    QTest::newRow("/net")
-        << "/net" << true << true << "" << "" << "" << "" << QDriveInfo::RemoteDrive << QDriveInfo::Capabilities(0);
+    DriveInfo netShare1 = { "/net", "", "", "",
+                            QDriveInfo::RemoteDrive, 0, false, false, false };
+    testDrives.insert("share1", netShare1);
 #elif defined(Q_OS_LINUX)
+    // ###
+#elif defined(Q_OS_SYMBIAN)
+    // ###
+#else
     // ###
 #endif
 }
 
-void tst_QDriveInfo::constructor()
+void tst_QDriveInfo::common_data()
 {
-    QFETCH(QString, path);
-    QFETCH(bool, isValid);
-    QFETCH(bool, isReady);
-    QFETCH(QString, rootPath);
-    QFETCH(QString, device);
-    QFETCH(QString, fileSystemName);
-    QFETCH(QString, name);
-    QFETCH(QDriveInfo::DriveType, type);
-    QFETCH(QDriveInfo::Capabilities, capabilities);
+    QTest::addColumn<QString>("path");
+    QTest::addColumn<DriveInfo>("driveInfo");
 
-    QDriveInfo info(path);
-    QCOMPARE(info.isValid(), isValid);
-    QCOMPARE(info.isReady(), isReady);
-    QCOMPARE(info.rootPath(), rootPath);
-
-    QCOMPARE(QString(info.device()), device);
-    QCOMPARE(QString(info.fileSystemName()), fileSystemName);
-    QCOMPARE(info.name(), name);
-
-    QVERIFY(info.bytesFree() <= info.bytesTotal());
-    QVERIFY(info.bytesAvailable() <= info.bytesTotal());
-    QVERIFY(info.bytesAvailable() <= info.bytesFree());
-
-    QCOMPARE(info.type(), type);
-    QCOMPARE(info.capabilities(), capabilities);
-}
-
-void tst_QDriveInfo::setRootPath_data()
-{
-    // same test
-    constructor_data();
-}
-
-void tst_QDriveInfo::setRootPath()
-{
-    QFETCH(QString, path);
-    QFETCH(bool, isValid);
-    QFETCH(bool, isReady);
-    QFETCH(QString, rootPath);
-    QFETCH(QString, device);
-    QFETCH(QString, fileSystemName);
-    QFETCH(QString, name);
-    QFETCH(QDriveInfo::DriveType, type);
-    QFETCH(QDriveInfo::Capabilities, capabilities);
-
-    QDriveInfo info;
-    QVERIFY(!info.isValid());
-    QVERIFY(!info.isReady());
-    QCOMPARE(info.rootPath(), QString());
-
-    info.setRootPath(path);
-    QCOMPARE(info.isValid(), isValid);
-    QCOMPARE(info.isReady(), isReady);
-    QCOMPARE(info.rootPath(), rootPath);
-
-    QCOMPARE(QString(info.device()), device);
-    QCOMPARE(QString(info.fileSystemName()), fileSystemName);
-    QCOMPARE(info.name(), name);
-
-    QVERIFY(info.bytesFree() <= info.bytesTotal());
-    QVERIFY(info.bytesAvailable() <= info.bytesTotal());
-    QVERIFY(info.bytesAvailable() <= info.bytesFree());
-
-    QCOMPARE(info.type(), type);
-    QCOMPARE(info.capabilities(), capabilities);
-
-    info.setRootPath("***" + path);
-
-    QVERIFY(!info.isValid());
-    QVERIFY(!info.isReady());
-    QCOMPARE(info.rootPath(), QString());
-
-    info.setRootPath(path);
-
-    QCOMPARE(info.isValid(), isValid);
-    QCOMPARE(info.isReady(), isReady);
-    QCOMPARE(info.rootPath(), rootPath);
-}
-
-void tst_QDriveInfo::refresh_data()
-{
-    // same test
-    constructor_data();
-}
-
-void tst_QDriveInfo::refresh()
-{
-    QFETCH(QString, path);
-    QFETCH(bool, isValid);
-    QFETCH(bool, isReady);
-    QFETCH(QString, rootPath);
-    QFETCH(QString, device);
-    QFETCH(QString, fileSystemName);
-    QFETCH(QString, name);
-    QFETCH(QDriveInfo::DriveType, type);
-    QFETCH(QDriveInfo::Capabilities, capabilities);
-
-    QDriveInfo info("***" + path);
-    QVERIFY(!info.isValid());
-    QVERIFY(!info.isReady());
-    QCOMPARE(info.rootPath(), QString());
-
-    info.refresh();
-    QVERIFY(!info.isValid());
-    QVERIFY(!info.isReady());
-    QCOMPARE(info.rootPath(), QString());
-
-    info.setRootPath(path);
-
-    QCOMPARE(info.isValid(), isValid);
-    QCOMPARE(info.isReady(), isReady);
-    QCOMPARE(info.rootPath(), rootPath);
-
-    QCOMPARE(QString(info.device()), device);
-    QCOMPARE(QString(info.fileSystemName()), fileSystemName);
-    QCOMPARE(info.name(), name);
-
-    QVERIFY(info.bytesFree() <= info.bytesTotal());
-    QVERIFY(info.bytesAvailable() <= info.bytesTotal());
-    QVERIFY(info.bytesAvailable() <= info.bytesFree());
-
-    QCOMPARE(info.type(), type);
-    QCOMPARE(info.capabilities(), capabilities);
-}
-
-void tst_QDriveInfo::drives_data()
-{
-    QTest::addColumn<QStringList>("drives");
-    QTest::addColumn<QDriveInfo::DriveType>("type");
-
-    QStringList localDrives;
-    QStringList cdromDrives;
-    QStringList removableDrives;
-    QStringList remoteDrives;
+    QTest::newRow("invalid") << "" << testDrives["invalid"];
+    QTest::newRow("invalid PP:/") << "" << testDrives["invalid"];
 
 #if defined(Q_OS_WIN)
-    localDrives << "C:/" << "D:/" << "E:/" << "F:/" << "H:/";
-    cdromDrives << "I:/";
-    removableDrives << "L:/";
+    QTest::newRow("c:\\") << "c:\\" << testDrives["C"];
+    QTest::newRow("C:\\windows\\") << "C:\\windows\\" << testDrives["C"];
+    QTest::newRow("C:\\windows\\..") << "C:\\windows\\.." << testDrives["C"];
+    QTest::newRow("d:\\") << "d:\\" << testDrives["D"];
+    QTest::newRow("e:\\") << "e:\\" << testDrives["E"];
+    QTest::newRow("f:\\") << "f:\\" << testDrives["F"];
+    QTest::newRow("h:\\") << "h:\\" << testDrives["H"];
+
+    QTest::newRow("I:\\") << "I:\\" << testDrives["I"];
+
+    QTest::newRow("L:\\") << "L:\\" << testDrives["L"];
+
+    QTest::newRow("net share") << "//192.168.7.55/Users/" << testDrives["invalid"];
 #elif defined(Q_OS_MAC)
-    localDrives << "/" << "/Volumes/Data HD" << "/home";
-    remoteDrives << "/net";
+    QTest::newRow("/") << "/" << testDrives["root"];
+    QTest::newRow("/Volumes/Macintosh HD") << "/Volumes/Macintosh HD" << testDrives["root"];
+    QTest::newRow("/Volumes/Data HD") << "/Volumes/Data HD" << testDrives["root"];
+
+    QTest::newRow("/net") << "/net" << testDrives["share1"];
 #elif defined(Q_OS_LINUX)
-
+    // ###
+#elif defined(Q_OS_SYMBIAN)
+    // ###
+#else
+    // ###
 #endif
-
-    QTest::newRow("local") << localDrives << QDriveInfo::InternalDrive;
-    QTest::newRow("cdrom") << cdromDrives << QDriveInfo::CdromDrive;
-    QTest::newRow("removable") << removableDrives << QDriveInfo::RemovableDrive;
-    QTest::newRow("remote") << remoteDrives << QDriveInfo::RemoteDrive;
-}
-
-void tst_QDriveInfo::drives()
-{
-    QFETCH(QStringList, drives);
-    QFETCH(QDriveInfo::DriveType, type);
-
-    foreach (const QDriveInfo &info, QDriveInfo::drives()) {
-        QVERIFY(info.isValid());
-        if (info.type() == type) {
-            QVERIFY(drives.removeAll(info.rootPath()) == 1);
-            if (type != QDriveInfo::CdromDrive) {
-                QVERIFY(info.isReady());
-                QVERIFY(!(info.capabilities() & QDriveInfo::ReadOnlyVolume));
-            } else {
-                QCOMPARE(info.capabilities() == QDriveInfo::ReadOnlyVolume, info.isReady());
-            }
-        }
-    }
-    QVERIFY(drives.isEmpty());
 }
 
 void tst_QDriveInfo::equals_data()
@@ -287,6 +175,160 @@ void tst_QDriveInfo::equals()
 #if 0
     QVERIFY(info5 != info); // ### QVERIFY(info5 == info);
 #endif
+}
+
+void tst_QDriveInfo::rootDrive()
+{
+    QDriveInfo rootDrive = QDriveInfo::rootDrive();
+    QVERIFY(rootDrive.isValid());
+    QVERIFY(rootDrive.isReady());
+    QVERIFY(rootDrive.isRoot());
+}
+
+void tst_QDriveInfo::constructor_data()
+{
+    common_data();
+}
+
+void tst_QDriveInfo::constructor()
+{
+    QFETCH(QString, path);
+    QFETCH(DriveInfo, driveInfo);
+
+    QDriveInfo info(path);
+    QCOMPARE(info.isValid(), driveInfo.isValid);
+    QCOMPARE(info.isReady(), driveInfo.isReady);
+    QCOMPARE(info.isRoot(), driveInfo.isRoot);
+    QCOMPARE(info.rootPath(), driveInfo.rootPath);
+
+    QCOMPARE(QLatin1String(info.device()), QLatin1String(driveInfo.device));
+    QCOMPARE(QLatin1String(info.fileSystemName()), QLatin1String(driveInfo.fileSystemName));
+    QCOMPARE(info.name(), driveInfo.name);
+
+    QCOMPARE(info.type(), driveInfo.type);
+    QCOMPARE((uint)info.capabilities(), driveInfo.capabilities);
+
+    QVERIFY(info.bytesFree() <= info.bytesTotal());
+    QVERIFY(info.bytesAvailable() <= info.bytesTotal());
+}
+
+void tst_QDriveInfo::setRootPath_data()
+{
+    common_data();
+}
+
+void tst_QDriveInfo::setRootPath()
+{
+    QFETCH(QString, path);
+    QFETCH(DriveInfo, driveInfo);
+
+    QDriveInfo info;
+    QVERIFY(!info.isValid());
+    QVERIFY(!info.isReady());
+    QVERIFY(!info.isRoot());
+    QCOMPARE(info.rootPath(), QString());
+
+    info.setRootPath(path);
+    QCOMPARE(info.isValid(), driveInfo.isValid);
+    QCOMPARE(info.isReady(), driveInfo.isReady);
+    QCOMPARE(info.isRoot(), driveInfo.isRoot);
+    QCOMPARE(info.rootPath(), driveInfo.rootPath);
+
+    QCOMPARE(QLatin1String(info.device()), QLatin1String(driveInfo.device));
+    QCOMPARE(QLatin1String(info.fileSystemName()), QLatin1String(driveInfo.fileSystemName));
+    QCOMPARE(info.name(), driveInfo.name);
+
+    QCOMPARE(info.type(), driveInfo.type);
+    QCOMPARE((uint)info.capabilities(), driveInfo.capabilities);
+
+    QVERIFY(info.bytesFree() <= info.bytesTotal());
+    QVERIFY(info.bytesAvailable() <= info.bytesTotal());
+
+    info.setRootPath("***" + path); // invalid path
+    QVERIFY(!info.isValid());
+    QVERIFY(!info.isReady());
+    QVERIFY(!info.isRoot());
+    QCOMPARE(info.rootPath(), QString());
+
+    info.setRootPath(path); // and again
+    QCOMPARE(info.isValid(), driveInfo.isValid);
+    QCOMPARE(info.isReady(), driveInfo.isReady);
+    QCOMPARE(info.isRoot(), driveInfo.isRoot);
+    QCOMPARE(info.rootPath(), driveInfo.rootPath);
+}
+
+void tst_QDriveInfo::refresh_data()
+{
+    common_data();
+}
+
+void tst_QDriveInfo::refresh()
+{
+    QFETCH(QString, path);
+    QFETCH(DriveInfo, driveInfo);
+
+    QDriveInfo info("***" + path); // invalid path
+    QVERIFY(!info.isValid());
+    QVERIFY(!info.isReady());
+    QVERIFY(!info.isRoot());
+    QCOMPARE(info.rootPath(), QString());
+
+    info.refresh();
+    QVERIFY(!info.isValid());
+    QVERIFY(!info.isReady());
+    QVERIFY(!info.isRoot());
+    QCOMPARE(info.rootPath(), QString());
+
+    info.setRootPath(path);
+    QCOMPARE(info.isValid(), driveInfo.isValid);
+    QCOMPARE(info.isReady(), driveInfo.isReady);
+    QCOMPARE(info.isRoot(), driveInfo.isRoot);
+    QCOMPARE(info.rootPath(), driveInfo.rootPath);
+
+    QCOMPARE(QLatin1String(info.device()), QLatin1String(driveInfo.device));
+    QCOMPARE(QLatin1String(info.fileSystemName()), QLatin1String(driveInfo.fileSystemName));
+    QCOMPARE(info.name(), driveInfo.name);
+
+    QCOMPARE(info.type(), driveInfo.type);
+    QCOMPARE((uint)info.capabilities(), driveInfo.capabilities);
+
+    QVERIFY(info.bytesFree() <= info.bytesTotal());
+    QVERIFY(info.bytesAvailable() <= info.bytesTotal());
+}
+
+void tst_QDriveInfo::drives_data()
+{
+    QTest::addColumn<QDriveInfo::DriveType>("type");
+
+    QTest::newRow("local") << QDriveInfo::InternalDrive;
+    QTest::newRow("cdrom") << QDriveInfo::CdromDrive;
+    QTest::newRow("removable") << QDriveInfo::RemovableDrive;
+    QTest::newRow("remote") << QDriveInfo::RemoteDrive;
+}
+
+void tst_QDriveInfo::drives()
+{
+    QFETCH(QDriveInfo::DriveType, type);
+
+    QStringList drives;
+    foreach (const DriveInfo &info, testDrives.values()) {
+        if (info.type == type)
+            drives << info.rootPath;
+    }
+
+    foreach (const QDriveInfo &info, QDriveInfo::drives()) {
+        QVERIFY(info.isValid());
+        if (info.type() == type) {
+            QVERIFY(drives.removeAll(info.rootPath()) == 1);
+            if (type != QDriveInfo::CdromDrive) {
+                QVERIFY(info.isReady());
+                QVERIFY(!(info.capabilities() & QDriveInfo::ReadOnlyVolume));
+            } else {
+                QCOMPARE(info.isReadOnly(), info.isReady());
+            }
+        }
+    }
+    QVERIFY(drives.isEmpty());
 }
 
 QTEST_APPLESS_MAIN(tst_QDriveInfo)
