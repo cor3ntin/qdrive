@@ -45,8 +45,6 @@ static inline QByteArray getDevice(const QString &rootPath)
 static inline QDriveInfo::DriveType determineType(const QString &rootPath)
 {
 #if !defined(Q_OS_WINCE)
-    UINT oldmode = ::SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
-
     UINT result = ::GetDriveType((wchar_t *)rootPath.utf16());
     switch (result) {
     case DRIVE_REMOVABLE:
@@ -70,8 +68,6 @@ static inline QDriveInfo::DriveType determineType(const QString &rootPath)
     default:
         break;
     };
-
-    ::SetErrorMode(oldmode);
 #else
     Q_UNUSED(rootPath)
 #endif
