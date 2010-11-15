@@ -5,7 +5,6 @@
 #include <IOKit/storage/IODVDMedia.h>
 
 #include <sys/mount.h>
-//#include <sys/statfs.h>
 
 #if defined(QT_LARGEFILE_SUPPORT)
 #  define QT_STATFSBUF struct statfs64
@@ -61,10 +60,8 @@ static inline QDriveInfo::DriveType determineType(const QByteArray &device)
 {
     QDriveInfo::DriveType drivetype = QDriveInfo::InvalidDrive;
 
-    DADiskRef diskRef;
     DASessionRef sessionRef;
-    CFBooleanRef boolRef;
-    CFBooleanRef boolRef2;
+    DADiskRef diskRef;
     CFDictionaryRef descriptionDictionary;
 
     sessionRef = DASessionCreate(NULL);
@@ -84,12 +81,18 @@ static inline QDriveInfo::DriveType determineType(const QByteArray &device)
         return QDriveInfo::RemoteDrive;
     }
 
+    CFBooleanRef boolRef;
     boolRef = (CFBooleanRef)CFDictionaryGetValue(descriptionDictionary, kDADiskDescriptionMediaRemovableKey);
-    if (boolRef)
+    if (boolRef) {
         drivetype = CFBooleanGetValue(boolRef) ? QDriveInfo::RemovableDrive : QDriveInfo::InternalDrive;
-    boolRef2 = (CFBooleanRef)CFDictionaryGetValue(descriptionDictionary, kDADiskDescriptionVolumeNetworkKey);
-    if (boolRef2 && CFBooleanGetValue(boolRef2))
-        drivetype = QDriveInfo::RemoteDrive;
+        CFRelease(boolRef);
+    }
+    boolRef = (CFBooleanRef)CFDictionaryGetValue(descriptionDictionary, kDADiskDescriptionVolumeNetworkKey);
+    if (boolRef) {
+        if (CFBooleanGetValue(boolRef))
+            drivetype = QDriveInfo::RemoteDrive;
+        CFRelease(boolRef);
+    }
 
     DADiskRef wholeDisk;
     wholeDisk = DADiskCopyWholeDisk(diskRef);
@@ -105,10 +108,9 @@ static inline QDriveInfo::DriveType determineType(const QByteArray &device)
         }
         CFRelease(wholeDisk);
     }
-    CFRelease(diskRef);
+
     CFRelease(descriptionDictionary);
-    CFRelease(boolRef);
-    CFRelease(boolRef2);
+    CFRelease(diskRef);
     CFRelease(sessionRef);
 
     return drivetype;
