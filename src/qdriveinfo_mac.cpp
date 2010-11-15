@@ -85,13 +85,13 @@ static inline QDriveInfo::DriveType determineType(const QByteArray &device)
     boolRef = (CFBooleanRef)CFDictionaryGetValue(descriptionDictionary, kDADiskDescriptionMediaRemovableKey);
     if (boolRef) {
         drivetype = CFBooleanGetValue(boolRef) ? QDriveInfo::RemovableDrive : QDriveInfo::InternalDrive;
-        CFRelease(boolRef);
+        CFRelease(boolRef); // maybe we don't need it?
     }
     boolRef = (CFBooleanRef)CFDictionaryGetValue(descriptionDictionary, kDADiskDescriptionVolumeNetworkKey);
     if (boolRef) {
         if (CFBooleanGetValue(boolRef))
             drivetype = QDriveInfo::RemoteDrive;
-        CFRelease(boolRef);
+        CFRelease(boolRef); // maybe we don't need it?
     }
 
     DADiskRef wholeDisk;
@@ -189,8 +189,9 @@ void QDriveInfoPrivate::getVolumeInfo()
         // ### check if an alternative way exists
         QByteArray fsName = data->fileSystemName.toLower();
         if (!fsName.startsWith("fat") && !fsName.startsWith("smb")
-            && fsName != "hfs" && fsName != "hpfs" && fsName != "nfs" && fsName != "cifs") {
-            if (!fsName.startsWith("reiser") && !fsName.contains("9660") && !fsName.contains("joliet"))
+            && fsName != "hpfs" && fsName != "nfs" && fsName != "cifs") {
+            if (!fsName.startsWith("reiser") && !fsName.contains("9660") && !fsName.contains("joliet")
+                &&!fsName.startsWith("autofs"))
                 data->capabilities |= QDriveInfo::AccessControlListsSupport;
             data->capabilities |= QDriveInfo::HardlinksSupport;
         }

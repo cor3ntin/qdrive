@@ -92,18 +92,30 @@ void tst_QDriveInfo::initTestCase()
                               QDriveInfo::RemovableDrive, caps_for_ntfs, true, true, false };
     testDrives.insert("L", localDriveL);
 #elif defined(Q_OS_MAC)
-    QDriveInfo::Capabilities caps_for_hfs = (QDriveInfo::AccessControlListsSupport | QDriveInfo::HardlinksSupport);
+    QDriveInfo::Capabilities caps_for_hfs = (QDriveInfo::CaseSensitiveFileNames |
+                                             QDriveInfo::AccessControlListsSupport | QDriveInfo::HardlinksSupport |
+                                             QDriveInfo::SymlinksSupport);
+    QDriveInfo::Capabilities caps_for_autofs = (QDriveInfo::CaseSensitiveFileNames | QDriveInfo::HardlinksSupport);
 
     // local drives
     DriveInfo rootDrive = { "/", "/dev/disk0s2", "hfs", "Macintosh HD",
                             QDriveInfo::InternalDrive, caps_for_hfs, true, true, true };
     testDrives.insert("root", rootDrive);
 
+    DriveInfo dataDrive = { "/Volumes/Data HD", "/dev/disk0s3", "hfs", "Data HD",
+                            QDriveInfo::InternalDrive, caps_for_hfs, true, true, false };
+    testDrives.insert("data", dataDrive);
+
     // net shares
     // ###
-    DriveInfo netShare1 = { "/net", "", "", "",
-                            QDriveInfo::RemoteDrive, 0, false, false, false };
+    DriveInfo netShare1 = { "/net", "map -hosts", "autofs", "net",
+                            QDriveInfo::RemoteDrive, caps_for_autofs, true, true, false };
     testDrives.insert("share1", netShare1);
+
+    DriveInfo netShare2 = { "/home", "map auto_home", "autofs", "home",
+                            QDriveInfo::RemoteDrive, caps_for_autofs, true, true, false };
+    testDrives.insert("share2", netShare2);
+
 #elif defined(Q_OS_LINUX)
     QDriveInfo::Capabilities caps_for_btrfs = (QDriveInfo::CaseSensitiveFileNames | QDriveInfo::AccessControlListsSupport |
                                                QDriveInfo::HardlinksSupport | QDriveInfo::SymlinksSupport);
@@ -149,9 +161,10 @@ void tst_QDriveInfo::common_data()
 #elif defined(Q_OS_MAC)
     QTest::newRow("/") << "/" << testDrives["root"];
     QTest::newRow("/Volumes/Macintosh HD") << "/Volumes/Macintosh HD" << testDrives["root"];
-    QTest::newRow("/Volumes/Data HD") << "/Volumes/Data HD" << testDrives["root"];
+    QTest::newRow("/Volumes/Data HD") << "/Volumes/Data HD" << testDrives["data"];
 
     QTest::newRow("/net") << "/net" << testDrives["share1"];
+    QTest::newRow("/home") << "/home" << testDrives["share2"];
 #elif defined(Q_OS_LINUX)
     // ###
 #elif defined(Q_OS_SYMBIAN)
