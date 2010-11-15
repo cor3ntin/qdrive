@@ -157,7 +157,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
 void QDriveInfoPrivate::getVolumeInfo()
 {
     QT_STATFSBUF statfs_buf;
-    int result = ::QT_STATFS(QFile::encodeName(data->rootPath).constData(), &statfs_buf);
+    int result = QT_STATFS(QFile::encodeName(data->rootPath).constData(), &statfs_buf);
     if (result == 0) {
         data->valid = true;
         data->ready = true;
