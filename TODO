@@ -6,11 +6,11 @@ todo:
 todo (?):
 * drop netshares support
 * split removables drivetype to device types
-* root drive API
 * controller capabilities API
 * add/eject/remove drives via controller's API
 
 done:
+* root drive API
 * pre-cache data obtained in drives()
 * operator ==
 * capabilities API
