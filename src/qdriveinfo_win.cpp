@@ -94,7 +94,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
     uint bitmask = 0;
 
     bitmask = CachedFileSystemNameFlag | CachedNameFlag |
-              CachedCapabilitiesFlag | CachedReadyFlag | CachedValidFlag;
+              CachedReadOnlyFlag | CachedReadyFlag | CachedValidFlag;
     if (requiredFlags & bitmask) {
         getVolumeInfo();
         if (data->valid && !data->ready)
@@ -105,15 +105,15 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
             return;
     }
 
-    bitmask = CachedBytesTotalFlag | CachedBytesFreeFlag | CachedBytesAvailableFlag;
-    if (requiredFlags & bitmask) {
-        getDiskFreeSpace();
-        data->setCachedFlag(bitmask);
-    }
-
     bitmask = CachedDeviceFlag;
     if (requiredFlags & bitmask) {
         data->device = getDevice(data->rootPath);
+        data->setCachedFlag(bitmask);
+    }
+
+    bitmask = CachedBytesTotalFlag | CachedBytesFreeFlag | CachedBytesAvailableFlag;
+    if (requiredFlags & bitmask) {
+        getDiskFreeSpace();
         data->setCachedFlag(bitmask);
     }
 
@@ -147,14 +147,7 @@ void QDriveInfoPrivate::getVolumeInfo()
         data->fileSystemName = QString::fromWCharArray(fileSystemNameBuf).toLatin1();
         data->name = QString::fromWCharArray(nameBuf);
 
-        if (fileSystemFlags & FILE_PERSISTENT_ACLS)
-            data->capabilities |= QDriveInfo::AccessControlListsSupport;
-        if (fileSystemFlags & FILE_READ_ONLY_VOLUME)
-            data->capabilities |= QDriveInfo::ReadOnlyVolume;
-        if ((fileSystemFlags & FILE_SUPPORTS_HARD_LINKS) || data->fileSystemName.toUpper() == "NTFS")
-            data->capabilities |= QDriveInfo::HardlinksSupport;
-        if ((fileSystemFlags & FILE_SUPPORTS_REPARSE_POINTS) && QSysInfo::WindowsVersion >= QSysInfo::WV_VISTA)
-            data->capabilities |= QDriveInfo::SymlinksSupport;
+        data->readOnly = (fileSystemFlags & FILE_READ_ONLY_VOLUME);
     }
 
     ::SetErrorMode(oldmode);

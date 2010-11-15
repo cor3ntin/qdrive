@@ -12,8 +12,8 @@ struct DriveInfo
     QString name;
 
     QDriveInfo::DriveType type;
-    uint capabilities;
 
+    bool isReadOnly;
     bool isReady;
     bool isValid;
     bool isRoot;
@@ -62,72 +62,64 @@ void tst_QDriveInfo::initTestCase()
     testDrives.insert("invalid", invalidDrive);
 
 #if defined(Q_OS_WIN)
-    QDriveInfo::Capabilities caps_for_ntfs = (QDriveInfo::AccessControlListsSupport | QDriveInfo::HardlinksSupport);
-    QDriveInfo::Capabilities caps_for_udf = QDriveInfo::ReadOnlyVolume;
-
     // local drives
     DriveInfo localDriveC = { "C:/", "\\\\?\\Volume{ddf26dc2-90e4-11df-acb1-806d6172696f}\\", "NTFS", "",
-                              QDriveInfo::InternalDrive, caps_for_ntfs, true, true, true };
+                              QDriveInfo::InternalDrive, false, true, true, true };
     testDrives.insert("C", localDriveC);
     DriveInfo localDriveD = { "D:/", "\\\\?\\Volume{e9204280-a0d1-11df-93bf-806d6172696f}\\", "NTFS", "old win",
-                              QDriveInfo::InternalDrive, caps_for_ntfs, true, true, false };
+                              QDriveInfo::InternalDrive, false, true, true, false };
     testDrives.insert("D", localDriveD);
     DriveInfo localDriveE = { "E:/", "\\\\?\\Volume{e920427e-a0d1-11df-93bf-806d6172696f}\\", "NTFS", "",
-                              QDriveInfo::InternalDrive, caps_for_ntfs, true, true, false };
+                              QDriveInfo::InternalDrive, false, true, true, false };
     testDrives.insert("E", localDriveE);
     DriveInfo localDriveF = { "F:/", "\\\\?\\Volume{e920427f-a0d1-11df-93bf-806d6172696f}\\", "NTFS", "",
-                              QDriveInfo::InternalDrive, caps_for_ntfs, true, true, false };
+                              QDriveInfo::InternalDrive, false, true, true, false };
     testDrives.insert("F", localDriveF);
     DriveInfo localDriveH = { "H:/", "\\\\?\\Volume{ddf26dc3-90e4-11df-acb1-806d6172696f}\\", "NTFS", "",
-                              QDriveInfo::InternalDrive, caps_for_ntfs, true, true, false };
+                              QDriveInfo::InternalDrive, false, true, true, false };
     testDrives.insert("H", localDriveH);
 
     // cdroms
     DriveInfo cdDriveI = { "I:/", "\\\\?\\Volume{2c15bbb2-bf3c-11df-8730-0004619ece73}\\", "UDF", "GRMCULF(X)RER(O)_EN-RU_DVD",
-                              QDriveInfo::CdromDrive, caps_for_udf, true, true, false };
+                              QDriveInfo::CdromDrive, true, true, true, false };
     testDrives.insert("I", cdDriveI);
 
     // flash drives
     DriveInfo localDriveL = { "L:/", "\\\\?\\Volume{6df0fd95-90d8-11df-977e-0004614df815}\\", "NTFS", "",
-                              QDriveInfo::RemovableDrive, caps_for_ntfs, true, true, false };
+                              QDriveInfo::RemovableDrive, false, true, true, false };
     testDrives.insert("L", localDriveL);
-#elif defined(Q_OS_MAC)
-    QDriveInfo::Capabilities caps_for_hfs = (QDriveInfo::CaseSensitiveFileNames |
-                                             QDriveInfo::AccessControlListsSupport | QDriveInfo::HardlinksSupport |
-                                             QDriveInfo::SymlinksSupport);
-    QDriveInfo::Capabilities caps_for_autofs = (QDriveInfo::CaseSensitiveFileNames | QDriveInfo::HardlinksSupport);
 
+    // net shares
+    DriveInfo netShareZ = { "Z:/", "", "NTFS", "",
+                            QDriveInfo::RemoteDrive, 0, true, true, false };
+    testDrives.insert("Z", netShareZ);
+#elif defined(Q_OS_MAC)
     // local drives
     DriveInfo rootDrive = { "/", "/dev/disk0s2", "hfs", "Macintosh HD",
-                            QDriveInfo::InternalDrive, caps_for_hfs, true, true, true };
+                            QDriveInfo::InternalDrive, false, true, true, true };
     testDrives.insert("root", rootDrive);
 
     DriveInfo dataDrive = { "/Volumes/Data HD", "/dev/disk0s3", "hfs", "Data HD",
-                            QDriveInfo::InternalDrive, caps_for_hfs, true, true, false };
+                            QDriveInfo::InternalDrive, false, true, true, false };
     testDrives.insert("data", dataDrive);
 
     // net shares
     // ###
     DriveInfo netShare1 = { "/net", "map -hosts", "autofs", "net",
-                            QDriveInfo::RemoteDrive, caps_for_autofs, true, true, false };
+                            QDriveInfo::RemoteDrive, false, true, true, false };
     testDrives.insert("share1", netShare1);
 
     DriveInfo netShare2 = { "/home", "map auto_home", "autofs", "home",
-                            QDriveInfo::RemoteDrive, caps_for_autofs, true, true, false };
+                            QDriveInfo::RemoteDrive, false, true, true, false };
     testDrives.insert("share2", netShare2);
 
 #elif defined(Q_OS_LINUX)
-    QDriveInfo::Capabilities caps_for_btrfs = (QDriveInfo::CaseSensitiveFileNames | QDriveInfo::AccessControlListsSupport |
-                                               QDriveInfo::HardlinksSupport | QDriveInfo::SymlinksSupport);
-    QDriveInfo::Capabilities caps_for_ext3 = (QDriveInfo::CaseSensitiveFileNames | QDriveInfo::AccessControlListsSupport |
-                                              QDriveInfo::HardlinksSupport | QDriveInfo::SymlinksSupport);
-
     // local drives
     DriveInfo rootDrive = { "/", "/dev/sda2", "btrfs", "",
-                            QDriveInfo::InternalDrive, caps_for_btrfs, true, true, true };
+                            QDriveInfo::InternalDrive, false, true, true, true };
     testDrives.insert("sda2", rootDrive);
     DriveInfo bootDrive = { "/boot", "/dev/sda1", "ext3", "",
-                            QDriveInfo::InternalDrive, caps_for_ext3, true, true, false };
+                            QDriveInfo::InternalDrive, false, true, true, false };
     testDrives.insert("sda1", bootDrive);
 #elif defined(Q_OS_SYMBIAN)
     // ###
@@ -230,7 +222,7 @@ void tst_QDriveInfo::constructor()
     QCOMPARE(info.name(), driveInfo.name);
 
     QCOMPARE(info.type(), driveInfo.type);
-    QCOMPARE((uint)info.capabilities(), driveInfo.capabilities);
+    QCOMPARE(info.isReadOnly(), driveInfo.isReadOnly);
 
     QVERIFY(info.bytesFree() <= info.bytesTotal());
     QVERIFY(info.bytesAvailable() <= info.bytesTotal());
@@ -263,7 +255,7 @@ void tst_QDriveInfo::setRootPath()
     QCOMPARE(info.name(), driveInfo.name);
 
     QCOMPARE(info.type(), driveInfo.type);
-    QCOMPARE((uint)info.capabilities(), driveInfo.capabilities);
+    QCOMPARE(info.isReadOnly(), driveInfo.isReadOnly);
 
     QVERIFY(info.bytesFree() <= info.bytesTotal());
     QVERIFY(info.bytesAvailable() <= info.bytesTotal());
@@ -314,7 +306,7 @@ void tst_QDriveInfo::refresh()
     QCOMPARE(info.name(), driveInfo.name);
 
     QCOMPARE(info.type(), driveInfo.type);
-    QCOMPARE((uint)info.capabilities(), driveInfo.capabilities);
+    QCOMPARE(info.isReadOnly(), driveInfo.isReadOnly);
 
     QVERIFY(info.bytesFree() <= info.bytesTotal());
     QVERIFY(info.bytesAvailable() <= info.bytesTotal());
@@ -346,7 +338,7 @@ void tst_QDriveInfo::drives()
             QVERIFY(drives.removeAll(info.rootPath()) == 1);
             if (type != QDriveInfo::CdromDrive) {
                 QVERIFY(info.isReady());
-                QVERIFY(!(info.capabilities() & QDriveInfo::ReadOnlyVolume));
+                QVERIFY(!info.isReadOnly());
             } else {
                 QCOMPARE(info.isReadOnly(), info.isReady());
             }

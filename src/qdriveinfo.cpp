@@ -44,25 +44,6 @@ QDriveInfoPrivate::QDriveInfoPrivate(QDriveInfoPrivate *other)
 */
 
 /*!
-    \enum QDriveInfo::Capability
-    Specifies the system capabilities of the drive or volume this QDriveInfo instance represents.
-    The possible values are:
-
-    \value CaseSensitiveFileNames     The specified volume supports case sensitivity for file names.
-                                      Some environments cannot create files whose names differ only by case even if
-                                      the file system was designed to support case sensitivity for file names.
-                                      For example, the NTFS file system itself supports case sensitivity for file names
-                                      but the Win32 environment subsystem does not for compatibility reasons,
-                                      but being mounted on Unix NTFS can have case-sensitivity.
-    \value AccessControlListsSupport  The specified volume preserves and enforces access control lists (ACL).
-                                      For example, the NTFS, XFS and BTRFS file systems preserves and enforces ACLs,
-                                      and the FATand UDF file system does not.
-    \value ReadOnlyVolume             The specified volume is read-only.
-    \value HardlinksSupport           The specified volume supports hard links.
-    \value SymlinksSupport            The specified volume supports symbolic links (aka soft links).
-*/
-
-/*!
     Constructs an empty QDriveInfo object.
 
     This object is not ready, invalid and all it's parameters are empty.
@@ -266,20 +247,21 @@ QString QDriveInfo::name() const
 }
 
 /*!
-    \fn bool QDriveInfo::isReadOnly() const
-
-    Returns true if current filesystem is protected for writing; false otherwise.
-
-    \sa capabilities()
-*/
-
-/*!
     \fn bool QDriveInfo::isRoot() const
 
     Returns true if this QDriveInfo represents a system root volume or drive; false otherwise.
 
     \sa rootDrive()
 */
+
+/*!
+    Returns true if the current filesystem is protected for writing; false otherwise.
+*/
+bool QDriveInfo::isReadOnly() const
+{
+    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedReadOnlyFlag);
+    return d_func()->data->readOnly;
+}
 
 /*!
     Returns true if current filesystem is ready to work; false otherwise.
@@ -316,15 +298,6 @@ QDriveInfo::DriveType QDriveInfo::type() const
 {
     const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedTypeFlag);
     return d_func()->data->type;
-}
-
-/*!
-    Returns the capabilities supported by the current drive.
-*/
-QDriveInfo::Capabilities QDriveInfo::capabilities() const
-{
-    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedCapabilitiesFlag);
-    return QDriveInfo::Capabilities(d_func()->data->capabilities);
 }
 
 /*!

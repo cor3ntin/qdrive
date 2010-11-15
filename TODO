@@ -13,4 +13,3 @@ done:
 * root drive API
 * pre-cache data obtained in drives()
 * operator ==
-* capabilities API

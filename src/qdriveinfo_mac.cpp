@@ -138,7 +138,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
 
     bitmask = CachedDeviceFlag | CachedFileSystemNameFlag |
               CachedBytesTotalFlag | CachedBytesFreeFlag | CachedBytesAvailableFlag |
-              CachedCapabilitiesFlag | CachedReadyFlag | CachedValidFlag;
+              CachedReadOnlyFlag | CachedReadyFlag | CachedValidFlag;
     if (requiredFlags & bitmask) {
         getVolumeInfo();
         data->setCachedFlag(bitmask);
@@ -169,30 +169,7 @@ void QDriveInfoPrivate::getVolumeInfo()
         data->bytesFree = statfs_buf.f_bfree * statfs_buf.f_bsize;
         data->bytesAvailable = statfs_buf.f_bavail * statfs_buf.f_bsize;
 
-        if (statfs_buf.f_flags & MNT_RDONLY)
-            data->capabilities |= QDriveInfo::ReadOnlyVolume;
-
-        FSRef ref;
-        FSPathMakeRef((UInt8*)QFile::encodeName(data->rootPath).constData(), &ref, 0);
-        FSCatalogInfo catalogInfo;
-        if (FSGetCatalogInfo(&ref, kFSCatInfoVolume, &catalogInfo, 0, 0, 0) == noErr) {
-            GetVolParmsInfoBuffer infoBuffer;
-            FSGetVolumeParms(catalogInfo.volume, &infoBuffer, sizeof(infoBuffer));
-            if (infoBuffer.vMExtendedAttributes & bIsCaseSensitive)
-                data->capabilities |= QDriveInfo::CaseSensitiveFileNames;
-            if (infoBuffer.vMExtendedAttributes & bSupportsSymbolicLinks)
-                data->capabilities |= QDriveInfo::SymlinksSupport;
-        }
-
-        // ### check if an alternative way exists
-        QByteArray fsName = data->fileSystemName.toLower();
-        if (!fsName.startsWith("fat") && !fsName.startsWith("smb")
-            && fsName != "hpfs" && fsName != "nfs" && fsName != "cifs") {
-            if (!fsName.startsWith("reiser") && !fsName.contains("9660") && !fsName.contains("joliet")
-                &&!fsName.startsWith("autofs"))
-                data->capabilities |= QDriveInfo::AccessControlListsSupport;
-            data->capabilities |= QDriveInfo::HardlinksSupport;
-        }
+        data->readOnly = (statfs_buf.f_flags & MNT_RDONLY);
     }
 }
 

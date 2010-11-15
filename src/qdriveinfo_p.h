@@ -23,7 +23,7 @@ public:
         CachedBytesFreeFlag = 0x020,
         CachedBytesAvailableFlag = 0x040,
         CachedTypeFlag = 0x100,
-        CachedCapabilitiesFlag = 0x200,
+        CachedReadOnlyFlag = 0x200,
         CachedReadyFlag = 0x400,
         CachedValidFlag = 0x800
     };
@@ -32,15 +32,15 @@ public:
     {
         Data() : QSharedData(),
             bytesTotal(0), bytesFree(0), bytesAvailable(0),
-            type(QDriveInfo::InvalidDrive), capabilities(0),
-            ready(false), valid(false),
+            type(QDriveInfo::InvalidDrive),
+            readOnly(false), ready(false), valid(false),
             cachedFlags(0)
         {}
         Data(const Data &other) : QSharedData(other),
             rootPath(other.rootPath),
             bytesTotal(0), bytesFree(0), bytesAvailable(0),
-            type(QDriveInfo::InvalidDrive), capabilities(0),
-            ready(false), valid(false),
+            type(QDriveInfo::InvalidDrive),
+            readOnly(false), ready(false), valid(false),
             cachedFlags(0)
         {}
 
@@ -55,7 +55,7 @@ public:
             bytesAvailable = 0;
 
             type = QDriveInfo::InvalidDrive;
-            capabilities = 0;
+            readOnly = false;
             ready = false;
             valid = false;
 
@@ -77,7 +77,7 @@ public:
         quint64 bytesAvailable;
 
         QDriveInfo::DriveType type;
-        uint capabilities;
+        bool readOnly;
         bool ready;
         bool valid;
 

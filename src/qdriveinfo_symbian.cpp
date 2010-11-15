@@ -42,7 +42,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
 
     uint bitmask = CachedFileSystemNameFlag | CachedNameFlag |
                    CachedBytesTotalFlag | CachedBytesFreeFlag | CachedBytesAvailableFlag |
-                   CachedTypeFlag | CachedCapabilitiesFlag |
+                   CachedTypeFlag | CachedReadOnlyFlag |
                    CachedReadyFlag | CachedValidFlag;
     if (requiredFlags & bitmask) {
         getVolumeInfo();
@@ -96,8 +96,7 @@ void QDriveInfoPrivate::getVolumeInfo()
             break;
         }
 
-        if (volumeInfo.iDrive.iMediaAtt & KMediaAttWriteProtected)
-            data->capabilities |= QDriveInfo::ReadOnlyVolume;
+        data->readOnly = (volumeInfo.iDrive.iMediaAtt & KMediaAttWriteProtected);
     }
 }
 

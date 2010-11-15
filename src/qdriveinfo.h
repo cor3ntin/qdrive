@@ -31,15 +31,6 @@ public:
         RamDrive
     };
 
-    enum Capability {
-        CaseSensitiveFileNames = 0x00000001,
-        AccessControlListsSupport = 0x00000002,
-        HardlinksSupport = 0x00000004,
-        SymlinksSupport = 0x00000008,
-        ReadOnlyVolume = 0x00000010
-    };
-    Q_DECLARE_FLAGS(Capabilities, Capability)
-
     QDriveInfo();
     explicit QDriveInfo(const QString &rootPath);
     QDriveInfo(const QDriveInfo &other);
@@ -61,14 +52,12 @@ public:
     quint64 bytesFree() const;
     quint64 bytesAvailable() const;
 
-    inline bool isReadOnly() const;
     inline bool isRoot() const;
+    bool isReadOnly() const;
     bool isReady() const;
     bool isValid() const;
 
     DriveType type() const;
-
-    Capabilities capabilities() const;
 
     void refresh();
 
@@ -85,12 +74,7 @@ private:
 inline bool QDriveInfo::operator!=(const QDriveInfo &other) const
 { return !(operator==(other)); }
 
-inline bool QDriveInfo::isReadOnly() const
-{ return (capabilities() & QDriveInfo::ReadOnlyVolume); }
-
 inline bool QDriveInfo::isRoot() const
 { return *this == QDriveInfo::rootDrive(); }
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(QDriveInfo::Capabilities)
 
 #endif // QDRIVEINFO_H

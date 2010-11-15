@@ -14,6 +14,8 @@ int main(int argc, char *argv[])
                 qDebug() << drive.rootPath();
                 if (drive.isRoot())
                     qDebug() << "   " << "isRoot:" << drive.isRoot();
+                if (drive.isReadOnly())
+                    qDebug() << "   " << "isReadOnly:" << drive.isReadOnly();
                 qDebug() << "   " << "name:" << drive.name();
                 qDebug() << "   " << "fileSystemName:" << drive.fileSystemName();
                 qDebug() << "   " << "device:" << drive.device();
@@ -45,17 +47,6 @@ int main(int argc, char *argv[])
                 default:
                     break;
                 }
-                qDebug() << "   " << "Capabilities:";
-                if (drive.capabilities() & QDriveInfo::CaseSensitiveFileNames)
-                    qDebug() << "      QDriveInfo::CaseSensitiveFileNames";
-                if (drive.capabilities() & QDriveInfo::AccessControlListsSupport)
-                    qDebug() << "      QDriveInfo::AccessControlListsSupport";
-                if (drive.capabilities() & QDriveInfo::HardlinksSupport)
-                    qDebug() << "      QDriveInfo::HardlinksSupport";
-                if (drive.capabilities() & QDriveInfo::SymlinksSupport)
-                    qDebug() << "      QDriveInfo::SymlinksSupport";
-                if (drive.capabilities() & QDriveInfo::ReadOnlyVolume)
-                    qDebug() << "      QDriveInfo::ReadOnlyVolume";
             } else {
                 qDebug() << "    " <<  drive.rootPath() << "is not ready";
             }

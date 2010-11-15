@@ -132,7 +132,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
     uint bitmask = 0;
 
     bitmask = CachedBytesTotalFlag | CachedBytesFreeFlag | CachedBytesAvailableFlag |
-              CachedCapabilitiesFlag | CachedReadyFlag | CachedValidFlag;
+              CachedReadOnlyFlag | CachedReadyFlag | CachedValidFlag;
     if (requiredFlags & bitmask) {
         getVolumeInfo();
         data->setCachedFlag(bitmask);
@@ -177,19 +177,7 @@ void QDriveInfoPrivate::getVolumeInfo()
         data->bytesFree = statfs_buf.f_bfree * statfs_buf.f_bsize;
         data->bytesAvailable = statfs_buf.f_bavail * statfs_buf.f_bsize;
 
-        if (statfs_buf.f_flag & ST_RDONLY)
-            data->capabilities |= QDriveInfo::ReadOnlyVolume;
-
-        // ### check if an alternative way exists
-        QByteArray fsName = data->fileSystemName.toLower();
-        if (!fsName.startsWith("fat") && !fsName.startsWith("smb")
-            && fsName != "hfs" && fsName != "hpfs" && fsName != "nfs" && fsName != "cifs") {
-            if (!fsName.startsWith("reiser") && !fsName.contains("9660") && !fsName.contains("joliet"))
-                data->capabilities |= QDriveInfo::AccessControlListsSupport;
-            data->capabilities |= QDriveInfo::CaseSensitiveFileNames;
-            data->capabilities |= QDriveInfo::HardlinksSupport;
-            data->capabilities |= QDriveInfo::SymlinksSupport;
-        }
+        data->readOnly = (statfs_buf.f_flag & ST_RDONLY);
     }
 }
 
