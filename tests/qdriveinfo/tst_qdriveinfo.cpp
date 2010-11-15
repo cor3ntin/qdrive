@@ -105,7 +105,18 @@ void tst_QDriveInfo::initTestCase()
                             QDriveInfo::RemoteDrive, 0, false, false, false };
     testDrives.insert("share1", netShare1);
 #elif defined(Q_OS_LINUX)
-    // ###
+    QDriveInfo::Capabilities caps_for_btrfs = (QDriveInfo::CaseSensitiveFileNames | QDriveInfo::AccessControlListsSupport |
+                                               QDriveInfo::HardlinksSupport | QDriveInfo::SymlinksSupport);
+    QDriveInfo::Capabilities caps_for_ext3 = (QDriveInfo::CaseSensitiveFileNames | QDriveInfo::AccessControlListsSupport |
+                                              QDriveInfo::HardlinksSupport | QDriveInfo::SymlinksSupport);
+
+    // local drives
+    DriveInfo rootDrive = { "/", "/dev/sda2", "btrfs", "",
+                            QDriveInfo::InternalDrive, caps_for_btrfs, true, true, true };
+    testDrives.insert("sda2", rootDrive);
+    DriveInfo bootDrive = { "/boot", "/dev/sda1", "ext3", "",
+                            QDriveInfo::InternalDrive, caps_for_ext3, true, true, false };
+    testDrives.insert("sda1", bootDrive);
 #elif defined(Q_OS_SYMBIAN)
     // ###
 #else
