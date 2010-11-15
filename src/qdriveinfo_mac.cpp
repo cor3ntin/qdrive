@@ -217,3 +217,8 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
 
     return drives;
 }
+
+QDriveInfo QDriveInfoPrivate::rootDrive()
+{
+    return QDriveInfo(QLatin1String("/"));
+}

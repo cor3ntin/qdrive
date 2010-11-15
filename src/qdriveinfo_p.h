@@ -89,6 +89,7 @@ public:
     void doStat(uint requiredFlags);
 
     static QList<QDriveInfo> drives();
+    static QDriveInfo rootDrive();
 
 protected:
     void getVolumeInfo();

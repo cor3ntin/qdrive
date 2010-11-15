@@ -62,6 +62,7 @@ public:
     quint64 bytesAvailable() const;
 
     inline bool isReadOnly() const;
+    inline bool isRoot() const;
     bool isReady() const;
     bool isValid() const;
 
@@ -72,6 +73,7 @@ public:
     void refresh();
 
     static QList<QDriveInfo> drives();
+    static QDriveInfo rootDrive();
 
 protected:
     QDriveInfoPrivate *d_ptr;
@@ -85,6 +87,9 @@ inline bool QDriveInfo::operator!=(const QDriveInfo &other) const
 
 inline bool QDriveInfo::isReadOnly() const
 { return (capabilities() & QDriveInfo::ReadOnlyVolume); }
+
+inline bool QDriveInfo::isRoot() const
+{ return *this == QDriveInfo::rootDrive(); }
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QDriveInfo::Capabilities)
 

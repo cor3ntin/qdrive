@@ -1,36 +1,35 @@
 #include "qdriveinfo_p.h"
 
 #include <QtCore/QDir>
+#include <QtCore/QVarLengthArray>
 
-static inline bool isRelativePath(const QString &path)
-{
-    // drive, e.g. "a:", or UNC root, e.q. "//"
-    return !(path.startsWith(QLatin1Char('/'))
-             || (path.length() >= 2
-                 && ((path.at(0).isLetter() && path.at(1) == QLatin1Char(':'))
-                     || (path.at(0) == QLatin1Char('/') && path.at(1) == QLatin1Char('/')))));
-}
+#include <Userenv.h>
 
 void QDriveInfoPrivate::initRootPath()
 {
     if (data->rootPath.isEmpty())
         return;
 
-    if (isRelativePath(data->rootPath)) {
-        data->rootPath.clear();
+    QString path = QDir::toNativeSeparators(data->rootPath);
+    data->rootPath.clear();
+
+    if (path.startsWith(QLatin1String("\\\\?\\")))
+        path = path.mid(4);
+    if (path.isEmpty())
+        return;
+    path[0] = path[0].toUpper();
+    if (!(path.length() >= 2
+          && path.at(0).unicode() >= 'A' && path.at(0).unicode() <= 'Z'
+          && path.at(1) == QLatin1Char(':'))) {
         return;
     }
+    if (!path.endsWith(QLatin1Char('\\')))
+        path.append(QLatin1Char('\\'));
 
-    // ### test when disk mounted in folder on other disk
-    QString path = QDir::toNativeSeparators(data->rootPath);
+    // ### test if disk mounted to folder on other disk
     wchar_t buffer[MAX_PATH + 1];
-    if (::GetVolumePathName((wchar_t *)path.utf16(), buffer, MAX_PATH)) {
+    if (::GetVolumePathName((wchar_t *)path.utf16(), buffer, MAX_PATH))
         data->rootPath = QDir::fromNativeSeparators(QString::fromWCharArray(buffer));
-        if (!data->rootPath.endsWith(QLatin1Char('/')))
-            data->rootPath.append(QLatin1Char('/'));
-    } else {
-        data->rootPath.clear();
-    }
 }
 
 static inline QByteArray getDevice(const QString &rootPath)
@@ -196,4 +195,20 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
     }
 
     return drives;
+}
+
+QDriveInfo QDriveInfoPrivate::rootDrive()
+{
+    DWORD dwBufferSize = 128;
+    QVarLengthArray<wchar_t, 128> profilesDirectory(dwBufferSize);
+    bool ok;
+    do {
+        if (dwBufferSize > (DWORD)profilesDirectory.size())
+            profilesDirectory.resize(dwBufferSize);
+        ok = ::GetProfilesDirectory(profilesDirectory.data(), &dwBufferSize);
+    } while (!ok && GetLastError() == ERROR_INSUFFICIENT_BUFFER);
+    if (ok)
+        return QDriveInfo(QString::fromWCharArray(profilesDirectory.data(), profilesDirectory.size()));
+
+    return QDriveInfo();
 }

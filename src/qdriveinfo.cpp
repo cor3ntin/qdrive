@@ -140,16 +140,16 @@ bool QDriveInfo::operator==(const QDriveInfo &other) const
 }
 
 /*!
-    Returns mount path of the filesystem, presented by QDriveInfo.
+    Returns mount point of the filesystem this QDriveInfo object represents.
 
-    On Windows, usually returns drive letter, in case drive is not mounted to specific folder.
+    On Windows, in case the drive is not mounted to folder returns drive letter.
 
-    Note, that value, returned by this function, is the real mount point of a drive and may it not be
-    equal to value passed to constructor or to setRootPath() function. By example, if you have only
-    root drive in system and you pass '/folder' to constructor, this funtion will return '/'.
+    Note that the value returned by rootPath() is the real mount point of a drive
+    and may not equal to value passed to constructor or setRootPath() method.
+    For example, if you have only the root drive in the system and pass '/folder'
+    to setRootPath(), then this method will return '/'.
 
-    On Symbian, root path, passed to constructor or setRootPath() function, is always truncated to
-    'X:/' where X is drive letter.
+    \sa setRootPath(), device()
 */
 QString QDriveInfo::rootPath() const
 {
@@ -158,10 +158,10 @@ QString QDriveInfo::rootPath() const
 }
 
 /*!
-    Sets QDriveInfo to filesystem, mounted at \a rootPath.
+    Sets QDriveInfo to filesystem mounted at \a rootPath.
 
-    You can also pass a folder on the drive, in that case root path will be truncated to real mount
-    point of the drive (if exists).
+    You can also pass a path to the folder on the drive, in that case the rootPath()
+    will be truncated to match the drive's mount point.
 
     \sa rootPath()
 */
@@ -219,6 +219,8 @@ quint64 QDriveInfo::bytesTotal() const
     This is not a platform-independent function, and filesystem names can vary between different
     operation systems. For example, on Windows filesystem can be named as 'NTFS' and on Linux
     as 'ntfs-3g' or 'fuseblk'.
+
+    \sa name()
 */
 QByteArray QDriveInfo::fileSystemName() const
 {
@@ -233,11 +235,13 @@ QByteArray QDriveInfo::fileSystemName() const
     you can retrieve this value for some platform-specific notes. By example, you can get device
     on Unix and try to read from it manually.
 
-    On Unix filesystems (including Mac OS), this returns something like '/dev/sda0' for local drives.
+    On Unix filesystems (including Mac OS), this returns devpath like '/dev/sda0' for local drives.
 
-    On Windows, returns UNC path, starting with \\?\ for local drives (i.e. volume GUID).
+    On Windows, returns UNC path starting with \\?\ for local drives (i.e. volume GUID).
 
-    On Symbian OS this function returns nothing.
+    On Symbian OS, the first byte of the returned byte array is a drive number.
+
+    \sa rootPath()
 */
 QByteArray QDriveInfo::device() const
 {
@@ -246,14 +250,14 @@ QByteArray QDriveInfo::device() const
 }
 
 /*!
-    Returns human-readable name of a filesystem, usually called as 'label'.
+    Returns human-readable name of a filesystem, usually called 'label'.
 
-    Not all filesystems support this feature, so normally value, returned by this function could
+    Not all filesystems support this feature, in this case value returned by this method could
     be empty. Also, empty string is returned if no label set for drive.
 
-    Unfortunately, due to implementation, on Linux this function requires udev to be present in system.
-    If there is no udev, returns empty string.
+    On Linux, retrieving the drive's label requires udev to be present in the system.
 
+    \sa fileSystemName()
 */
 QString QDriveInfo::name() const
 {
@@ -262,10 +266,27 @@ QString QDriveInfo::name() const
 }
 
 /*!
-    Returns true is current filesystem is ready for work.
+    \fn bool QDriveInfo::isReadOnly() const
 
-    This function can return false only on Windows for floppy or cdrom drives.
-    Note, that you can't retreive any information about device if it is not ready.
+    Returns true if current filesystem is protected for writing; false otherwise.
+
+    \sa capabilities()
+*/
+
+/*!
+    \fn bool QDriveInfo::isRoot() const
+
+    Returns true if this QDriveInfo represents a system root volume or drive; false otherwise.
+
+    \sa rootDrive()
+*/
+
+/*!
+    Returns true if current filesystem is ready to work; false otherwise.
+
+    This method can return false only on Windows for floppy or cdrom drives.
+    Note that fileSystemName(), name(), bytesTotal(), bytesFree(), and bytesAvailable()
+    will return an invalid data until drive is ready.
 
     \sa isValid()
 */
@@ -324,10 +345,25 @@ void QDriveInfo::refresh()
 
     On Windows, this returnes drives presented in 'My Computer' folder. On Unix operation systems,
     returns list of all mounted filesystems (exept for Mac, where devfs is ignored). In Linux, you
-    will get a lot of pseudo filesystems by calling this function, but you can filter them using
-    type() (they always have InvalidDrive type) or by checking bytesTotal() (always equal to 0).
+    will get a lot of pseudo filesystems by calling this function, you can filter them out
+    by using type() (as they always have an InvalidDrive type).
+
+    \sa rootDrive()
 */
 QList<QDriveInfo> QDriveInfo::drives()
 {
     return QDriveInfoPrivate::drives();
+}
+
+/*!
+    Returns a QDriveInfo object that represents a system root volume or drive.
+
+    \sa isRoot()
+*/
+QDriveInfo QDriveInfo::rootDrive()
+{
+    static QDriveInfo rootDrive;
+    if (!rootDrive.isValid())
+        rootDrive = QDriveInfoPrivate::rootDrive();
+    return rootDrive;
 }

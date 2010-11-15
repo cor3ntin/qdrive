@@ -14,10 +14,10 @@ void QDriveInfoPrivate::initRootPath()
 
     RFs rfs = qt_s60GetRFs();
 
-    TInt drive;
-    if (RFs::CharToDrive(driveLetter.toAscii(), drive) == KErrNone) {
+    TInt driveNumber;
+    if (RFs::CharToDrive(driveLetter.toAscii(), driveNumber) == KErrNone) {
         data->rootPath = driveLetter + QLatin1String(":/");
-        data->device = QByteArray(1, drive);
+        data->device = QByteArray(1, driveNumber);
     } else {
         data->rootPath.clear();
     }
@@ -111,12 +111,12 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
     TChar driveChar;
     TDriveList drivelist;
     if (rfs.DriveList(drivelist) == KErrNone) {
-        for (int i = EDriveA; i < EDriveZ; ++i) {
-            if (drivelist[i] && RFs::DriveToChar(i, driveChar) == KErrNone) {
+        for (TInt driveNumber = EDriveA; driveNumber <= EDriveZ; ++driveNumber) {
+            if (drivelist[driveNumber] && RFs::DriveToChar(driveNumber, driveChar) == KErrNone) {
                 driveName[0] = driveChar;
                 QDriveInfo drive;
                 drive.d_ptr->data->rootPath = QLatin1String(driveName);
-                drive.d_ptr->data->device = QByteArray(1, i);
+                drive.d_ptr->data->device = QByteArray(1, driveNumber);
                 drive.d_ptr->data->setCachedFlag(CachedRootPathFlag | CachedDeviceFlag);
                 drives.append(drive);
             }
@@ -124,4 +124,22 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
     }
 
     return drives;
+}
+
+QDriveInfo QDriveInfoPrivate::rootDrive()
+{
+    RFs rfs = qt_s60GetRFs();
+
+    char driveName[] = "A:/";
+    driveName[0] = RFs::GetSystemDriveChar();
+    TInt driveNumber;
+    if (RFs::CharToDrive(driveName[0], driveNumber) == KErrNone) {
+        QDriveInfo drive;
+        drive.d_ptr->data->rootPath = QLatin1String(driveName);
+        drive.d_ptr->data->device = QByteArray(1, driveNumber);
+        drive.d_ptr->data->setCachedFlag(CachedRootPathFlag | CachedDeviceFlag);
+        return drive;
+    }
+
+    return QDriveInfo();
 }
