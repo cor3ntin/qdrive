@@ -5,7 +5,7 @@
 #include <IOKit/storage/IODVDMedia.h>
 
 #include <sys/mount.h>
-#include <sys/statfs.h>
+//#include <sys/statfs.h>
 
 #if defined(QT_LARGEFILE_SUPPORT)
 #  define QT_STATFSBUF struct statfs64
@@ -157,7 +157,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
 void QDriveInfoPrivate::getVolumeInfo()
 {
     QT_STATFSBUF statfs_buf;
-    int result = ::QT_STATFS(QFile::encodeName(data->rootPath).constData(), &statfs_buf);
+    int result = QT_STATFS(QFile::encodeName(data->rootPath).constData(), &statfs_buf);
     if (result == 0) {
         data->valid = true;
         data->ready = true;
