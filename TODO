@@ -1,6 +1,5 @@
 todo:
 * polish API docs
-* find out an alternative way to retreive capabilities on mac and linux
 * implement controller (watching, notifications, global cache)
 
 todo (?):
