@@ -297,7 +297,7 @@ bool QDriveInfo::isValid() const
 QDriveInfo::DriveType QDriveInfo::type() const
 {
     const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedTypeFlag);
-    return d_func()->data->type;
+    return QDriveInfo::DriveType(d_func()->data->type);
 }
 
 /*!

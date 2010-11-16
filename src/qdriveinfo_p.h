@@ -76,10 +76,11 @@ public:
         quint64 bytesFree;
         quint64 bytesAvailable;
 
-        QDriveInfo::DriveType type;
-        bool readOnly;
-        bool ready;
-        bool valid;
+        ushort type : 8;
+        ushort readOnly : 1;
+        ushort ready : 1;
+        ushort valid : 1;
+        ushort reserved : 5;
 
         uint cachedFlags;
     };
