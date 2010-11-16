@@ -11,6 +11,7 @@ void QDriveInfoPrivate::initRootPath()
         return;
 
     QChar driveLetter = data->rootPath.at(0).toUpper();
+    data->rootPath.clear();
 
     RFs rfs = qt_s60GetRFs();
 
@@ -18,8 +19,6 @@ void QDriveInfoPrivate::initRootPath()
     if (RFs::CharToDrive(driveLetter.toAscii(), driveNumber) == KErrNone) {
         data->rootPath = driveLetter + QLatin1String(":/");
         data->device = QByteArray(1, driveNumber);
-    } else {
-        data->rootPath.clear();
     }
 }
 

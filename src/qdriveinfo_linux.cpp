@@ -117,9 +117,9 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
     if (data->getCachedFlag(requiredFlags))
         return;
 
-    if (!data->getCachedFlag(CachedRootPathFlag | CachedFileSystemNameFlag | CachedDeviceFlag)) {
+    if (!data->getCachedFlag(CachedRootPathFlag | CachedDeviceFlag | CachedFileSystemNameFlag)) {
         initRootPath();
-        data->setCachedFlag(CachedRootPathFlag | CachedFileSystemNameFlag | CachedDeviceFlag);
+        data->setCachedFlag(CachedRootPathFlag | CachedDeviceFlag | CachedFileSystemNameFlag);
     }
 
     if (data->rootPath.isEmpty() || (data->getCachedFlag(CachedValidFlag) && !data->valid))
