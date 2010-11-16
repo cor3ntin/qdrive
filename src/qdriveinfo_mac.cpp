@@ -82,15 +82,17 @@ static inline QDriveInfo::DriveType determineType(const QByteArray &device)
     }
 
     CFBooleanRef boolRef;
-    boolRef = (CFBooleanRef)CFDictionaryGetValue(descriptionDictionary, kDADiskDescriptionMediaRemovableKey);
-    if (boolRef) {
-        drivetype = CFBooleanGetValue(boolRef) ? QDriveInfo::RemovableDrive : QDriveInfo::InternalDrive;
-    }
     boolRef = (CFBooleanRef)CFDictionaryGetValue(descriptionDictionary, kDADiskDescriptionVolumeNetworkKey);
-    if (boolRef) {
-        if (CFBooleanGetValue(boolRef))
-            drivetype = QDriveInfo::RemoteDrive;
+    if (boolRef || CFBooleanGetValue(boolRef)){
+        CFRelease(descriptionDictionary);
+        CFRelease(diskRef);
+        CFRelease(sessionRef);
+        return QDriveInfo::RemoteDrive;
     }
+
+    boolRef = (CFBooleanRef)CFDictionaryGetValue(descriptionDictionary, kDADiskDescriptionMediaRemovableKey);
+    if (boolRef)
+        drivetype = CFBooleanGetValue(boolRef) ? QDriveInfo::RemovableDrive : QDriveInfo::InternalDrive;
 
     DADiskRef wholeDisk;
     wholeDisk = DADiskCopyWholeDisk(diskRef);
