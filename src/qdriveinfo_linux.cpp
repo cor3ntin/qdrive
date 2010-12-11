@@ -56,9 +56,7 @@ static inline QDriveInfo::DriveType determineType(const QByteArray &device)
     if (device.contains("mapper")) {
         QT_STATBUF stat_buf;
         int result;
-        do {
-            result = QT_STAT(device.constData(), &stat_buf);
-        } while (result != 0 && errno == EINTR);
+        EINTR_LOOP(result, QT_STAT(device.constData(), &stat_buf));
         if (result == 0)
             dmFile = QLatin1String("dm-") + QString::number(stat_buf.st_rdev & 0377);
         else
@@ -166,9 +164,7 @@ void QDriveInfoPrivate::getVolumeInfo()
 {
     QT_STATFSBUF statfs_buf;
     int result;
-    do {
-        result = QT_STATFS(QFile::encodeName(data->rootPath).constData(), &statfs_buf);
-    } while (result != 0 && errno == EINTR);
+    EINTR_LOOP(result, QT_STATFS(QFile::encodeName(data->rootPath).constData(), &statfs_buf));
     if (result == 0) {
         data->valid = true;
         data->ready = true;
