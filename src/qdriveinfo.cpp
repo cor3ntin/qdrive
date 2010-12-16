@@ -266,7 +266,6 @@ bool QDriveInfo::isReadOnly() const
 /*!
     Returns true if current filesystem is ready to work; false otherwise.
 
-    This method can return false only on Windows for floppy or cdrom drives.
     Note that fileSystemName(), name(), bytesTotal(), bytesFree(), and bytesAvailable()
     will return an invalid data until drive is ready.
 

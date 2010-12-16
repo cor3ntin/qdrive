@@ -45,6 +45,8 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
                    CachedReadyFlag | CachedValidFlag;
     if (requiredFlags & bitmask) {
         getVolumeInfo();
+        if (data->valid && !data->ready)
+            bitmask = CachedTypeFlag | CachedReadOnlyFlag | CachedValidFlag;
         data->setCachedFlag(bitmask);
     }
 }
@@ -55,37 +57,48 @@ void QDriveInfoPrivate::getVolumeInfo()
 
     TInt drive = data->device[0];
 
-    TVolumeInfo volumeInfo;
-    if (rfs.Volume(volumeInfo, drive) != KErrNone) {
+    TDriveInfo driveInfo;
+    if (rfs.Drive(driveInfo, drive) == KErrNone) {
         data->valid = true;
-        data->ready = true;
 
-        data->name = QString::fromUtf16((const ushort *)volumeInfo.iName.Ptr(), volumeInfo.iName.Length());
-        TFSName fileSystemNameBuf;
-        if (rfs.FileSystemSubType(drive, fileSystemNameBuf) == KErrNone)
-            data->fileSystemName = QString::fromUtf16((const ushort *)fileSystemNameBuf.Ptr(), fileSystemNameBuf.Length()).toLatin1();
+        TVolumeInfo volumeInfo;
+        if (rfs.Volume(volumeInfo, drive) == KErrNone) {
+            data->ready = true;
 
-        data->bytesTotal = volumeInfo.iSize;
-        data->bytesFree = volumeInfo.iFree;
-        data->bytesAvailable = volumeInfo.iFree;
+            data->name = QString::fromUtf16((const ushort *)volumeInfo.iName.Ptr(),
+                                            volumeInfo.iName.Length());
+            TFSName fileSystemNameBuf;
+            if (rfs.FileSystemSubType(drive, fileSystemNameBuf) == KErrNone)
+                data->fileSystemName = QString::fromUtf16((const ushort *)fileSystemNameBuf.Ptr(),
+                                                          fileSystemNameBuf.Length()).toLatin1();
 
-        switch (volumeInfo.iDrive.iType) {
+            data->bytesTotal = volumeInfo.iSize;
+            data->bytesFree = volumeInfo.iFree;
+            data->bytesAvailable = volumeInfo.iFree;
+        }
+
+        data->readOnly = (driveInfo.iMediaAtt & KMediaAttWriteProtected);
+
+        switch (driveInfo.iType) {
         case EMediaFlash:
         case EMediaFloppy:
             data->type = QDriveInfo::RemovableDrive;
             break;
         case EMediaHardDisk:
+        case EMediaRom:
             data->type = QDriveInfo::InternalDrive;
+            if (driveInfo.iDriveAtt & KDriveAttRemovable)
+                data->type = QDriveInfo::RemovableDrive;
             break;
         case EMediaNANDFlash:
             data->type = QDriveInfo::InternalFlashDrive;
             break;
         case EMediaRam:
-        case EMediaRom:
             data->type = QDriveInfo::RamDrive;
             break;
         case EMediaCdRom:
             data->type = QDriveInfo::CdromDrive;
+            data->readOnly = true;
             break;
         case EMediaRemote:
             data->type = QDriveInfo::RemoteDrive;
@@ -94,8 +107,6 @@ void QDriveInfoPrivate::getVolumeInfo()
         default:
             break;
         }
-
-        data->readOnly = (volumeInfo.iDrive.iMediaAtt & KMediaAttWriteProtected);
     }
 }
 
