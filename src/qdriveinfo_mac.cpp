@@ -83,7 +83,7 @@ static inline QDriveInfo::DriveType determineType(const QByteArray &device)
 
     CFBooleanRef boolRef;
     boolRef = (CFBooleanRef)CFDictionaryGetValue(descriptionDictionary, kDADiskDescriptionVolumeNetworkKey);
-    if (boolRef || CFBooleanGetValue(boolRef)){
+    if (boolRef && CFBooleanGetValue(boolRef)){
         CFRelease(descriptionDictionary);
         CFRelease(diskRef);
         CFRelease(sessionRef);
