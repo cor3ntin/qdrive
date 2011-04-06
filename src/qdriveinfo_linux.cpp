@@ -23,6 +23,15 @@
 #  define _PATH_DISK_BY_LABEL "/dev/disk/by-label"
 #endif
 
+// TODO: remove in QtCore;
+#ifndef EINTR_LOOP
+#define EINTR_LOOP(var, cmd)                    \
+    do {                                        \
+        var = cmd;                              \
+    } while (var == -1 && errno == EINTR)
+#endif
+
+
 void QDriveInfoPrivate::initRootPath()
 {
     if (data->rootPath.isEmpty())
