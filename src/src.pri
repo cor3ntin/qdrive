@@ -28,7 +28,9 @@ win32 {
         LIBS += -framework CoreServices -framework DiskArbitration -framework IOKit
     }
     symbian {
-        SOURCES += qdriveinfo_symbian.cpp
-        LIBS += -lefsrv
+        SOURCES += qdriveinfo_symbian.cpp \
+                qdrivecontroller_symbian.cpp
+        LIBS *= -lefsrv
+        LIBS *= $$QMAKE_LIBS_CORE
     }
 }

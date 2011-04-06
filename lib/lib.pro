@@ -15,3 +15,8 @@ mac: LIBS += -dynamiclib -Wl,-install_name,$$OUT_PWD/libqdriveinfo_debug.1.dylib
 !contains(CONFIG, staticlib) {
     win32:DEFINES *= QDRIVEINFO_MAKEDLL
 }
+
+symbian: {
+ CONFIG += staticlib
+}
+

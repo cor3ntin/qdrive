@@ -2,6 +2,7 @@
 #define QDRIVECONTROLLER_P_H
 
 #include "qdrivecontroller.h"
+#include <qglobal.h>
 
 #ifdef Q_OS_WIN
 //#include <windows.h>
@@ -60,7 +61,7 @@ private:
 
 #endif
 
-//#ifdef Q_OS_LINUX
+#ifdef Q_OS_LINUX
 
 #include <QtCore/QSet>
 
@@ -85,6 +86,28 @@ private:
     QSet<QString> drivePaths;
 };
 
-//#endif
+#endif
+
+#ifdef Q_OS_SYMBIAN
+
+#include <e32base.h>
+#include <f32file.h>
+
+class Watcher : public QObject, public CActive
+{
+    Q_OBJECT
+public:
+    explicit Watcher(QObject *parent = 0);
+    ~Watcher();
+
+    static Watcher *watcher;
+
+protected:  //from CActive
+    void DoCancel();
+    void RunL();
+
+};
+
+#endif
 
 #endif // QDRIVECONTROLLER_P_H
