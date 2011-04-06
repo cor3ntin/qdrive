@@ -3,9 +3,13 @@
 
 #include <QDriveInfo>
 
+#include <QDriveController>
+
 int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
+
+    QDriveController c;
 
     foreach (const QDriveInfo &drive, QDriveInfo::drives()) {
         qDebug() << "==============";
