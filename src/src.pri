@@ -19,7 +19,8 @@ win32 {
     LIBS += -luserenv
 } else: unix {
     linux-* {
-        SOURCES += qdriveinfo_linux.cpp
+        SOURCES += qdriveinfo_linux.cpp \
+                qdrivecontroller_linux.cpp
     }
     macx-* {
         SOURCES += qdriveinfo_mac.cpp \
