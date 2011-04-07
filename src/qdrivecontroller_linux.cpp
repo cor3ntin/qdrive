@@ -16,10 +16,30 @@
 #  define _PATH_MOUNTED "/etc/mtab"
 #endif
 
+QSet<QString> getDrives()
+{
+    QSet<QString> result;
+
+    FILE *fp = ::setmntent(_PATH_MOUNTED, "r");
+    if (fp) {
+        struct mntent *mnt;
+        while ((mnt = ::getmntent(fp))) {
+            QString rootPath = QFile::decodeName(mnt->mnt_dir);
+            if (!result.contains(rootPath)) {
+                result.insert(rootPath);
+            }
+        }
+        ::endmntent(fp);
+    }
+
+    return result;
+}
+
 QDriveWatcher::QDriveWatcher(QObject *parent) :
         QObject(parent)
 {
     qDebug("QDriveWatcher::QDriveWatcher");
+    drives = getDrives();
     inotifyFD = ::inotify_init();
     mtabWatchA = ::inotify_add_watch(inotifyFD, _PATH_MOUNTED, IN_MODIFY);
     if (mtabWatchA > 0) {
@@ -35,29 +55,16 @@ QDriveWatcher::~QDriveWatcher()
 
 void QDriveWatcher::deviceChanged()
 {
-    QSet<QString> allNewDrives;
+    QSet<QString> allNewDrives = getDrives();
 
-    FILE *fp = ::setmntent(_PATH_MOUNTED, "r");
-    if (fp) {
-        struct mntent *mnt;
-        while ((mnt = ::getmntent(fp))) {
-            QString rootPath = QFile::decodeName(mnt->mnt_dir);
-            if (!allNewDrives.contains(rootPath)) {
-                allNewDrives.insert(rootPath);
-            }
-        }
-        ::endmntent(fp);
+    foreach (QString drive, allNewDrives) {
+        if (!drives.contains(drive))
+            emit driveAdded(drive);
     }
 
-    QSet<QString> newDrives = newDrives.subtract(drives);
-    QSet<QString> oldDrives = drives.subtract(allNewDrives);
-
-    foreach (QString drive, newDrives) {
-        emit driveAdded(drive);
-    }
-
-    foreach (QString drive, oldDrives) {
-        emit driveRemoved(drive);
+    foreach (QString drive, drives) {
+        if (!allNewDrives.contains(drive))
+            emit driveRemoved(drive);
     }
 
     drives = allNewDrives;

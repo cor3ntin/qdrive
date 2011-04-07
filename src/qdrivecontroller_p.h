@@ -67,10 +67,10 @@ private:
     volatile bool m_running;
 #endif
 
-#ifdef Q_OS_LINUX
 private slots:
     void deviceChanged();
     void inotifyActivated();
+#ifdef Q_OS_LINUX
 
 private:
     QSet<QString> drives;
