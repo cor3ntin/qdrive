@@ -99,11 +99,25 @@ void mountCallback2(DADiskRef disk, void *context)
 
 void unmountCallback(DADiskRef disk, void *context)
 {
+    CFShow(DADiskCopyDescription(disk));
     QString path = getDiskPath(disk);
-    if (path.isEmpty())
-        return;
-
     QDriveWatcher *sessionThread = reinterpret_cast<QDriveWatcher*>(context);
+    if (path.isEmpty()) {
+        // if we didn't receive path from API, we maunally determine lost drive
+        // (fixes bug with .dmg and .iso images
+        QSet<QString> oldDrives = sessionThread->volumes;
+
+        sessionThread->volumes.clear();
+        sessionThread->populateVolumes();
+
+        foreach (QString path, oldDrives) {
+            if (!sessionThread->volumes.contains(path)) {
+                QMetaObject::invokeMethod(sessionThread, "driveRemoved", Q_ARG(QString, path));
+            }
+        }
+        return;
+    }
+
     if (sessionThread->volumes.contains(path)) {
         sessionThread->volumes.remove(path);
         QMetaObject::invokeMethod(sessionThread, "driveRemoved", Q_ARG(QString, path));

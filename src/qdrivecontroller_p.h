@@ -56,13 +56,12 @@ private:
     void stop();
 
     QSet<QString> volumes; // careful, use ONLY from thread itself
+    void populateVolumes();
 
 protected:
     void run(); // from QThread
 
 private:
-    void populateVolumes();
-
     DASessionRef m_session;
     volatile bool m_running;
 #endif
