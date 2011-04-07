@@ -61,8 +61,8 @@ void checkNewDiskAndEmitSignal(DADiskRef disk, void *context)
     if (path.isEmpty())
         return;
 
-    QDriveWatcher *sessionThread = reinterpret_cast<QDriveWatcher*>(context);
-    sessionThread->addDrive(path);
+    QDriveWatcher *watcher = reinterpret_cast<QDriveWatcher*>(context);
+    watcher->addDrive(path);
 }
 
 // FIXME: here we get event when flash drive mounted
@@ -97,15 +97,15 @@ void unmountCallback(DADiskRef disk, void *context)
 {
     CFShow(DADiskCopyDescription(disk));
     QString path = getDiskPath(disk);
-    QDriveWatcher *sessionThread = reinterpret_cast<QDriveWatcher*>(context);
+    QDriveWatcher *watcher = reinterpret_cast<QDriveWatcher*>(context);
     if (path.isEmpty()) {
         // if we didn't receive path from API, we maunally determine lost drive
         // (fixes bug with .dmg and .iso images
-        sessionThread->updateDrives();
+        watcher->updateDrives();
         return;
     }
 
-    sessionThread->removeDrive(path);
+    watcher->removeDrive(path);
 }
 
 QDriveWatcher::QDriveWatcher(QObject *parent) :
@@ -129,7 +129,6 @@ QDriveWatcher::QDriveWatcher(QObject *parent) :
                                       kDADiskDescriptionMatchVolumeMountable,
                                       unmountCallback,
                                       this);
-    qDebug("starting thread");
     start();
 }
 
@@ -142,7 +141,6 @@ void QDriveWatcher::stop()
 {
     m_running = false;
     wait();
-    qDebug() << "stopped";
 }
 
 void QDriveWatcher::run()
@@ -166,7 +164,7 @@ void QDriveWatcher::run()
 void QDriveWatcher::populateVolumes()
 {
     // TODO: get paths as StringList?
-    foreach (QDriveInfo info, QDriveInfo::drives()) {
+    foreach (const QDriveInfo &info, QDriveInfo::drives()) {
         volumes.insert(info.rootPath());
     }
 }
@@ -175,7 +173,6 @@ void QDriveWatcher::addDrive(const QString &path)
 {
     if (!volumes.contains(path)) {
         volumes.insert(path);
-        qDebug() << "disk added - path:" << path;
         QMetaObject::invokeMethod(this, "driveAdded", Q_ARG(QString, path));
     }
 }
