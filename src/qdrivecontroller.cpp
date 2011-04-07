@@ -33,6 +33,11 @@ QDriveController::QDriveController(QObject *parent) :
     connect(this, SIGNAL(driveUnmounted(QString)), SLOT(testDriveUnounted(QString)));
 }
 
+QDriveController::~QDriveController()
+{
+    delete d_ptr;
+}
+
 void QDriveController::testDriveMounted(const QString &path)
 {
     qDebug() << "We got new drive! Mounted at" << path;

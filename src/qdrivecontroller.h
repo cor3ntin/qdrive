@@ -1,7 +1,7 @@
 #ifndef QDRIVECONTROLLER_H
 #define QDRIVECONTROLLER_H
 
-#include <QObject>
+#include <QtCore/QObject>
 
 #include "qdrive_global.h"
 
@@ -12,6 +12,7 @@ class QDRIVEINFO_EXPORT QDriveController : public QObject
     Q_DECLARE_PRIVATE(QDriveController)
 public:
     explicit QDriveController(QObject *parent = 0);
+    ~QDriveController();
 
 signals:
     void driveMounted(const QString &path);
@@ -23,7 +24,6 @@ public slots:
 
 protected:
     QDriveControllerPrivate *d_ptr;
-
 };
 
 #endif // QDRIVECONTROLLER_H
