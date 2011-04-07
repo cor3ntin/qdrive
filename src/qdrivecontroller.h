@@ -14,6 +14,8 @@ public:
     explicit QDriveController(QObject *parent = 0);
 
 signals:
+    void driveMounted(const QString &mountPath);
+    void driveUnmounted(const QString &mountPath);
 
 public slots:
 

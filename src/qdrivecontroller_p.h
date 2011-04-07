@@ -4,26 +4,14 @@
 #include "qdrivecontroller.h"
 #include <qglobal.h>
 
+#include <QtCore/QSet>
+
 #ifdef Q_OS_WIN
 //#include <windows.h>
 #define _WIN32_WINNT  0x0500
 #include <qt_windows.h>
 #include <dbt.h>
 #endif
-
-class DASessionThread;
-class QDriveControllerPrivate
-{
-public:
-    QDriveControllerPrivate();
-    ~QDriveControllerPrivate();
-
-    static DASessionThread *sessionThread;
-
-#ifdef Q_OS_WIN
-    HWND hwnd;
-#endif
-};
 
 #ifdef Q_OS_MACX
 
@@ -34,32 +22,59 @@ public:
 
 #define TIME_INTERVAL 1
 
-class DASessionThread : public QThread
+#endif
+
+class QDriveWatcher;
+class QDriveControllerPrivate
+{
+public:
+    QDriveControllerPrivate();
+    ~QDriveControllerPrivate();
+
+    static QDriveWatcher *watcherInstance;
+
+#ifdef Q_OS_WIN
+    HWND hwnd;
+#endif
+};
+
+#ifdef Q_OS_MACX
+class QDriveWatcher : public QThread
+#else
+class QDriveWatcher : public QObject
+#endif
 {
     Q_OBJECT
 public:
-    explicit DASessionThread(QObject *parent = 0);
-    ~DASessionThread();
+    explicit QDriveWatcher(QObject *parent = 0);
+    ~QDriveWatcher();
 
+#ifdef Q_OS_WIN
+private:
+    HWND hwnd;
+#endif
+
+#ifdef Q_OS_MACX
     void stop();
 
-    QSet<QString> volumes;
-
-signals:
-    void driveAdded(const QString &);
-
-public slots:
-    void testMount();
+    QSet<QString> volumes; // careful, use ONLY from thread itself
 
 protected:
-    void run();
+    void run(); // from QThread
 
 private:
-    DASessionRef session;
-    volatile bool running;
+    void populateVolumes();
+
+    DASessionRef m_session;
+    volatile bool m_running;
+#endif
+
+signals:
+    void driveAdded(const QString &path);
+    void driveRemoved(const QString &path);
 };
 
-#endif
+//#endif
 
 #ifdef Q_OS_LINUX
 
