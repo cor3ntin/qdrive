@@ -73,9 +73,9 @@ private slots:
     void inotifyActivated();
 
 private:
+    QSet<QString> drives;
     int inotifyFD;
     int mtabWatchA;
-    QSet<QString> drivePaths;
 #endif
 
 signals:
