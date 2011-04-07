@@ -1,6 +1,6 @@
 #include "qdrivecontroller_p.h"
 
-#include <QStringList>
+#include <QtCore/QStringList>
 
 #ifndef DBT_CUSTOMEVENT
 #  define DBT_CUSTOMEVENT 0x8006
@@ -8,14 +8,6 @@
 
 // from Panter Commader
 Q_CORE_EXPORT HINSTANCE qWinAppInst();
-
-class QDriveCotrollerEventHandler: public QObject
-{
-    Q_OBJECT
-public:
-signals:
-    void driveAdded(const QString &);
-};
 
 static QStringList drivesFromMask(quint32 driveBits)
 {
@@ -67,7 +59,7 @@ LRESULT CALLBACK vw_internal_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                 const QStringList& drives = drivesFromMask(db_volume->dbcv_unitmask);
                 if(wParam == DBT_DEVICEARRIVAL)
                 {
-                    foreach(const QString& drive, drives)
+                    foreach(const QString &drive, drives)
                     {
                         if(db_volume->dbcv_flags & DBTF_MEDIA)
                             qWarning("Drive %c: Media has been arrived.", drive.at(0).toAscii());
@@ -76,8 +68,10 @@ LRESULT CALLBACK vw_internal_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                         else
                             qWarning("Drive %c: Device has been added.", drive.at(0).toAscii());
 
-//                        QMetaObject::invokeMethod(engine, "volumeAdded", Qt::QueuedConnection,
-//                                                  Q_ARG(QString, drive));
+                        QMetaObject::invokeMethod(QDriveControllerPrivate::watcherInstance,
+                                                  "driveAdded",
+                                                  Qt::QueuedConnection,
+                                                  Q_ARG(QString, drive));
                     }
                 }
                 else if(wParam == DBT_DEVICEQUERYREMOVE)
@@ -91,7 +85,7 @@ LRESULT CALLBACK vw_internal_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                 }
                 else if(wParam == DBT_DEVICEREMOVECOMPLETE)
                 {
-                    foreach(const QString& drive, drives)
+                    foreach(const QString &drive, drives)
                     {
                         if(db_volume->dbcv_flags & DBTF_MEDIA)
                             qWarning("Drive %c: Media has been removed.", drive.at(0).toAscii());
@@ -100,8 +94,10 @@ LRESULT CALLBACK vw_internal_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
                         else
                             qWarning("Drive %c: Device has been removed.", drive.at(0).toAscii());
 
-//                        QMetaObject::invokeMethod(engine, "volumeRemoved", Qt::QueuedConnection,
-//                                                  Q_ARG(QString, drive));
+                        QMetaObject::invokeMethod(QDriveControllerPrivate::watcherInstance,
+                                                  "driveRemoved",
+                                                  Qt::QueuedConnection,
+                                                  Q_ARG(QString, drive));
                     }
                 }
             }
@@ -119,16 +115,20 @@ LRESULT CALLBACK vw_internal_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
             qWarning("WM_DEVICECHANGE message received, unhandled value %d.", wParam);
             break;
         }
-
-
     }
 
     return DefWindowProc(hwnd, message, wParam, lParam);
 }
 
+QString getClassName()
+{
+    return QLatin1String("VolumeWatcher_Internal_Widget") + QString::number(quintptr(vw_internal_proc));
+}
+
 static HWND vw_create_internal_window(const void* userData)
 {
-    QString className = QLatin1String("VolumeWatcher_Internal_Widget") + QString::number(quintptr(vw_internal_proc));
+    QString className = getClassName();
+
     HINSTANCE hi = qWinAppInst();
     WNDCLASS wc;
     wc.style = 0;
@@ -144,12 +144,12 @@ static HWND vw_create_internal_window(const void* userData)
     RegisterClass(&wc);
     HWND wnd = CreateWindow(wc.lpszClassName,       // classname
                             wc.lpszClassName,       // window name
-                            0,                                      // style
-                            0, 0, 0, 0,                     // geometry
-                            0,                                      // parent
-                            0,                                      // menu handle
-                            hi,                                     // application
-                            0);                                     // windows creation data.
+                            0,                      // style
+                            0, 0, 0, 0,             // geometry
+                            0,                      // parent
+                            0,                      // menu handle
+                            hi,                     // application
+                            0);                     // windows creation data.
     if(!wnd)
     {
         qWarning("WindowsVolumeWatcherEngine: Failed to create internal window: %d", (int)GetLastError());
@@ -169,16 +169,20 @@ static void vw_destroy_internal_window(HWND wnd)
 {
     if(wnd)
         DestroyWindow(wnd);
-    QString className = QLatin1String("VolumeWatcher_Internal_Widget") + QString::number(quintptr(vw_internal_proc));
+
+    QString className = getClassName();
+
     UnregisterClass((wchar_t*)className.utf16(), qWinAppInst());
 }
 
-QDriveControllerPrivate::QDriveControllerPrivate()
+
+QDriveWatcher::QDriveWatcher(QObject *parent) :
+    QObject(parent)
 {
     hwnd = vw_create_internal_window(this);
 }
 
-QDriveControllerPrivate::~QDriveControllerPrivate()
+QDriveWatcher::~QDriveWatcher()
 {
     vw_destroy_internal_window(hwnd);
 }

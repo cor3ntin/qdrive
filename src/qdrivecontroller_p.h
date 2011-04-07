@@ -32,14 +32,12 @@ public:
     ~QDriveControllerPrivate();
 
     static QDriveWatcher *watcherInstance;
-
-#ifdef Q_OS_WIN
-    HWND hwnd;
-#endif
 };
 
 #ifdef Q_OS_MACX
 class QDriveWatcher : public QThread
+#elif Q_OS_SYMBIAN
+class Watcher : public QObject, public CActive
 #else
 class QDriveWatcher : public QObject
 #endif
@@ -73,8 +71,6 @@ signals:
     void driveAdded(const QString &path);
     void driveRemoved(const QString &path);
 };
-
-//#endif
 
 #ifdef Q_OS_LINUX
 
