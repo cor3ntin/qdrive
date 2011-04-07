@@ -33,18 +33,18 @@ QString getDiskPath(DADiskRef diskRef)
 {
     CFDictionaryRef dictionary = DADiskCopyDescription(diskRef);
     if (!dictionary)
-        return "";
+        return QString();
 
     CFURLRef url = (CFURLRef)CFDictionaryGetValue(dictionary, kDADiskDescriptionVolumePathKey);
     if (!url) {
         CFRelease(dictionary);
-        return "";
+        return QString();
     }
 
     CFStringRef stringRef = CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
     if (!stringRef) {
         CFRelease(dictionary);
-        return "";
+        return QString();
     }
 
     QString path = CFStringToQString(stringRef);
@@ -62,11 +62,7 @@ void checkNewDiskAndEmitSignal(DADiskRef disk, void *context)
         return;
 
     QDriveWatcher *sessionThread = reinterpret_cast<QDriveWatcher*>(context);
-    if (!sessionThread->volumes.contains(path)) {
-        sessionThread->volumes.insert(path);
-        qDebug() << "disk added - path:" << path;
-        QMetaObject::invokeMethod(sessionThread, "driveAdded", Q_ARG(QString, path));
-    }
+    sessionThread->addDrive(path);
 }
 
 // FIXME: here we get event when flash drive mounted
@@ -105,23 +101,11 @@ void unmountCallback(DADiskRef disk, void *context)
     if (path.isEmpty()) {
         // if we didn't receive path from API, we maunally determine lost drive
         // (fixes bug with .dmg and .iso images
-        QSet<QString> oldDrives = sessionThread->volumes;
-
-        sessionThread->volumes.clear();
-        sessionThread->populateVolumes();
-
-        foreach (QString path, oldDrives) {
-            if (!sessionThread->volumes.contains(path)) {
-                QMetaObject::invokeMethod(sessionThread, "driveRemoved", Q_ARG(QString, path));
-            }
-        }
+        sessionThread->updateDrives();
         return;
     }
 
-    if (sessionThread->volumes.contains(path)) {
-        sessionThread->volumes.remove(path);
-        QMetaObject::invokeMethod(sessionThread, "driveRemoved", Q_ARG(QString, path));
-    }
+    sessionThread->removeDrive(path);
 }
 
 QDriveWatcher::QDriveWatcher(QObject *parent) :
@@ -187,3 +171,38 @@ void QDriveWatcher::populateVolumes()
     }
 }
 
+void QDriveWatcher::addDrive(const QString &path)
+{
+    if (!volumes.contains(path)) {
+        volumes.insert(path);
+        qDebug() << "disk added - path:" << path;
+        QMetaObject::invokeMethod(this, "driveAdded", Q_ARG(QString, path));
+    }
+}
+
+void QDriveWatcher::removeDrive(const QString &path)
+{
+    if (volumes.remove(path)) {
+        QMetaObject::invokeMethod(this, "driveRemoved", Q_ARG(QString, path));
+    }
+}
+
+void QDriveWatcher::updateDrives()
+{
+    QSet<QString> oldDrives = volumes;
+
+    volumes.clear();
+    populateVolumes();
+
+    foreach (const QString &path, oldDrives) {
+        if (!volumes.contains(path)) {
+            QMetaObject::invokeMethod(this, "driveRemoved", Q_ARG(QString, path));
+        }
+    }
+
+    foreach (const QString &path, volumes) {
+        if (!oldDrives.contains(path)) {
+            QMetaObject::invokeMethod(this, "driveAdded", Q_ARG(QString, path));
+        }
+    }
+}

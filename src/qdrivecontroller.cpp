@@ -4,8 +4,11 @@
 #include <QtCore/QCoreApplication>
 
 #include <QDebug>
+#include <qglobal.h>
 
 QDriveWatcher *QDriveControllerPrivate::watcherInstance = 0;
+
+//Q_GLOBAL_STATIC_WITH_ARG(QDriveWatcher*, theWatcher, {qApp});
 
 QDriveControllerPrivate::QDriveControllerPrivate()
 {
@@ -24,9 +27,9 @@ QDriveController::QDriveController(QObject *parent) :
     d_ptr(new QDriveControllerPrivate)
 {
     connect(QDriveControllerPrivate::watcherInstance, SIGNAL(driveAdded(QString)),
-            this, SIGNAL(driveMounted(QString)));
+            this, SIGNAL(driveMounted(QString)), Qt::QueuedConnection);
     connect(QDriveControllerPrivate::watcherInstance, SIGNAL(driveRemoved(QString)),
-            this, SIGNAL(driveUnmounted(QString)));
+            this, SIGNAL(driveUnmounted(QString)), Qt::QueuedConnection);
 
     // TODO: remove in release
     connect(this, SIGNAL(driveMounted(QString)), SLOT(testDriveMounted(QString)));
@@ -47,5 +50,3 @@ void QDriveController::testDriveUnounted(const QString &path)
 {
     qDebug() << "We lost drive! Was mounted at" << path;
 }
-
-

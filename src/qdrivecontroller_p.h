@@ -54,6 +54,9 @@ private:
 
 #ifdef Q_OS_MACX
     void stop();
+    void addDrive(const QString &path);
+    void removeDrive(const QString &path);
+    void updateDrives();
 
     QSet<QString> volumes; // careful, use ONLY from thread itself
     void populateVolumes();
