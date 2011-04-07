@@ -173,14 +173,14 @@ void QDriveWatcher::addDrive(const QString &path)
 {
     if (!volumes.contains(path)) {
         volumes.insert(path);
-        QMetaObject::invokeMethod(this, "driveAdded", Q_ARG(QString, path));
+        emit driveAdded(path);
     }
 }
 
 void QDriveWatcher::removeDrive(const QString &path)
 {
     if (volumes.remove(path)) {
-        QMetaObject::invokeMethod(this, "driveRemoved", Q_ARG(QString, path));
+        emit driveRemoved(path);
     }
 }
 
@@ -193,13 +193,13 @@ void QDriveWatcher::updateDrives()
 
     foreach (const QString &path, oldDrives) {
         if (!volumes.contains(path)) {
-            QMetaObject::invokeMethod(this, "driveRemoved", Q_ARG(QString, path));
+            emit driveRemoved(path);
         }
     }
 
     foreach (const QString &path, volumes) {
         if (!oldDrives.contains(path)) {
-            QMetaObject::invokeMethod(this, "driveAdded", Q_ARG(QString, path));
+            emit driveAdded(path);
         }
     }
 }
