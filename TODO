@@ -1,6 +1,7 @@
 todo:
 * polish API docs
 * implement controller (watching, notifications, global cache)
+* fix unmounting of isk images on mac (doesnt't get their paths)
 
 todo (?):
 * drop netshares support
