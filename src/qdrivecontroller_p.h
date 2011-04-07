@@ -67,26 +67,7 @@ private:
     volatile bool m_running;
 #endif
 
-signals:
-    void driveAdded(const QString &path);
-    void driveRemoved(const QString &path);
-};
-
 #ifdef Q_OS_LINUX
-
-#include <QtCore/QSet>
-
-class INotifyWatcher : public QObject
-{
-    Q_OBJECT
-public:
-    explicit INotifyWatcher(QObject *parent = 0);
-    ~INotifyWatcher();
-
-    static INotifyWatcher *watcher;
-
-    void testMount(const QString &path);
-
 private slots:
     void deviceChanged();
     void inotifyActivated();
@@ -95,9 +76,12 @@ private:
     int inotifyFD;
     int mtabWatchA;
     QSet<QString> drivePaths;
-};
-
 #endif
+
+signals:
+    void driveAdded(const QString &path);
+    void driveRemoved(const QString &path);
+};
 
 #ifdef Q_OS_SYMBIAN
 
