@@ -10,8 +10,6 @@
 #include <sys/inotify.h>
 #include <mntent.h>
 
-#include <QDebug>
-
 #ifndef _PATH_MOUNTED
 #  define _PATH_MOUNTED "/etc/mtab"
 #endif
@@ -38,7 +36,6 @@ QSet<QString> getDrives()
 QDriveWatcher::QDriveWatcher(QObject *parent) :
         QObject(parent)
 {
-    qDebug("QDriveWatcher::QDriveWatcher");
     drives = getDrives();
     inotifyFD = ::inotify_init();
     mtabWatchA = ::inotify_add_watch(inotifyFD, _PATH_MOUNTED, IN_MODIFY);
@@ -72,8 +69,6 @@ void QDriveWatcher::deviceChanged()
 
 void QDriveWatcher::inotifyActivated()
 {
-    qDebug("QDriveWatcher::inotifyActivated");
-
     char buffer[1024];
     struct inotify_event *event;
     int len = ::read(inotifyFD, (void *)buffer, sizeof(buffer));
