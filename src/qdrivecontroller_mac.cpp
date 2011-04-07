@@ -61,7 +61,7 @@ void checkNewDiskAndEmitSignal(DADiskRef disk, void *context)
     if (path.isEmpty())
         return;
 
-    QDriveWatcher *sessionThread = (QDriveWatcher*)context;
+    QDriveWatcher *sessionThread = reinterpret_cast<QDriveWatcher*>(context);
     if (!sessionThread->volumes.contains(path)) {
         sessionThread->volumes.insert(path);
         qDebug() << "disk added - path:" << path;
@@ -103,7 +103,7 @@ void unmountCallback(DADiskRef disk, void *context)
     if (path.isEmpty())
         return;
 
-    QDriveWatcher *sessionThread = (QDriveWatcher*)context;
+    QDriveWatcher *sessionThread = reinterpret_cast<QDriveWatcher*>(context);
     if (sessionThread->volumes.contains(path)) {
         sessionThread->volumes.remove(path);
         QMetaObject::invokeMethod(sessionThread, "driveRemoved", Q_ARG(QString, path));
