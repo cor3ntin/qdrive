@@ -14,6 +14,9 @@ public:
     explicit QDriveController(QObject *parent = 0);
     ~QDriveController();
 
+    bool mount(const QString &device, const QString &path);
+    bool unmount(const QString &path);
+
 signals:
     void driveMounted(const QString &path);
     void driveUnmounted(const QString &path);
