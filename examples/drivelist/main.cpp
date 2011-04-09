@@ -10,6 +10,8 @@ int main(int argc, char *argv[])
     QCoreApplication app(argc, argv);
 
     QDriveController c;
+    qDebug() << "QDriveController::mount" << c.mount("E:\\", "C:\\1");
+    qDebug() << "QDriveController::unmount" << c.unmount("C:\\1");
 
     foreach (const QDriveInfo &drive, QDriveInfo::drives()) {
         qDebug() << "==============";

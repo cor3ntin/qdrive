@@ -1,6 +1,8 @@
 #include "qdrivecontroller_p.h"
 
 #include <QtCore/QStringList>
+#include <QtCore/QFileInfo>
+#include <QDriveInfo>
 
 #ifndef DBT_CUSTOMEVENT
 #  define DBT_CUSTOMEVENT 0x8006
@@ -186,3 +188,49 @@ QDriveWatcher::~QDriveWatcher()
 {
     vw_destroy_internal_window(hwnd);
 }
+
+#include <QDebug>
+#include <QDir>
+
+bool QDriveController::mount(const QString &device, const QString &path)
+{
+    QString targetPath = QDir::toNativeSeparators(path);
+    if (!targetPath.endsWith('\\'))
+        targetPath.append('\\');
+
+    bool result;
+    if (device.startsWith(QLatin1String("\\\\?\\"))) { // GUID
+        qDebug() << "mounting by uid";
+        result = SetVolumeMountPoint((wchar_t*)targetPath.utf16(), (wchar_t*)device.utf16());
+        if (!result) {
+            // TODO: add error handling
+            qDebug() << "can't mount" << GetLastError();
+        }
+    } else if (device.startsWith(QLatin1String("\\\\"))) { // network share
+        qDebug() << "mounting share";
+    } else {
+        if (QFileInfo(device).isDir()) {
+            qDebug() << "mounting by path";
+            QDriveInfo driveInfo(device);
+            QString guid = driveInfo.device();
+            result = mount(guid, targetPath);
+        }
+    }
+    return result;
+}
+
+bool QDriveController::unmount(const QString &path)
+{
+    //TODO: unmount by device and share
+    QString targetPath = QDir::toNativeSeparators(path);
+    if (!targetPath.endsWith('\\'))
+        targetPath.append('\\');
+
+    bool result;
+    result = DeleteVolumeMountPoint((wchar_t*)targetPath.utf16());
+    if (!result) {
+        // TODO: add error handling
+        qDebug() << "can't unmount" << GetLastError();
+    }
+}
+
