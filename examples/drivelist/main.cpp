@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 
 //    qDebug() << "QDriveController::mount" << c.mount("/dev/disk1", "");
 //    qDebug() << "QDriveController::unmount" << c.unmount("/Volumes/NO NAME");
-    qDebug() << "QDriveController::eject" << c.eject("/Volumes/NO NAME");
+//    qDebug() << "QDriveController::eject" << c.eject("/Volumes/NO NAME");
 
 //    c.mount("/dev/disk0s3", "/Volumes/1");
 //    c.mount("/Volumes/Data HD/Images/openSUSE-11.4-DVD-x86_64.iso", "/Volumes/1");

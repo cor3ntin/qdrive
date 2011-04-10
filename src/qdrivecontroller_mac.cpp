@@ -210,14 +210,6 @@ void QDriveWatcher::updateDrives()
     }
 }
 
-//void diskMountCallback(DADiskRef disk, DADissenterRef dissenter, void *context )
-//{
-//    qDebug() << "diskMountCallback";
-//    CFShow(disk);
-//    qDebug() << "dissenter";
-//    CFShow(dissenter);
-//}
-
 bool QDriveController::mount(const QString &device, const QString &path)
 {
     CFStringRef disk = CFStringCreateWithCharacters(kCFAllocatorDefault,
@@ -237,30 +229,6 @@ bool QDriveController::mount(const QString &device, const QString &path)
     }
 
     return true;
-//    int              ret      = -1;
-//    DASessionRef     session  = NULL;
-//    DADiskRef        disk     = NULL;
-
-//    // create a new Disk Arbitration session
-//    session = DASessionCreate(kCFAllocatorDefault);
-//    qDebug() << session << "failed to create Disk Arbitration session";
-//    DASessionScheduleWithRunLoop(session, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
-
-//    // create a new disk object from the given BSD device name
-//    disk = DADiskCreateFromBSDName(kCFAllocatorDefault, session, device.toUtf8().data());
-//    CFShow(disk);
-//    qDebug() << disk << "failed to create disk object";
-
-//    CFURLRef url = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault,
-//                                                           (const UInt8*)path.toUtf8().data(),
-//                                                           path.length(),
-//                                                           true);
-//    CFShow(url);
-//    DADiskMount(disk, url, kDADiskMountOptionDefault, diskMountCallback, this);
-//    SInt32 result;
-//    do {
-//        result = CFRunLoopRunInMode(kCFRunLoopDefaultMode, TIME_INTERVAL, true);
-//    } while (true && result);
 }
 
 FSVolumeRefNum getRefNumByPath(const QString &path)
@@ -304,25 +272,6 @@ bool QDriveController::unmount(const QString &path)
     }
 
     return true;
-
-//    DASessionRef     session  = NULL;
-//    DADiskRef        disk     = NULL;
-
-//    // create a new Disk Arbitration session
-//    session = DASessionCreate(kCFAllocatorDefault);
-////    qDebug() << session << "failed to create Disk Arbitration session";
-//    DASessionScheduleWithRunLoop(session, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
-
-//    // create a new disk object from the given BSD device name
-//    disk = DADiskCreateFromBSDName(kCFAllocatorDefault, session, device.toUtf8().data());
-//    CFShow(disk);
-////    qDebug() << disk << "failed to create disk object";
-
-//    DADiskUnmount(disk, kDADiskUnmountOptionDefault, diskMountCallback, this);
-//    SInt32 result;
-//    do {
-//        result = CFRunLoopRunInMode(kCFRunLoopDefaultMode, TIME_INTERVAL, true);
-//    } while (true && result);
 }
 
 bool QDriveController::eject(const QString &path)
