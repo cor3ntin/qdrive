@@ -1,7 +1,8 @@
 #include "qdrivecontroller_p.h"
 
-#include <QtCore/QStringList>
+#include <QtCore/QDir>
 #include <QtCore/QFileInfo>
+#include <QtCore/QStringList>
 #include <QDriveInfo>
 
 #ifndef DBT_CUSTOMEVENT
@@ -190,24 +191,62 @@ QDriveWatcher::~QDriveWatcher()
 }
 
 #include <QDebug>
-#include <QDir>
 
 bool QDriveController::mount(const QString &device, const QString &path)
 {
     QString targetPath = QDir::toNativeSeparators(path);
-    if (!targetPath.endsWith('\\'))
-        targetPath.append('\\');
+//    if (!targetPath.endsWith('\\'))
+//        targetPath.append('\\');
 
-    bool result;
+    bool result = false;
     if (device.startsWith(QLatin1String("\\\\?\\"))) { // GUID
         qDebug() << "mounting by uid";
+
         result = SetVolumeMountPoint((wchar_t*)targetPath.utf16(), (wchar_t*)device.utf16());
+
         if (!result) {
             // TODO: add error handling
             qDebug() << "can't mount" << GetLastError();
         }
     } else if (device.startsWith(QLatin1String("\\\\"))) { // network share
         qDebug() << "mounting share";
+        NETRESOURCE source;
+        DWORD result2;
+
+        source.dwType = RESOURCETYPE_ANY;
+        source.lpRemoteName = (wchar_t*)device.utf16();
+        source.lpLocalName = (wchar_t*)targetPath.utf16();
+        source.lpProvider = NULL;
+
+        result2 = WNetAddConnection2(&source, 0, 0, CONNECT_UPDATE_PROFILE);
+
+        if (result2 != NO_ERROR) {
+            result = false;
+            qDebug() << "error mounting share:" << result2;
+            switch (result2) {
+            case ERROR_ACCESS_DENIED : qDebug() << "Access denied"; break;
+            case ERROR_ALREADY_ASSIGNED : qDebug() << "ERROR_ALREADY_ASSIGNED"; break;
+            case ERROR_BAD_DEV_TYPE : qDebug() << "ERROR_BAD_DEV_TYPE"; break;
+            case ERROR_BAD_DEVICE : qDebug() << "ERROR_BAD_DEVICE"; break;
+            case ERROR_BAD_NET_NAME : qDebug() << "ERROR_BAD_NET_NAME"; break;
+            case ERROR_BAD_PROFILE : qDebug() << "ERROR_BAD_PROFILE"; break;
+            case ERROR_BAD_PROVIDER : qDebug() << "ERROR_BAD_PROVIDER"; break;
+            case ERROR_BAD_USERNAME : qDebug() << "ERROR_BAD_USERNAME"; break;
+            case ERROR_BUSY : qDebug() << "ERROR_BUSY"; break;
+            case ERROR_CANCELLED : qDebug() << "ERROR_CANCELLED"; break;
+            case ERROR_CANNOT_OPEN_PROFILE : qDebug() << "ERROR_CANNOT_OPEN_PROFILE"; break;
+            case ERROR_DEVICE_ALREADY_REMEMBERED : qDebug() << "ERROR_DEVICE_ALREADY_REMEMBERED"; break;
+            case ERROR_EXTENDED_ERROR : qDebug() << "ERROR_EXTENDED_ERROR"; break;
+            case ERROR_INVALID_ADDRESS : qDebug() << "ERROR_INVALID_ADDRESS"; break;
+            case ERROR_INVALID_PARAMETER : qDebug() << "ERROR_INVALID_PARAMETER"; break;
+            case ERROR_INVALID_PASSWORD : qDebug() << "ERROR_INVALID_PASSWORD"; break;
+            case ERROR_LOGON_FAILURE : qDebug() << "ERROR_LOGON_FAILURE"; break;
+            case ERROR_NO_NET_OR_BAD_PATH : qDebug() << "ERROR_NO_NET_OR_BAD_PATH"; break;
+            case ERROR_NO_NETWORK : qDebug() << "ERROR_NO_NETWORK"; break;
+            default: qDebug() << "other error"; break;
+            }
+        }
+        result = true;
     } else {
         if (QFileInfo(device).isDir()) {
             qDebug() << "mounting by path";
@@ -221,16 +260,40 @@ bool QDriveController::mount(const QString &device, const QString &path)
 
 bool QDriveController::unmount(const QString &path)
 {
-    //TODO: unmount by device and share
-    QString targetPath = QDir::toNativeSeparators(path);
-    if (!targetPath.endsWith('\\'))
-        targetPath.append('\\');
+    QDriveInfo driveInfo(path);
+    if (path.startsWith("\\\\") || driveInfo.type() == QDriveInfo::RemoteDrive) { // share
+        QString targetPath = QDir::toNativeSeparators(path);
+        if (targetPath.endsWith('\\'))
+            targetPath.chop(1);
 
-    bool result;
-    result = DeleteVolumeMountPoint((wchar_t*)targetPath.utf16());
-    if (!result) {
-        // TODO: add error handling
-        qDebug() << "can't unmount" << GetLastError();
+        DWORD result;
+        result = WNetCancelConnection2((wchar_t*)targetPath.utf16(), CONNECT_UPDATE_PROFILE, true);
+        if (result != NO_ERROR) {
+            qDebug() << "error unmounting share:" << result;
+            switch (result) {
+            case ERROR_BAD_PROFILE : qDebug() << "ERROR_BAD_PROFILE"; break;
+            case ERROR_CANNOT_OPEN_PROFILE : qDebug() << "ERROR_CANNOT_OPEN_PROFILE"; break;
+            case ERROR_DEVICE_IN_USE : qDebug() << "ERROR_DEVICE_IN_USE"; break;
+            case ERROR_EXTENDED_ERROR : qDebug() << "ERROR_EXTENDED_ERROR"; break;
+            case ERROR_NOT_CONNECTED : qDebug() << "ERROR_NOT_CONNECTED"; break;
+            case ERROR_OPEN_FILES : qDebug() << "ERROR_OPEN_FILES"; break;
+            default: qDebug() << "other error"; break;
+            }
+            return false;
+        }
+        return true;
+    } else {
+        QString targetPath = QDir::toNativeSeparators(path);
+        if (!targetPath.endsWith('\\'))
+            targetPath.append('\\');
+
+        bool result;
+        result = DeleteVolumeMountPoint((wchar_t*)targetPath.utf16());
+        if (!result) {
+            // TODO: add error handling
+            qDebug() << "can't unmount" << GetLastError();
+        }
     }
+    return false;
 }
 

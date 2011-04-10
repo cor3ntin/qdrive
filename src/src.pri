@@ -16,7 +16,7 @@ SOURCES += qdriveinfo.cpp \
 win32 {
     SOURCES += qdriveinfo_win.cpp \
                qdrivecontroller_win.cpp
-    LIBS += -luserenv
+    LIBS += -luserenv -lNetapi32 -lMpr
 } else: unix {
     linux-* {
         SOURCES += qdriveinfo_linux.cpp \
