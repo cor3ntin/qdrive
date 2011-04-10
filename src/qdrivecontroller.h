@@ -16,6 +16,7 @@ public:
 
     bool mount(const QString &device, const QString &path);
     bool unmount(const QString &path);
+    bool eject(const QString &path);
 
 signals:
     void driveMounted(const QString &path);

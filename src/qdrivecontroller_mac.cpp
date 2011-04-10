@@ -210,13 +210,13 @@ void QDriveWatcher::updateDrives()
     }
 }
 
-void diskMountCallback(DADiskRef disk, DADissenterRef dissenter, void *context )
-{
-    qDebug() << "diskMountCallback";
-    CFShow(disk);
-    qDebug() << "dissenter";
-    CFShow(dissenter);
-}
+//void diskMountCallback(DADiskRef disk, DADissenterRef dissenter, void *context )
+//{
+//    qDebug() << "diskMountCallback";
+//    CFShow(disk);
+//    qDebug() << "dissenter";
+//    CFShow(dissenter);
+//}
 
 bool QDriveController::mount(const QString &device, const QString &path)
 {
@@ -230,10 +230,13 @@ bool QDriveController::mount(const QString &device, const QString &path)
                                                                path.length(),
                                                                true);
     OSStatus result = FSMountLocalVolumeSync(disk, url, &refNum, kFSIterateReserved);
-    qDebug() << result;
     if (result != noErr) {
-        qDebug() << "failed";
+        qDebug() << result;
+        qDebug() << "failed mount";
+        return false;
     }
+
+    return true;
 //    int              ret      = -1;
 //    DASessionRef     session  = NULL;
 //    DADiskRef        disk     = NULL;
@@ -260,25 +263,85 @@ bool QDriveController::mount(const QString &device, const QString &path)
 //    } while (true && result);
 }
 
-bool QDriveController::unmount(const QString &device)
+FSVolumeRefNum getRefNumByPath(const QString &path)
 {
-    DASessionRef     session  = NULL;
-    DADiskRef        disk     = NULL;
+    OSStatus result;
 
-    // create a new Disk Arbitration session
-    session = DASessionCreate(kCFAllocatorDefault);
-//    qDebug() << session << "failed to create Disk Arbitration session";
-    DASessionScheduleWithRunLoop(session, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
+    FSRef fsref;
+    result = FSPathMakeRef((const UInt8*)path.toUtf8().constData(), &fsref, 0);
+    if (result != noErr) {
+        qDebug() << result;
+        qDebug() << "failed getting FSRef";
+        return kFSInvalidVolumeRefNum;
+    }
 
-    // create a new disk object from the given BSD device name
-    disk = DADiskCreateFromBSDName(kCFAllocatorDefault, session, device.toUtf8().data());
-    CFShow(disk);
-//    qDebug() << disk << "failed to create disk object";
+    FSCatalogInfo catalogInfo;
+    result = FSGetCatalogInfo(&fsref, kFSCatInfoVolume, &catalogInfo, 0, 0, 0);
+    if (result != noErr) {
+        qDebug() << result;
+        qDebug() << "failed getting info";
+        return kFSInvalidVolumeRefNum;
+    }
 
-    DADiskUnmount(disk, kDADiskUnmountOptionDefault, diskMountCallback, this);
-    SInt32 result;
-    do {
-        result = CFRunLoopRunInMode(kCFRunLoopDefaultMode, TIME_INTERVAL, true);
-    } while (true && result);
+    return catalogInfo.volume;
+}
+
+bool QDriveController::unmount(const QString &path)
+{
+    OSStatus result;
+
+    FSVolumeRefNum refNum = getRefNumByPath(path);
+    pid_t dissenter;
+
+    // TODO: manually check refNum == kFSInvalidVolumeRefNum ??
+
+    result = FSUnmountVolumeSync(refNum, 0, &dissenter);
+
+    if (result != noErr) {
+        qDebug() << result;
+        qDebug() << "failed unmount";
+        return false;
+    }
+
+    return true;
+
+//    DASessionRef     session  = NULL;
+//    DADiskRef        disk     = NULL;
+
+//    // create a new Disk Arbitration session
+//    session = DASessionCreate(kCFAllocatorDefault);
+////    qDebug() << session << "failed to create Disk Arbitration session";
+//    DASessionScheduleWithRunLoop(session, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
+
+//    // create a new disk object from the given BSD device name
+//    disk = DADiskCreateFromBSDName(kCFAllocatorDefault, session, device.toUtf8().data());
+//    CFShow(disk);
+////    qDebug() << disk << "failed to create disk object";
+
+//    DADiskUnmount(disk, kDADiskUnmountOptionDefault, diskMountCallback, this);
+//    SInt32 result;
+//    do {
+//        result = CFRunLoopRunInMode(kCFRunLoopDefaultMode, TIME_INTERVAL, true);
+//    } while (true && result);
+}
+
+bool QDriveController::eject(const QString &path)
+{
+    OSStatus result;
+
+    FSVolumeRefNum refNum = getRefNumByPath(path);
+    pid_t dissenter;
+
+    // TODO: manually check refNum == kFSInvalidVolumeRefNum ??
+
+    result = FSEjectVolumeSync(refNum, 0, &dissenter);
+
+    if (result != noErr) {
+        qDebug() << result;
+        qDebug() << "failed eject";
+        return false;
+    }
+
+    return true;
 }
 
