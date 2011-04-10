@@ -25,6 +25,12 @@ int main(int argc, char *argv[])
 //    c.mount("/Volumes/Data HD/Images/openSUSE-11.4-DVD-x86_64.iso", "/Volumes/1");
 //    c.unmount("/dev/disk1");
 
+    // Linux:
+//    c.mount("/dev/sda3", "/media/1");
+//    c.unmount("/media/1");
+//    c.unmount("/dev/sda3");
+//    c.eject("/dev/cdrom");
+
     foreach (const QDriveInfo &drive, QDriveInfo::drives()) {
         qDebug() << "==============";
         if (drive.isValid()) {
