@@ -12,6 +12,11 @@ int main(int argc, char *argv[])
 
     QDriveController c;
 
+    // Windows:
+//    qDebug() << "QDriveController::mount" << c.mount("E:\\", "C:\\1");
+//    qDebug() << "QDriveController::unmount" << c.unmount("C:\\1");
+
+    // Mac:
 //    qDebug() << "QDriveController::mount" << c.mount("/dev/disk1", "");
 //    qDebug() << "QDriveController::unmount" << c.unmount("/Volumes/NO NAME");
 //    qDebug() << "QDriveController::eject" << c.eject("/Volumes/NO NAME");
