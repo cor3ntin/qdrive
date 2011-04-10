@@ -2,6 +2,7 @@
 #include <QtCore/QDebug>
 
 #include <QDriveInfo>
+#include <QTimer>
 
 #include <QDriveController>
 
@@ -10,8 +11,14 @@ int main(int argc, char *argv[])
     QCoreApplication app(argc, argv);
 
     QDriveController c;
-    qDebug() << "QDriveController::mount" << c.mount("E:\\", "C:\\1");
-    qDebug() << "QDriveController::unmount" << c.unmount("C:\\1");
+
+//    qDebug() << "QDriveController::mount" << c.mount("/dev/disk1", "");
+//    qDebug() << "QDriveController::unmount" << c.unmount("/Volumes/NO NAME");
+    qDebug() << "QDriveController::eject" << c.eject("/Volumes/NO NAME");
+
+//    c.mount("/dev/disk0s3", "/Volumes/1");
+//    c.mount("/Volumes/Data HD/Images/openSUSE-11.4-DVD-x86_64.iso", "/Volumes/1");
+//    c.unmount("/dev/disk1");
 
     foreach (const QDriveInfo &drive, QDriveInfo::drives()) {
         qDebug() << "==============";
@@ -61,5 +68,6 @@ int main(int argc, char *argv[])
         }
     }
 
+    QTimer::singleShot(15000, &app, SLOT(quit()));
     return app.exec();
 }

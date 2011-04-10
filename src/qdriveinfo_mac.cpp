@@ -35,6 +35,7 @@ void QDriveInfoPrivate::initRootPath()
         CFStringRef stringRef;
         stringRef = CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
         if (stringRef) {
+            // TODO : use utf-16 ??
             CFIndex length = CFStringGetLength(stringRef) + 1;
             char *volname = NewPtr(length);
             CFStringGetCString(stringRef, volname, length, kCFStringEncodingMacRoman);
@@ -46,6 +47,7 @@ void QDriveInfoPrivate::initRootPath()
 
         stringRef = FSCreateStringFromHFSUniStr(NULL, &volumeName);
         if (stringRef) {
+            // TODO : use utf-16 ??
             CFIndex length = CFStringGetLength(stringRef) + 1;
             char *volname = NewPtr(length);
             CFStringGetCString(stringRef, volname, length, kCFStringEncodingMacRoman);
