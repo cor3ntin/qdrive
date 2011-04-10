@@ -1,7 +1,8 @@
 todo:
 * polish API docs
 * implement controller (watching, notifications, global cache)
-* fix unmounting of isk images on mac (doesnt't get their paths)
+* test all use-cases on mac (mount/unmount by device)
+* mount disk images on mac
 
 todo (?):
 * drop netshares support
@@ -13,3 +14,4 @@ done:
 * root drive API
 * pre-cache data obtained in drives()
 * operator ==
+* fix unmounting of isk dimages on mac (doesnt't get their paths)
