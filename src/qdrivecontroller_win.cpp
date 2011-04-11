@@ -14,6 +14,8 @@
 #  define DBT_CUSTOMEVENT 0x8006
 #endif
 
+#define QDRIVECONTROLLER_DEBUG 1
+
 Q_CORE_EXPORT HINSTANCE qWinAppInst();
 
 static inline QStringList drivesFromMask(quint32 driveBits)
@@ -35,10 +37,7 @@ static inline QStringList drivesFromMask(quint32 driveBits)
 LRESULT CALLBACK dw_internal_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     if (message == WM_DEVICECHANGE) {
-#ifdef QDRIVECONTROLLER_DEBUG
-        qDebug("WM_DEVICECHANGE");
-#endif
-        PDEV_BROADCAST_HDR lpdb = (PDEV_BROADCAST_HDR)lParam;
+        DEV_BROADCAST_HDR *lpdb = (DEV_BROADCAST_HDR *)lParam;
         switch (wParam) {
         case DBT_DEVNODES_CHANGED:
 #ifdef QDRIVECONTROLLER_DEBUG
@@ -68,7 +67,7 @@ LRESULT CALLBACK dw_internal_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
         case DBT_DEVICEREMOVEPENDING:
         case DBT_DEVICEREMOVECOMPLETE:
             if (lpdb->dbch_devicetype == DBT_DEVTYP_VOLUME) {
-                DEV_BROADCAST_VOLUME* db_volume = (DEV_BROADCAST_VOLUME*)lpdb;
+                DEV_BROADCAST_VOLUME *db_volume = (DEV_BROADCAST_VOLUME *)lpdb;
                 QStringList drives = drivesFromMask(db_volume->dbcv_unitmask);
 #ifdef GWLP_USERDATA
                 QDriveWatcher *watcher = (QDriveWatcher *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
@@ -108,7 +107,7 @@ LRESULT CALLBACK dw_internal_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
             break;
         case DBT_DEVICETYPESPECIFIC:
 #ifdef QDRIVECONTROLLER_DEBUG
-            qWarning("DBT_DEVICETYPESPECIFIC message received, can contain an extended info.");
+            qWarning("DBT_DEVICETYPESPECIFIC message received, may contain an extended info.");
 #endif
             break;
         case DBT_CUSTOMEVENT:
@@ -152,7 +151,7 @@ static inline HWND dw_create_internal_window(const void* userData)
     wc.hCursor = 0;
     wc.hbrBackground = 0;
     wc.lpszMenuName = NULL;
-    wc.lpszClassName = reinterpret_cast<const wchar_t*>(className().utf16());
+    wc.lpszClassName = reinterpret_cast<const wchar_t *>(className().utf16());
     RegisterClass(&wc);
 
     HWND hwnd = CreateWindow(wc.lpszClassName,       // classname
@@ -181,7 +180,7 @@ static inline void dw_destroy_internal_window(HWND hwnd)
     if (hwnd)
         DestroyWindow(hwnd);
 
-    UnregisterClass(reinterpret_cast<const wchar_t*>(className().utf16()), qWinAppInst());
+    UnregisterClass(reinterpret_cast<const wchar_t *>(className().utf16()), qWinAppInst());
 }
 
 
@@ -196,7 +195,6 @@ bool QDriveWatcher::start_sys()
 {
     engine = new QDriveWatcherEngine;
     engine->hwnd = dw_create_internal_window(this);
-
     return engine->hwnd;
 }
 
