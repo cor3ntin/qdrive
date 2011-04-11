@@ -9,7 +9,7 @@ class QDriveControllerPrivate;
 class QDRIVEINFO_EXPORT QDriveController : public QObject
 {
     Q_OBJECT
-    Q_DECLARE_PRIVATE(QDriveController);
+
 public:
     explicit QDriveController(QObject *parent = 0);
     ~QDriveController();
@@ -34,7 +34,8 @@ public Q_SLOTS:
     void testDriveUnounted(const QString &path);
 //
 protected:
-    QDriveControllerPrivate *d_ptr;
+    Q_DECLARE_PRIVATE(QDriveController);
+    QDriveControllerPrivate *const d;
 };
 
 #endif // QDRIVECONTROLLER_H

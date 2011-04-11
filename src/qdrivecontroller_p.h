@@ -1,10 +1,10 @@
 #ifndef QDRIVECONTROLLER_P_H
 #define QDRIVECONTROLLER_P_H
 
+#include "qdrivecontroller.h"
+
 #include <QtCore/QAtomicInt>
 #include <QtCore/QObject>
-
-#include "qdrivecontroller.h"
 
 class QDriveControllerPrivate
 {
@@ -12,6 +12,7 @@ public:
     QDriveController::MountError error;
     QString errorString;
 };
+
 
 class QDriveWatcherEngine;
 
