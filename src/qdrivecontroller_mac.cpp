@@ -98,21 +98,17 @@ void unmountCallback(DADiskRef disk, void *context)
 //    CFShow(DADiskCopyDescription(disk));
     QString path = getDiskPath(disk);
     QDriveWatcherEngine *watcher = reinterpret_cast<QDriveWatcherEngine*>(context);
-    if (path.isEmpty()) {
-        // if we didn't receive path from API, we maunally determine lost drive
-        // (fixes bug with .dmg and .iso images
+    if (!path.isEmpty()) {
+        watcher->removeDrive(path);
+    } else {
+        // if we didn't receive path from API, we need to determine the lost drive manually
         watcher->updateDrives();
-
-        return;
     }
-
-    watcher->removeDrive(path);
 }
 
 
-QDriveWatcherEngine::QDriveWatcherEngine(QDriveWatcher *watcher)
-    : QThread(0),
-      m_watcher(watcher),
+QDriveWatcherEngine::QDriveWatcherEngine()
+    : QThread(),
       m_running(false)
 {
     m_session = DASessionCreate(kCFAllocatorDefault);
@@ -182,14 +178,14 @@ void QDriveWatcherEngine::addDrive(const QString &path)
 {
     if (!volumes.contains(path)) {
         volumes.insert(path);
-        m_watcher->emitDriveAdded(path);
+        emit driveAdded(path);
     }
 }
 
 void QDriveWatcherEngine::removeDrive(const QString &path)
 {
     if (volumes.remove(path))
-        m_watcher->emitDriveRemoved(path);
+        emit driveRemoved(path);
 }
 
 void QDriveWatcherEngine::updateDrives()
@@ -201,19 +197,21 @@ void QDriveWatcherEngine::updateDrives()
 
     foreach (const QString &path, oldDrives) {
         if (!volumes.contains(path))
-            m_watcher->emitDriveRemoved(path);
+            emit driveRemoved(path);
     }
 
     foreach (const QString &path, volumes) {
         if (!oldDrives.contains(path))
-            m_watcher->emitDriveAdded(path);
+            emit driveAdded(path);
     }
 }
 
 
 bool QDriveWatcher::start_sys()
 {
-    engine = new QDriveWatcherEngine(this);
+    engine = new QDriveWatcherEngine;
+    connect(engine, SIGNAL(driveAdded(QString)), this, SIGNAL(driveAdded(QString)));
+    connect(engine, SIGNAL(driveRemoved(QString)), this, SIGNAL(driveRemoved(QString)));
     return true;
 }
 
