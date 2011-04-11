@@ -6,11 +6,16 @@
 #include <QtCore/QAtomicInt>
 #include <QtCore/QObject>
 
+#include "qsystemerror_p.h"
+
 class QDriveControllerPrivate
 {
 public:
-    QDriveController::MountError error;
-    QString errorString;
+//    QDriveController::MountError error;
+//    QString errorString;
+
+    QSystemError error;
+    void setLastError(int errorCode);
 };
 
 

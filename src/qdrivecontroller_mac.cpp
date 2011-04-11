@@ -221,40 +221,6 @@ void QDriveWatcher::stop_sys()
     engine = 0;
 }
 
-void setLastError(QDriveControllerPrivate *d, OSStatus status)
-{
-    switch (status) {
-    case bdNamErr: // Bad filename or volume name.
-    case nsDrvErr: // No such drive.
-        d->error = QDriveController::MountErrorBadDevice;
-        d->errorString = QObject::tr("Bad Device");
-        break;
-    case wPrErr: // Volume is locked through hardware.
-    case vLckdErr: // Volume is locked through software.
-        d->error = QDriveController::MountErrorResourceBusy;
-        d->errorString = QObject::tr("Resource busy");
-        break;
-    case volOnLinErr: // Volume already online. // NOT SURE
-    case afpAlreadyMounted: // Volume already mounted.
-        d->error = QDriveController::MountErrorAlreadyMounted;
-        d->errorString = QObject::tr("Device or share already mounted");
-        break;
-    case afpAccessDenied: // User does not have the correct access to the file. Directory cannot be shared.
-        d->error = QDriveController::MountErrorAccessDenied;
-        d->errorString = QObject::tr("Access denied");
-        break;
-    case afpUserNotAuth: // User authentication failed.
-        d->error = QDriveController::MountErrorInvalidCredentials;
-        d->errorString = QObject::tr("Invalid Credentials");
-        break;
-    default:
-        d->error = QDriveController::MountErrorUnknown;
-        d->errorString = QObject::tr("Unknown error, system code %1").arg(status);
-        qWarning() << "QDriveController::MountErrorUnknown occured. Error status is" << status;
-        break;
-    }
-}
-
 bool QDriveController::mount(const QString &device, const QString &path)
 {
     bool result = true;
@@ -286,7 +252,7 @@ bool QDriveController::mount(const QString &device, const QString &path)
         if (status != noErr) {
             qDebug() << status;
             qDebug() << "failed mount";
-            setLastError(d_func(), status);
+            d->setLastError(status);
             result =  false;
         }
 
@@ -306,7 +272,7 @@ bool QDriveController::mount(const QString &device, const QString &path)
         if (status != noErr) {
             qDebug() << status;
             qDebug() << "failed mount";
-            setLastError(d_func(), status);
+            d->setLastError(status);
             result = false;
         }
         CFRelease(disk);

@@ -208,61 +208,6 @@ void QDriveWatcher::stop_sys()
     }
 }
 
-void setLastError(QDriveControllerPrivate *d, int errorCode)
-{
-    switch (errorCode) {
-// mount:
-    case ERROR_ACCESS_DENIED :
-        d->error = QDriveController::MountErrorAccessDenied;
-        d->errorString = QObject::tr("Access denied");
-        break;
-    case ERROR_BAD_DEV_TYPE :
-    case ERROR_BAD_DEVICE :
-    case ERROR_BAD_NET_NAME :
-        d->error = QDriveController::MountErrorBadDevice;
-        d->error = QObject::tr("Bad Device");
-        break;
-    case ERROR_BAD_PROFILE :
-    case ERROR_BAD_USERNAME :
-    case ERROR_INVALID_PASSWORD :
-    case ERROR_LOGON_FAILURE :
-        d->error = QDriveController::MountErrorInvalidCredentials;
-        d->errorString = QObject::tr("Invalid Credentials");
-        break;
-    case ERROR_BAD_PROVIDER : qDebug() << "ERROR_BAD_PROVIDER"; break;
-    case ERROR_BUSY : qDebug() << "ERROR_BUSY"; break;
-    case ERROR_CANCELLED : qDebug() << "ERROR_CANCELLED"; break;
-    case ERROR_CANNOT_OPEN_PROFILE : qDebug() << "ERROR_CANNOT_OPEN_PROFILE"; break;
-
-    case ERROR_ALREADY_ASSIGNED : // NOT SURE (local path is mounted to share)
-    case ERROR_DEVICE_ALREADY_REMEMBERED :
-        d->error = QDriveController::MountErrorAlreadyMounted;
-        d->errorString = QObject::tr("Device or share already mounted");
-        break;
-    case ERROR_INVALID_ADDRESS : qDebug() << "ERROR_INVALID_ADDRESS"; break;
-    case ERROR_INVALID_PARAMETER : qDebug() << "ERROR_INVALID_PARAMETER"; break;
-    case ERROR_NO_NET_OR_BAD_PATH :
-    case ERROR_EXTENDED_ERROR :
-    case ERROR_NO_NETWORK :
-        d->error = QDriveController::MountErrorNetworkError;
-        d->errorString = QObject::tr("Network error occured");
-        break;
-// Unmount:
-    case ERROR_DEVICE_IN_USE :
-    case ERROR_OPEN_FILES :
-        d->error = QDriveController::MountErrorResourceBusy;
-        d->errorString = QObject::tr("Resource busy");
-        break;
-    case ERROR_NOT_CONNECTED : qDebug() << "ERROR_NOT_CONNECTED"; break;
-
-    default:
-        d->error = MountErrorUnknown;
-        d->errorString = QObject::tr("Unknown error, system code %1").arg(errorCode);
-        qWarning() << "QDriveController::MountErrorUnknown occured. Error status is" << errorCode;
-        break;
-    }
-}
-
 bool QDriveController::mount(const QString &device, const QString &path)
 {
     QString targetPath = QDir::toNativeSeparators(path);
@@ -273,7 +218,7 @@ bool QDriveController::mount(const QString &device, const QString &path)
 
         bool result = SetVolumeMountPoint((wchar_t*)targetPath.utf16(), (wchar_t*)device.utf16());
         if (!result) {
-            setLastError(d_func(), GetLastError());
+            d->setLastError(GetLastError());
             return false;
         }
 
@@ -287,7 +232,7 @@ bool QDriveController::mount(const QString &device, const QString &path)
 
         DWORD result = WNetAddConnection2(&resource, 0, 0, CONNECT_UPDATE_PROFILE);
         if (result != NO_ERROR) {
-            setLastError(d_func(), result);
+            d->setLastError(result);
             return false;
         }
 
@@ -316,7 +261,7 @@ bool QDriveController::unmount(const QString &path)
 
         DWORD result = WNetCancelConnection2((wchar_t*)targetPath.utf16(), CONNECT_UPDATE_PROFILE, true);
         if (result != NO_ERROR) {
-            setLastError(d_func(), result);
+            d->setLastError(result);
             return false;
         }
 
@@ -327,7 +272,7 @@ bool QDriveController::unmount(const QString &path)
 
         bool result = DeleteVolumeMountPoint((wchar_t*)targetPath.utf16());
         if (!result) {
-            setLastError(d_func(), GetLastError());
+            d->setLastError(GetLastError());
             return false;
         }
 

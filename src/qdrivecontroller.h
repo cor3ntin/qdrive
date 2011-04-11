@@ -14,19 +14,7 @@ public:
     explicit QDriveController(QObject *parent = 0);
     ~QDriveController();
 
-    enum MountError { MountErrorNone = 0,
-                      MountErrorAccessDenied = 0x01,
-                      MountErrorBadDevice = 0x02,
-                      MountErrorBadMountPoint = 0x07,
-                      MountErrorInvalidCredentials = 0x03,
-                      MountErrorResourceBusy = 0x04,
-                      MountErrorAlreadyMounted = 0x05,
-                      MountErrorNetworkError = 0x06,
-                      MountErrorUnknown = 0xff };
-
-    Q_ENUMS(MountError);
-
-    MountError error() const;
+    int error() const;
     QString errorString() const;
 
     bool mount(const QString &device, const QString &path);

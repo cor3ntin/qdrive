@@ -32,6 +32,12 @@ void QDriveWatcher::stop()
 
 Q_GLOBAL_STATIC(QDriveWatcher, theWatcher);
 
+void QDriveControllerPrivate::setLastError(int errorCode)
+{
+    error.errorScope = QSystemError::NativeError;
+    error.errorCode = errorCode;
+}
+
 
 QDriveController::QDriveController(QObject *parent)
     : QObject(parent), d(new QDriveControllerPrivate)
@@ -53,3 +59,14 @@ QDriveController::~QDriveController()
 
     delete d;
 }
+
+int QDriveController::error() const
+{
+    return d->error.error();
+}
+
+QString QDriveController::errorString() const
+{
+    return d->error.toString();
+}
+

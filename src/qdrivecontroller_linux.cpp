@@ -111,32 +111,6 @@ void QDriveWatcher::stop_sys()
     engine = 0;
 }
 
-void setLastError(QDriveControllerPrivate *d, inte errorCode)
-{
-    switch (errorCode) {
-    case EPERM:
-        d->error = QDriveController::MountErrorAccessDenied;
-        d->errorString = QObject::tr("Access denied");
-        break;
-    case EBUSY:
-        d->error = QDriveController::MountErrorResourceBusy;
-        d->errorString = QObject::tr("Resource busy");
-        break;
-    case ENAMETOOLONG:
-    case ENOENT:
-    case ENOTDIR:
-    case ELOOP:
-        d->error = QDriveController::MountErrorBadMountPoint;
-        d->errorString = QObject::tr("Bad mount point");
-        break;
-    default:
-        d->error = QDriveController::MountErrorUnknown;
-        d->errorString = QObject::tr("Unknown error, system code %1").arg(errorCode);
-        qWarning() << "QDriveController::MountErrorUnknown occured. Error status is" << errorCode;
-        break;
-    }
-}
-
 bool QDriveController::mount(const QString &device, const QString &path)
 {
     QString targetPath = QDir::toNativeSeparators(path);
@@ -146,7 +120,7 @@ bool QDriveController::mount(const QString &device, const QString &path)
     // TODO: guess filesystem
     int result = ::mount(QFile::encodeName(device), QFile::encodeName(targetPath), "ext4", 0, 0);
     if (result) {
-        qDebug() << "mount failed" << result << errno << QString::fromLocal8Bit(::strerror(errno));
+        d->setLastError(result);
         return false;
     }
     return true;
@@ -160,7 +134,7 @@ bool QDriveController::unmount(const QString &path)
 
     int result = ::umount(QFile::encodeName(targetPath));
     if (result) {
-        qDebug() << "unmount failed" << result << errno << QString::fromLocal8Bit(::strerror(errno));
+        d->setLastError(result);
         return false;
     }
     return true;
@@ -176,7 +150,7 @@ bool QDriveController::eject(const QString &device)
 
     int fd = ::open(QFile::encodeName(device), O_RDONLY | O_NONBLOCK);
     if (fd == -1) {
-        qDebug() << "can't open device" << errno << QString::fromLocal8Bit(::strerror(errno));
+        d->setLastError(errno);
         return false;
     }
 
@@ -188,7 +162,7 @@ bool QDriveController::eject(const QString &device)
 
     int result = ::ioctl(fd, CDROMEJECT);
     if (result == -1) {
-        qDebug() << "can't open device" << result << errno << QString::fromLocal8Bit(::strerror(errno));
+        d->setLastError(errno);
         close(fd);
         return false;
     }
