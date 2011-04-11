@@ -110,7 +110,7 @@ private Q_SLOTS:
     void inotifyActivated();
 
 private:
-    QDriveWatcher *m_watcher
+    QDriveWatcher *m_watcher;
 
     QSet<QString> drives;
     int inotifyFD;
