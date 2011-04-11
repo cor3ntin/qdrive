@@ -226,23 +226,63 @@ void QDriveWatcher::stop_sys()
 
 bool QDriveController::mount(const QString &device, const QString &path)
 {
-    CFStringRef disk = CFStringCreateWithCharacters(kCFAllocatorDefault,
-                                                    (const ushort*)device.data(),
-                                                    device.length());
-    CFShow(disk);
+    bool result = true;
     FSVolumeRefNum refNum;
-        CFURLRef url = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault,
-                                                               (const UInt8*)path.toUtf8().data(),
-                                                               path.length(),
-                                                               true);
-    OSStatus result = FSMountLocalVolumeSync(disk, url, &refNum, kFSIterateReserved);
-    if (result != noErr) {
-        qDebug() << result;
-        qDebug() << "failed mount";
-        return false;
+    CFURLRef mountUrl = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault,
+                                                                (const UInt8*)path.toUtf8().data(),
+                                                                path.length(),
+                                                                true);
+
+    if (device.startsWith(QLatin1String("afp://")) ||
+            device.startsWith(QLatin1String("smb://")) ||
+            device.startsWith(QLatin1String("ftp://"))) {
+
+        CFStringRef deviceString = CFStringCreateWithCharacters(kCFAllocatorDefault,
+                                                                device.utf16(),
+                                                                device.length());
+
+        CFStringRef encodedString = CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault,
+                                                                            deviceString,
+                                                                            0,
+                                                                            0,
+                                                                            0);
+
+        CFURLRef url = CFURLCreateWithString(kCFAllocatorDefault,
+                                             encodedString,
+                                             0);
+
+        OSStatus status = FSMountServerVolumeSync(url, mountUrl, 0, 0, &refNum, 0);
+        if (status != noErr) {
+            qDebug() << status;
+            qDebug() << "failed mount";
+            result =  false;
+        }
+
+        if (url)
+            CFRelease(url);
+        CFRelease(encodedString);
+        CFRelease(deviceString);
+
+    } else {
+
+        CFStringRef disk = CFStringCreateWithCharacters(kCFAllocatorDefault,
+                                                        device.utf16(),
+                                                        device.length());
+        CFShow(disk);
+
+        OSStatus status = FSMountLocalVolumeSync(disk, mountUrl, &refNum, /*kFSIterateReserved*/0);
+        if (status != noErr) {
+            qDebug() << status;
+            qDebug() << "failed mount";
+            result = false;
+        }
+        CFRelease(disk);
     }
 
-    return true;
+    if (mountUrl)
+        CFRelease(mountUrl);
+
+    return result;
 }
 
 static FSVolumeRefNum getRefNumByPath(const QString &path)

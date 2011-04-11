@@ -25,6 +25,9 @@ int main(int argc, char *argv[])
 //    c.mount("/Volumes/Data HD/Images/openSUSE-11.4-DVD-x86_64.iso", "/Volumes/1");
 //    c.unmount("/dev/disk1");
 
+//    qDebug() << "mounting share" << c.mount("smb://p5/Shared Folder", "");
+//    qDebug() << "unmounting share" << c.unmount("/Volumes/Shared Folder/");
+
     // Linux:
 //    c.mount("/dev/sda3", "/media/1");
 //    c.unmount("/media/1");
