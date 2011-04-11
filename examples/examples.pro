@@ -1,2 +1,3 @@
 TEMPLATE = subdirs
-SUBDIRS  = drivelist
+SUBDIRS  = drivelist \
+           volumesmonitor
