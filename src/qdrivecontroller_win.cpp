@@ -1,3 +1,4 @@
+#include "qdrivecontroller.h"
 #include "qdrivecontroller_p.h"
 
 #include <QtCore/QDir>
@@ -5,50 +6,60 @@
 #include <QtCore/QStringList>
 #include <QDriveInfo>
 
+#define _WIN32_WINNT 0x0500
+#include <qt_windows.h>
+#include <dbt.h>
+
 #ifndef DBT_CUSTOMEVENT
 #  define DBT_CUSTOMEVENT 0x8006
 #endif
 
-// from Panter Commader
 Q_CORE_EXPORT HINSTANCE qWinAppInst();
 
-static QStringList drivesFromMask(quint32 driveBits)
+static inline QStringList drivesFromMask(quint32 driveBits)
 {
         QStringList ret;
 
         char driveName[] = "A:/";
         driveBits = (driveBits & 0x3ffffff);
-        while(driveBits)
-        {
-                if(driveBits & 0x1)
-                        ret.append(QString::fromLatin1(driveName));
-                ++driveName[0];
-                driveBits = driveBits >> 1;
+        while (driveBits) {
+            if (driveBits & 0x1)
+                ret.append(QString::fromLatin1(driveName));
+            ++driveName[0];
+            driveBits = driveBits >> 1;
         }
 
         return ret;
 }
 
-LRESULT CALLBACK vw_internal_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK dw_internal_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    if(message == WM_DEVICECHANGE)
-    {
+    if (message == WM_DEVICECHANGE) {
+#ifdef QDRIVECONTROLLER_DEBUG
         qDebug("WM_DEVICECHANGE");
+#endif
         PDEV_BROADCAST_HDR lpdb = (PDEV_BROADCAST_HDR)lParam;
-        switch(wParam)
-        {
+        switch (wParam) {
         case DBT_DEVNODES_CHANGED:
+#ifdef QDRIVECONTROLLER_DEBUG
             qWarning("DBT_DEVNODES_CHANGED message received, no extended info.");
+#endif
             break;
 
         case DBT_QUERYCHANGECONFIG:
+#ifdef QDRIVECONTROLLER_DEBUG
             qWarning("DBT_QUERYCHANGECONFIG message received, no extended info.");
+#endif
             break;
         case DBT_CONFIGCHANGED:
+#ifdef QDRIVECONTROLLER_DEBUG
             qWarning("DBT_CONFIGCHANGED message received, no extended info.");
+#endif
             break;
         case DBT_CONFIGCHANGECANCELED:
+#ifdef QDRIVECONTROLLER_DEBUG
             qWarning("DBT_CONFIGCHANGECANCELED message received, no extended info.");
+#endif
             break;
 
         case DBT_DEVICEARRIVAL:
@@ -56,66 +67,65 @@ LRESULT CALLBACK vw_internal_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
         case DBT_DEVICEQUERYREMOVEFAILED:
         case DBT_DEVICEREMOVEPENDING:
         case DBT_DEVICEREMOVECOMPLETE:
-            if(lpdb->dbch_devicetype == DBT_DEVTYP_VOLUME)
-            {
+            if (lpdb->dbch_devicetype == DBT_DEVTYP_VOLUME) {
                 DEV_BROADCAST_VOLUME* db_volume = (DEV_BROADCAST_VOLUME*)lpdb;
-                const QStringList& drives = drivesFromMask(db_volume->dbcv_unitmask);
-                if(wParam == DBT_DEVICEARRIVAL)
-                {
-                    foreach(const QString &drive, drives)
-                    {
-                        if(db_volume->dbcv_flags & DBTF_MEDIA)
+                QStringList drives = drivesFromMask(db_volume->dbcv_unitmask);
+#ifdef GWLP_USERDATA
+                QDriveWatcher *watcher = (QDriveWatcher *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+#else
+                QDriveWatcher *watcher = (QDriveWatcher *)GetWindowLong(hwnd, GWL_USERDATA);
+#endif
+
+                if (wParam == DBT_DEVICEARRIVAL) {
+                    foreach (const QString &drive, drives) {
+#ifdef QDRIVECONTROLLER_DEBUG
+                        if (db_volume->dbcv_flags & DBTF_MEDIA)
                             qWarning("Drive %c: Media has been arrived.", drive.at(0).toAscii());
-                        else if(db_volume->dbcv_flags & DBTF_NET)
+                        else if (db_volume->dbcv_flags & DBTF_NET)
                             qWarning("Drive %c: Network share has been mounted.", drive.at(0).toAscii());
                         else
                             qWarning("Drive %c: Device has been added.", drive.at(0).toAscii());
-
-                        QMetaObject::invokeMethod(QDriveControllerPrivate::watcherInstance,
-                                                  "driveAdded",
-                                                  Qt::QueuedConnection,
-                                                  Q_ARG(QString, drive));
+#endif
+                        watcher->emitDriveAdded(drive);
                     }
-                }
-                else if(wParam == DBT_DEVICEQUERYREMOVE)
-                {
-                }
-                else if(wParam == DBT_DEVICEQUERYREMOVEFAILED)
-                {
-                }
-                else if(wParam == DBT_DEVICEREMOVEPENDING)
-                {
-                }
-                else if(wParam == DBT_DEVICEREMOVECOMPLETE)
-                {
-                    foreach(const QString &drive, drives)
-                    {
-                        if(db_volume->dbcv_flags & DBTF_MEDIA)
+                } else if (wParam == DBT_DEVICEQUERYREMOVE) {
+                } else if (wParam == DBT_DEVICEQUERYREMOVEFAILED) {
+                } else if (wParam == DBT_DEVICEREMOVEPENDING) {
+                } else if (wParam == DBT_DEVICEREMOVECOMPLETE) {
+                    foreach (const QString &drive, drives) {
+#ifdef QDRIVECONTROLLER_DEBUG
+                        if (db_volume->dbcv_flags & DBTF_MEDIA)
                             qWarning("Drive %c: Media has been removed.", drive.at(0).toAscii());
-                        else if(db_volume->dbcv_flags & DBTF_NET)
+                        else if (db_volume->dbcv_flags & DBTF_NET)
                             qWarning("Drive %c: Network share has been unmounted.", drive.at(0).toAscii());
                         else
                             qWarning("Drive %c: Device has been removed.", drive.at(0).toAscii());
-
-                        QMetaObject::invokeMethod(QDriveControllerPrivate::watcherInstance,
-                                                  "driveRemoved",
-                                                  Qt::QueuedConnection,
-                                                  Q_ARG(QString, drive));
+#endif
+                        watcher->emitDriveRemoved(drive);
                     }
                 }
             }
             break;
         case DBT_DEVICETYPESPECIFIC:
-            qWarning("DBT_DEVICETYPESPECIFIC message received, can contain extended info.");
+#ifdef QDRIVECONTROLLER_DEBUG
+            qWarning("DBT_DEVICETYPESPECIFIC message received, can contain an extended info.");
+#endif
             break;
         case DBT_CUSTOMEVENT:
-            qWarning("DBT_CUSTOMEVENT message received, contains extended info.");
+#ifdef QDRIVECONTROLLER_DEBUG
+            qWarning("DBT_CUSTOMEVENT message received, contains an extended info.");
+#endif
             break;
         case DBT_USERDEFINED:
-            qWarning("WM_DEVICECHANGE userdefined message received, can not handle.");
+#ifdef QDRIVECONTROLLER_DEBUG
+            qWarning("WM_DEVICECHANGE user defined message received, can not handle.");
+#endif
             break;
+
         default:
+#ifdef QDRIVECONTROLLER_DEBUG
             qWarning("WM_DEVICECHANGE message received, unhandled value %d.", wParam);
+#endif
             break;
         }
     }
@@ -123,19 +133,18 @@ LRESULT CALLBACK vw_internal_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
     return DefWindowProc(hwnd, message, wParam, lParam);
 }
 
-QString getClassName()
+static inline QString className()
 {
-    return QLatin1String("VolumeWatcher_Internal_Widget") + QString::number(quintptr(vw_internal_proc));
+    return QLatin1String("QDriveWatcherWin32_Internal_Widget") + QString::number(quintptr(dw_internal_proc));
 }
 
-static HWND vw_create_internal_window(const void* userData)
+static inline HWND dw_create_internal_window(const void* userData)
 {
-    QString className = getClassName();
-
     HINSTANCE hi = qWinAppInst();
+
     WNDCLASS wc;
     wc.style = 0;
-    wc.lpfnWndProc = vw_internal_proc;
+    wc.lpfnWndProc = dw_internal_proc;
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
     wc.hInstance = hi;
@@ -143,51 +152,61 @@ static HWND vw_create_internal_window(const void* userData)
     wc.hCursor = 0;
     wc.hbrBackground = 0;
     wc.lpszMenuName = NULL;
-    wc.lpszClassName = reinterpret_cast<const wchar_t*>(className.utf16());
+    wc.lpszClassName = reinterpret_cast<const wchar_t*>(className().utf16());
     RegisterClass(&wc);
-    HWND wnd = CreateWindow(wc.lpszClassName,       // classname
-                            wc.lpszClassName,       // window name
-                            0,                      // style
-                            0, 0, 0, 0,             // geometry
-                            0,                      // parent
-                            0,                      // menu handle
-                            hi,                     // application
-                            0);                     // windows creation data.
-    if(!wnd)
-    {
-        qWarning("WindowsVolumeWatcherEngine: Failed to create internal window: %d", (int)GetLastError());
-    }
-    else if(userData)
-    {
+
+    HWND hwnd = CreateWindow(wc.lpszClassName,       // classname
+                             wc.lpszClassName,       // window name
+                             0,                      // style
+                             0, 0, 0, 0,             // geometry
+                             0,                      // parent
+                             0,                      // menu handle
+                             hi,                     // application
+                             0);                     // windows creation data.
+    if (!hwnd) {
+        qWarning("QDriveWatcherEngine: Failed to create internal window: %d", (int)GetLastError());
+    } else if (userData) {
 #ifdef GWLP_USERDATA
-        SetWindowLongPtrA(wnd, GWLP_USERDATA, (LONG_PTR)userData);
+        SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)userData);
 #else
-        SetWindowLongA(wnd, GWL_USERDATA, (LONG)userData);
+        SetWindowLong(hwnd, GWL_USERDATA, (LONG)userData);
 #endif
     }
-    return wnd;
+
+    return hwnd;
 }
 
-static void vw_destroy_internal_window(HWND wnd)
+static inline void dw_destroy_internal_window(HWND hwnd)
 {
-    if(wnd)
-        DestroyWindow(wnd);
+    if (hwnd)
+        DestroyWindow(hwnd);
 
-    QString className = getClassName();
-
-    UnregisterClass((wchar_t*)className.utf16(), qWinAppInst());
+    UnregisterClass(reinterpret_cast<const wchar_t*>(className().utf16()), qWinAppInst());
 }
 
 
-QDriveWatcher::QDriveWatcher(QObject *parent) :
-    QObject(parent)
+class QDriveWatcherEngine
 {
-    hwnd = vw_create_internal_window(this);
+public:
+    HWND hwnd;
+};
+
+
+bool QDriveWatcher::start_sys()
+{
+    engine = new QDriveWatcherEngine;
+    engine->hwnd = dw_create_internal_window(this);
+
+    return engine->hwnd;
 }
 
-QDriveWatcher::~QDriveWatcher()
+void QDriveWatcher::stop_sys()
 {
-    vw_destroy_internal_window(hwnd);
+    if (engine) {
+        dw_destroy_internal_window(engine->hwnd);
+        delete engine;
+        engine = 0;
+    }
 }
 
 #include <QDebug>
@@ -198,32 +217,28 @@ bool QDriveController::mount(const QString &device, const QString &path)
 //    if (!targetPath.endsWith('\\'))
 //        targetPath.append('\\');
 
-    bool result = false;
     if (device.startsWith(QLatin1String("\\\\?\\"))) { // GUID
         qDebug() << "mounting by uid";
 
-        result = SetVolumeMountPoint((wchar_t*)targetPath.utf16(), (wchar_t*)device.utf16());
-
+        bool result = SetVolumeMountPoint((wchar_t*)targetPath.utf16(), (wchar_t*)device.utf16());
         if (!result) {
             // TODO: add error handling
             qDebug() << "can't mount" << GetLastError();
+            return false;
         }
     } else if (device.startsWith(QLatin1String("\\\\"))) { // network share
         qDebug() << "mounting share";
-        NETRESOURCE source;
-        DWORD result2;
 
-        source.dwType = RESOURCETYPE_ANY;
-        source.lpRemoteName = (wchar_t*)device.utf16();
-        source.lpLocalName = (wchar_t*)targetPath.utf16();
-        source.lpProvider = NULL;
+        NETRESOURCE resource;
+        resource.dwType = RESOURCETYPE_ANY;
+        resource.lpRemoteName = (wchar_t*)device.utf16();
+        resource.lpLocalName = (wchar_t*)targetPath.utf16();
+        resource.lpProvider = NULL;
 
-        result2 = WNetAddConnection2(&source, 0, 0, CONNECT_UPDATE_PROFILE);
-
-        if (result2 != NO_ERROR) {
-            result = false;
-            qDebug() << "error mounting share:" << result2;
-            switch (result2) {
+        DWORD result = WNetAddConnection2(&resource, 0, 0, CONNECT_UPDATE_PROFILE);
+        if (result != NO_ERROR) {
+            qDebug() << "error mounting share:" << result;
+            switch (result) {
             case ERROR_ACCESS_DENIED : qDebug() << "Access denied"; break;
             case ERROR_ALREADY_ASSIGNED : qDebug() << "ERROR_ALREADY_ASSIGNED"; break;
             case ERROR_BAD_DEV_TYPE : qDebug() << "ERROR_BAD_DEV_TYPE"; break;
@@ -245,29 +260,29 @@ bool QDriveController::mount(const QString &device, const QString &path)
             case ERROR_NO_NETWORK : qDebug() << "ERROR_NO_NETWORK"; break;
             default: qDebug() << "other error"; break;
             }
+            return false;
         }
-        result = true;
     } else {
         if (QFileInfo(device).isDir()) {
             qDebug() << "mounting by path";
             QDriveInfo driveInfo(device);
             QString guid = driveInfo.device();
-            result = mount(guid, targetPath);
+            return mount(guid, targetPath);
         }
+        return false;
     }
-    return result;
+
+    return true;
 }
 
 bool QDriveController::unmount(const QString &path)
 {
-    QDriveInfo driveInfo(path);
-    if (path.startsWith("\\\\") || driveInfo.type() == QDriveInfo::RemoteDrive) { // share
-        QString targetPath = QDir::toNativeSeparators(path);
-        if (targetPath.endsWith('\\'))
+    QString targetPath = QDir::toNativeSeparators(path);
+    if (targetPath.startsWith(QLatin1String("\\\\")) || QDriveInfo(path).type() == QDriveInfo::RemoteDrive) { // share
+        if (targetPath.endsWith(QLatin1Char('\\')))
             targetPath.chop(1);
 
-        DWORD result;
-        result = WNetCancelConnection2((wchar_t*)targetPath.utf16(), CONNECT_UPDATE_PROFILE, true);
+        DWORD result = WNetCancelConnection2((wchar_t*)targetPath.utf16(), CONNECT_UPDATE_PROFILE, true);
         if (result != NO_ERROR) {
             qDebug() << "error unmounting share:" << result;
             switch (result) {
@@ -281,19 +296,17 @@ bool QDriveController::unmount(const QString &path)
             }
             return false;
         }
-        return true;
     } else {
-        QString targetPath = QDir::toNativeSeparators(path);
-        if (!targetPath.endsWith('\\'))
-            targetPath.append('\\');
+        if (!targetPath.endsWith(QLatin1Char('\\')))
+            targetPath.append(QLatin1Char('\\'));
 
-        bool result;
-        result = DeleteVolumeMountPoint((wchar_t*)targetPath.utf16());
+        bool result = DeleteVolumeMountPoint((wchar_t*)targetPath.utf16());
         if (!result) {
             // TODO: add error handling
             qDebug() << "can't unmount" << GetLastError();
+            return false;
         }
     }
-    return false;
-}
 
+    return true;
+}

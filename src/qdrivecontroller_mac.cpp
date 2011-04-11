@@ -15,6 +15,8 @@
 
 #include "qdriveinfo.h"
 
+#define TIME_INTERVAL 1
+
 QString CFStringToQString(CFStringRef string)
 {
     CFRange range = { 0, CFStringGetLength(string) };
@@ -61,7 +63,7 @@ void checkNewDiskAndEmitSignal(DADiskRef disk, void *context)
     if (path.isEmpty())
         return;
 
-    QDriveWatcher *watcher = reinterpret_cast<QDriveWatcher*>(context);
+    QDriveWatcherEngine *watcher = reinterpret_cast<QDriveWatcherEngine*>(context);
     watcher->addDrive(path);
 }
 
@@ -82,10 +84,8 @@ void mountCallback2(DADiskRef disk, void *context)
         mediaService = DADiskCopyIOMedia(wholeDisk);
         if (mediaService) {
             if (IOObjectConformsTo(mediaService, kIOCDMediaClass)
-                    || IOObjectConformsTo(mediaService, kIODVDMediaClass)) {
-
+                || IOObjectConformsTo(mediaService, kIODVDMediaClass)) {
                 checkNewDiskAndEmitSignal(disk, context);
-
             }
         }
         IOObjectRelease(mediaService);
@@ -97,7 +97,7 @@ void unmountCallback(DADiskRef disk, void *context)
 {
 //    CFShow(DADiskCopyDescription(disk));
     QString path = getDiskPath(disk);
-    QDriveWatcher *watcher = reinterpret_cast<QDriveWatcher*>(context);
+    QDriveWatcherEngine *watcher = reinterpret_cast<QDriveWatcherEngine*>(context);
     if (path.isEmpty()) {
         // if we didn't receive path from API, we maunally determine lost drive
         // (fixes bug with .dmg and .iso images
@@ -109,9 +109,11 @@ void unmountCallback(DADiskRef disk, void *context)
     watcher->removeDrive(path);
 }
 
-QDriveWatcher::QDriveWatcher(QObject *parent) :
-    QThread(parent),
-    m_running(false)
+
+QDriveWatcherEngine::QDriveWatcherEngine(QDriveWatcher *watcher)
+    : QThread(0),
+      m_watcher(watcher),
+      m_running(false)
 {
     m_session = DASessionCreate(kCFAllocatorDefault);
 
@@ -120,36 +122,38 @@ QDriveWatcher::QDriveWatcher(QObject *parent) :
                                              kDADiskDescriptionWatchVolumePath,
                                              mountCallback1,
                                              this);
-
     DARegisterDiskAppearedCallback(m_session,
                                    kDADiskDescriptionMatchVolumeMountable,
                                    mountCallback2,
                                    this);
-
     DARegisterDiskDisappearedCallback(m_session,
                                       kDADiskDescriptionMatchVolumeMountable,
                                       unmountCallback,
                                       this);
+
     start();
 }
 
-QDriveWatcher::~QDriveWatcher()
+QDriveWatcherEngine::~QDriveWatcherEngine()
 {
     stop();
+
     DAUnregisterCallback(m_session, (void*)mountCallback1, this);
     DAUnregisterCallback(m_session, (void*)mountCallback2, this);
     DAUnregisterCallback(m_session, (void*)unmountCallback, this);
-    qDebug("QDriveWatcher::~QDriveWatcher");
+
     CFRelease(m_session);
+
+    qDebug("QDriveWatcherEngine::~QDriveWatcherEngine");
 }
 
-void QDriveWatcher::stop()
+void QDriveWatcherEngine::stop()
 {
     m_running = false;
     wait();
 }
 
-void QDriveWatcher::run()
+void QDriveWatcherEngine::run()
 {
     qDebug() << "DASessionThread::run" << currentThread();
 
@@ -167,30 +171,28 @@ void QDriveWatcher::run()
     DASessionUnscheduleFromRunLoop(m_session, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
 }
 
-void QDriveWatcher::populateVolumes()
+void QDriveWatcherEngine::populateVolumes()
 {
     // TODO: get paths as StringList?
-    foreach (const QDriveInfo &info, QDriveInfo::drives()) {
+    foreach (const QDriveInfo &info, QDriveInfo::drives())
         volumes.insert(info.rootPath());
-    }
 }
 
-void QDriveWatcher::addDrive(const QString &path)
+void QDriveWatcherEngine::addDrive(const QString &path)
 {
     if (!volumes.contains(path)) {
         volumes.insert(path);
-        emit driveAdded(path);
+        m_watcher->emitDriveAdded(path);
     }
 }
 
-void QDriveWatcher::removeDrive(const QString &path)
+void QDriveWatcherEngine::removeDrive(const QString &path)
 {
-    if (volumes.remove(path)) {
-        emit driveRemoved(path);
-    }
+    if (volumes.remove(path))
+        m_watcher->emitDriveRemoved(path);
 }
 
-void QDriveWatcher::updateDrives()
+void QDriveWatcherEngine::updateDrives()
 {
     QSet<QString> oldDrives = volumes;
 
@@ -198,17 +200,29 @@ void QDriveWatcher::updateDrives()
     populateVolumes();
 
     foreach (const QString &path, oldDrives) {
-        if (!volumes.contains(path)) {
-            emit driveRemoved(path);
-        }
+        if (!volumes.contains(path))
+            m_watcher->emitDriveRemoved(path);
     }
 
     foreach (const QString &path, volumes) {
-        if (!oldDrives.contains(path)) {
-            emit driveAdded(path);
-        }
+        if (!oldDrives.contains(path))
+            m_watcher->emitDriveAdded(path);
     }
 }
+
+
+bool QDriveWatcher::start_sys()
+{
+    engine = new QDriveWatcherEngine(this);
+    return true;
+}
+
+void QDriveWatcher::stop_sys()
+{
+    delete engine;
+    engine = 0;
+}
+
 
 bool QDriveController::mount(const QString &device, const QString &path)
 {
@@ -231,7 +245,7 @@ bool QDriveController::mount(const QString &device, const QString &path)
     return true;
 }
 
-FSVolumeRefNum getRefNumByPath(const QString &path)
+static FSVolumeRefNum getRefNumByPath(const QString &path)
 {
     OSStatus result;
 
@@ -293,4 +307,3 @@ bool QDriveController::eject(const QString &path)
 
     return true;
 }
-

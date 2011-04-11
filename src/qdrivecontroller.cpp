@@ -3,44 +3,62 @@
 
 #include <QtCore/QCoreApplication>
 
-#include <QDebug>
-#include <qglobal.h>
-
-QDriveWatcher *QDriveControllerPrivate::watcherInstance = 0;
-
-//Q_GLOBAL_STATIC_WITH_ARG(QDriveWatcher*, theWatcher, {qApp});
-
-QDriveControllerPrivate::QDriveControllerPrivate()
+QDriveWatcher::QDriveWatcher(QObject *parent)
+    : QObject(parent),
+      startStopCounter(0), engine(0)
 {
-    if (!watcherInstance) {
-        // TODO: add mutexes
-        watcherInstance = new QDriveWatcher(qApp);
+}
+
+QDriveWatcher::~QDriveWatcher()
+{
+    if (startStopCounter != 0)
+        qWarning("QDriveWatcher is going to be deleted but it seems like it is still in use.");
+
+    stop_sys();
+}
+
+void QDriveWatcher::start()
+{
+    startStopCounter.ref();
+    if (startStopCounter == 1) {
+        if (!start_sys())
+            stop();
     }
 }
 
-QDriveControllerPrivate::~QDriveControllerPrivate()
+void QDriveWatcher::stop()
 {
+    if (!startStopCounter.deref())
+        stop_sys();
 }
 
-QDriveController::QDriveController(QObject *parent) :
-    QObject(parent),
-    d_ptr(new QDriveControllerPrivate)
-{
-    connect(QDriveControllerPrivate::watcherInstance, SIGNAL(driveAdded(QString)),
-            this, SIGNAL(driveMounted(QString)), Qt::QueuedConnection);
-    connect(QDriveControllerPrivate::watcherInstance, SIGNAL(driveRemoved(QString)),
-            this, SIGNAL(driveUnmounted(QString)), Qt::QueuedConnection);
+Q_GLOBAL_STATIC(QDriveWatcher, theWatcher);
 
-    // TODO: remove in release
+
+QDriveController::QDriveController(QObject *parent)
+    : QObject(parent)
+{
+    if (QDriveWatcher *watcher = theWatcher()) {
+        connect(watcher, SIGNAL(driveAdded(QString)),
+                this, SIGNAL(driveMounted(QString)), Qt::QueuedConnection);
+        connect(watcher, SIGNAL(driveRemoved(QString)),
+                this, SIGNAL(driveUnmounted(QString)), Qt::QueuedConnection);
+
+        watcher->start();
+    }
+    // ### removeme!
     connect(this, SIGNAL(driveMounted(QString)), SLOT(testDriveMounted(QString)));
     connect(this, SIGNAL(driveUnmounted(QString)), SLOT(testDriveUnounted(QString)));
+    //
 }
 
 QDriveController::~QDriveController()
 {
-    delete d_ptr;
+    if (QDriveWatcher *watcher = theWatcher())
+        watcher->stop();
 }
-
+// ### removeme!
+#include <QDebug>
 void QDriveController::testDriveMounted(const QString &path)
 {
     qDebug() << "We got new drive! Mounted at" << path;
@@ -50,3 +68,4 @@ void QDriveController::testDriveUnounted(const QString &path)
 {
     qDebug() << "We lost drive! Was mounted at" << path;
 }
+//

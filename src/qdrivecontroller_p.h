@@ -1,108 +1,120 @@
 #ifndef QDRIVECONTROLLER_P_H
 #define QDRIVECONTROLLER_P_H
 
-#include "qdrivecontroller.h"
-#include <qglobal.h>
+#include <QtCore/QAtomicInt>
+#include <QtCore/QObject>
 
-#include <QtCore/QSet>
+class QDriveWatcherEngine;
 
-#ifdef Q_OS_WIN
-//#include <windows.h>
-#define _WIN32_WINNT  0x0500
-#include <qt_windows.h>
-#include <dbt.h>
-#endif
-
-#ifdef Q_OS_MACX
-
-#include <QtCore/QThread>
-#include <QtCore/QSet>
-
-#include <DiskArbitration/DiskArbitration.h>
-
-#define TIME_INTERVAL 1
-
-#endif
-
-class QDriveWatcher;
-class QDriveControllerPrivate
-{
-public:
-    QDriveControllerPrivate();
-    ~QDriveControllerPrivate();
-
-    static QDriveWatcher *watcherInstance;
-};
-
-#ifdef Q_OS_MACX
-class QDriveWatcher : public QThread
-#elif Q_OS_SYMBIAN
-class Watcher : public QObject, public CActive
-#else
 class QDriveWatcher : public QObject
-#endif
 {
     Q_OBJECT
+
 public:
     explicit QDriveWatcher(QObject *parent = 0);
     ~QDriveWatcher();
 
-#ifdef Q_OS_WIN
-private:
-    HWND hwnd;
-#endif
-
-#ifdef Q_OS_MACX
+    void start();
     void stop();
+
+    inline void emitDriveAdded(const QString &driveOrPath)
+    { emit driveAdded(driveOrPath); }
+    inline void emitDriveRemoved(const QString &driveOrPath)
+    { emit driveRemoved(driveOrPath); }
+
+Q_SIGNALS:
+    void driveAdded(const QString &path);
+    void driveRemoved(const QString &path);
+
+protected:
+    bool start_sys();
+    void stop_sys();
+
+private:
+    QAtomicInt startStopCounter;
+    QDriveWatcherEngine *engine;
+};
+
+
+#if defined(Q_OS_MAC)
+
+#include <QtCore/QSet>
+#include <QtCore/QThread>
+
+#include <DiskArbitration/DiskArbitration.h>
+
+class QDriveWatcherEngine : public QThread
+{
+    Q_OBJECT
+
+public:
+    QDriveWatcherEngine(QDriveWatcher *watcher);
+    ~QDriveWatcherEngine();
+
+    void stop();
+
     void addDrive(const QString &path);
     void removeDrive(const QString &path);
     void updateDrives();
 
-    QSet<QString> volumes; // careful, use ONLY from thread itself
+protected:
+    void run();
+
+private:
     void populateVolumes();
 
-protected:
-    void run(); // from QThread
+    QDriveWatcher *m_watcher;
 
-private:
-    DASessionRef m_session;
     volatile bool m_running;
-#endif
 
-#ifdef Q_OS_LINUX
-private slots:
-    void deviceChanged();
-    void inotifyActivated();
-
-private:
-    QSet<QString> drives;
-    int inotifyFD;
-    int mtabWatchA;
-#endif
-
-signals:
-    void driveAdded(const QString &path);
-    void driveRemoved(const QString &path);
+    DASessionRef m_session;
+    QSet<QString> volumes;
 };
 
-#ifdef Q_OS_SYMBIAN
+#elif defined(Q_OS_SYMBIAN)
 
 #include <e32base.h>
 #include <f32file.h>
 
-class Watcher : public QObject, public CActive
+class QDriveWatcherEngine : public CActive
 {
-    Q_OBJECT
 public:
-    explicit Watcher(QObject *parent = 0);
-    ~Watcher();
-
-    static Watcher *watcher;
+    QDriveWatcherEngine(QDriveWatcher *watcher);
+    ~QDriveWatcherEngine();
 
 protected:  //from CActive
     void DoCancel();
     void RunL();
 
+private:
+    QDriveWatcher *m_watcher;
+};
+
+#elif defined(Q_OS_LINUX)
+
+#include <QtCore/QSet>
+
+class QDriveWatcherEngine : public QObject
+{
+    Q_OBJECT
+
+public:
+    QDriveWatcherEngine(QDriveWatcher *watcher);
+    ~QDriveWatcherEngine();
+
+    inline bool isValid() const
+    { return mtabWatchA > 0; }
+
+private Q_SLOTS:
+    void deviceChanged();
+    void inotifyActivated();
+
+private:
+    QDriveWatcher *m_watcher
+
+    QSet<QString> drives;
+    int inotifyFD;
+    int mtabWatchA;
 };
 
 #endif

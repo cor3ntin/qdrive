@@ -1,53 +1,42 @@
+#include "qdrivecontroller.h"
 #include "qdrivecontroller_p.h"
-
-#include <QtCore/QCoreApplication>
 
 #ifndef SYMBIAN_3_1
 #include <driveinfo.h>
-#endif //SYMBIAN_3_1
+#endif
 
-Watcher *Watcher::watcher = 0;
-
-Watcher::Watcher(QObject *parent) :
-        QObject(parent),
-        CActive(EPriorityStandard)
+QDriveWatcherEngine::QDriveWatcherEngine(QDriveWatcher *watcher)
+    : CActive(EPriorityStandard),
+      m_watcher(watcher)
 {
     CActiveScheduler::Add(this);
+
     if (iFs.Connect() == KErrNone) {
 #ifndef SYMBIAN_3_1
         m_previousDriveList.Copy(PopulateDriveList());
-#endif //SYMBIAN_3_1
+#endif
         startMonitoring();
     }
 }
 
-Watcher::~Watcher()
+QDriveWatcherEngine::~QDriveWatcherEngine()
 {
     Cancel();
     iFs.Close();
 }
 
-void Watcher::DoCancel()
+void QDriveWatcherEngine::DoCancel()
 {
     iFs.NotifyChangeCancel();
 }
 
-void Watcher::RunL()
+void QDriveWatcherEngine::RunL()
 {
 #ifdef SYMBIAN_3_1
     TDriveInfo driveInfo;
     TDriveNumber driveLetter = EDriveE;  // Have to use hardcoded MMC drive letter for 3.1
     if (iFs.Drive(driveInfo, driveLetter) == KErrNone) {
-        bool driveInserted = false;
-
-        switch (driveInfo.iType) {
-        case EMediaNotPresent:
-            driveInserted = false;
-            break;
-        default:
-            driveInserted = true;
-            break;
-        }
+        bool driveInserted = driveInfo.iType != EMediaNotPresent;
 
         TChar volumeChar;
         QString volume;
@@ -57,14 +46,14 @@ void Watcher::RunL()
         foreach (MStorageStatusObserver *observer, m_observers)
             observer->storageStatusChanged(driveInserted, volume);
     }
-#else // SYMBIAN_3_1
+#else
     CompareDriveLists(PopulateDriveList());
-#endif // SYMBIAN_3_1
+#endif
     startMonitoring();
 }
 
 #ifndef SYMBIAN_3_1
-TDriveList Watcher::PopulateDriveList()
+TDriveList QDriveWatcherEngine::PopulateDriveList()
 {
     TDriveList driveList;
     TInt driveCount = 0;
@@ -73,13 +62,12 @@ TDriveList Watcher::PopulateDriveList()
         return TDriveList();
     }
 
-    for (int i = 0; i < KMaxDrives; i++) {
+    for (int i = 0; i < KMaxDrives; ++i) {
         if (driveList[i] == KDriveAbsent)
             continue;
 
         TUint driveStatus;
         if (DriveInfo::GetDriveStatus(iFs, i, driveStatus) == KErrNone) {
-
             if (!(driveStatus & DriveInfo::EDriveRemovable)) {
                 driveList[i] = KDriveAbsent;
                 continue;
@@ -87,67 +75,61 @@ TDriveList Watcher::PopulateDriveList()
 
             TDriveInfo driveInfo;
             if (iFs.Drive(driveInfo, i) == KErrNone) {
-                if (driveInfo.iType == EMediaNotPresent) {
+                if (driveInfo.iType == EMediaNotPresent)
                     driveList[i] = KDriveAbsent;
-                }
             }
         }
     }
     return driveList;
 }
 
-void Watcher::CompareDriveLists(const TDriveList &aDriveList)
+void QDriveWatcherEngine::CompareDriveLists(const TDriveList &aDriveList)
 {
     if (!(aDriveList.Length() > KMaxDrives - 1) || !(m_previousDriveList.Length() > KMaxDrives - 1))
         return;
 
     for (int i = 0; i < KMaxDrives; i++) {
+        if (aDriveList[i] == KDriveAbsent && m_previousDriveList[i] == KDriveAbsent)
+            continue;
 
-        if (aDriveList[i] == KDriveAbsent && m_previousDriveList[i] == KDriveAbsent) {
+        if (aDriveList[i] > KDriveAbsent && m_previousDriveList[i] > KDriveAbsent)
             continue;
-        } else if (aDriveList[i] > KDriveAbsent && m_previousDriveList[i] > KDriveAbsent) {
-            continue;
-        } else if (aDriveList[i] == KDriveAbsent && m_previousDriveList[i] > KDriveAbsent) {
+
+        if (aDriveList[i] == KDriveAbsent && m_previousDriveList[i] > KDriveAbsent) {
             TChar volumeChar;
             QString volume;
-//            bool driveInserted = false;
             if (iFs.DriveToChar(i, volumeChar) == KErrNone)
                 volume = QChar(volumeChar).toAscii();
 
-            emit driveRemoved(volume);
-
-            break;
+            m_watcher->emitDriveRemoved(volume);
         } else if (aDriveList[i] > KDriveAbsent && m_previousDriveList[i] == KDriveAbsent) {
             TChar volumeChar;
             QString volume;
-//            bool driveInserted = true;
             if (iFs.DriveToChar(i, volumeChar) == KErrNone)
                 volume = QChar(volumeChar).toAscii();
 
-            emit driveAdded(volume);
-
-            break;
+            m_watcher->emitDriveAdded(volume);
         }
     }
     m_previousDriveList.Copy(aDriveList);
 }
 #endif //SYMBIAN_3_1
 
-void Watcher::startMonitoring()
+void QDriveWatcherEngine::startMonitoring()
 {
     iFs.NotifyChange(ENotifyDisk, iStatus);
     SetActive();
 }
 
-QDriveControllerPrivate::QDriveControllerPrivate()
+
+bool QDriveWatcher::start_sys()
 {
-    if (!Watcher::watcher) {
-        // TODO: add mutex
-        Watcher::watcher = new Watcher(qApp);
-    }
+    engine = new QDriveWatcherEngine;
+    return true;
 }
 
-QDriveControllerPrivate::~QDriveControllerPrivate()
+void QDriveWatcher::stop_sys()
 {
-
+    delete engine;
+    engine = 0;
 }

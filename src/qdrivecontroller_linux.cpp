@@ -1,3 +1,4 @@
+#include "qdrivecontroller.h"
 #include "qdrivecontroller_p.h"
 
 #include <QtCore/QCoreApplication>
@@ -24,7 +25,7 @@
 #  define _PATH_MOUNTED "/etc/mtab"
 #endif
 
-QSet<QString> getDrives()
+static QSet<QString> getDrives()
 {
     QSet<QString> result;
 
@@ -43,8 +44,10 @@ QSet<QString> getDrives()
     return result;
 }
 
-QDriveWatcher::QDriveWatcher(QObject *parent) :
-        QObject(parent)
+
+QDriveWatcherEngine::QDriveWatcherEngine(QDriveWatcher *watcher)
+    : QObject(watcher),
+      m_watcher(watcher)
 {
     drives = getDrives();
     inotifyFD = ::inotify_init();
@@ -55,29 +58,29 @@ QDriveWatcher::QDriveWatcher(QObject *parent) :
     }
 }
 
-QDriveWatcher::~QDriveWatcher()
+QDriveWatcherEngine::~QDriveWatcherEngine()
 {
     ::close(inotifyFD);
 }
 
-void QDriveWatcher::deviceChanged()
+void QDriveWatcherEngine::deviceChanged()
 {
     QSet<QString> allNewDrives = getDrives();
 
-    foreach (QString drive, allNewDrives) {
+    foreach (const QString &drive, allNewDrives) {
         if (!drives.contains(drive))
-            emit driveAdded(drive);
+            m_watcher->emitDriveAdded(drive);
     }
 
-    foreach (QString drive, drives) {
+    foreach (const QString &drive, drives) {
         if (!allNewDrives.contains(drive))
-            emit driveRemoved(drive);
+            m_watcher->emitDriveRemoved(drive);
     }
 
     drives = allNewDrives;
 }
 
-void QDriveWatcher::inotifyActivated()
+void QDriveWatcherEngine::inotifyActivated()
 {
     char buffer[1024];
     struct inotify_event *event;
@@ -93,6 +96,20 @@ void QDriveWatcher::inotifyActivated()
         }
     }
 }
+
+
+bool QDriveWatcher::start_sys()
+{
+    engine = new QDriveWatcherEngine(this);
+    return engine->isValid();
+}
+
+void QDriveWatcher::stop_sys()
+{
+    delete engine;
+    engine = 0;
+}
+
 
 bool QDriveController::mount(const QString &device, const QString &path)
 {
