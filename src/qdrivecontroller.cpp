@@ -1,8 +1,6 @@
 #include "qdrivecontroller.h"
 #include "qdrivecontroller_p.h"
 
-#include <QtCore/QCoreApplication>
-
 QDriveWatcher::QDriveWatcher(QObject *parent)
     : QObject(parent),
       startStopCounter(0), engine(0)
@@ -46,10 +44,6 @@ QDriveController::QDriveController(QObject *parent)
 
         watcher->start();
     }
-    // ### removeme!
-    connect(this, SIGNAL(driveMounted(QString)), SLOT(testDriveMounted(QString)));
-    connect(this, SIGNAL(driveUnmounted(QString)), SLOT(testDriveUnounted(QString)));
-    //
 }
 
 QDriveController::~QDriveController()
