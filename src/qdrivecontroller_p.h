@@ -48,7 +48,7 @@ class QDriveWatcherEngine : public QThread
     Q_OBJECT
 
 public:
-    QDriveWatcherEngine(QDriveWatcher *watcher);
+    QDriveWatcherEngine();
     ~QDriveWatcherEngine();
 
     void stop();
@@ -60,10 +60,12 @@ public:
 protected:
     void run();
 
+Q_SIGNALS:
+    void driveAdded(const QString &path);
+    void driveRemoved(const QString &path);
+
 private:
     void populateVolumes();
-
-    QDriveWatcher *m_watcher;
 
     volatile bool m_running;
 
@@ -99,19 +101,21 @@ class QDriveWatcherEngine : public QObject
     Q_OBJECT
 
 public:
-    QDriveWatcherEngine(QDriveWatcher *watcher);
+    QDriveWatcherEngine(QObject *parent);
     ~QDriveWatcherEngine();
 
     inline bool isValid() const
     { return mtabWatchA > 0; }
+
+Q_SIGNALS:
+    void driveAdded(const QString &path);
+    void driveRemoved(const QString &path);
 
 private Q_SLOTS:
     void deviceChanged();
     void inotifyActivated();
 
 private:
-    QDriveWatcher *m_watcher;
-
     QSet<QString> drives;
     int inotifyFD;
     int mtabWatchA;

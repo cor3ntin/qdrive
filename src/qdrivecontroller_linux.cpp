@@ -45,9 +45,8 @@ static QSet<QString> getDrives()
 }
 
 
-QDriveWatcherEngine::QDriveWatcherEngine(QDriveWatcher *watcher)
-    : QObject(watcher),
-      m_watcher(watcher)
+QDriveWatcherEngine::QDriveWatcherEngine(QObject *parent)
+    : QObject(parent)
 {
     drives = getDrives();
     inotifyFD = ::inotify_init();
@@ -69,12 +68,12 @@ void QDriveWatcherEngine::deviceChanged()
 
     foreach (const QString &drive, allNewDrives) {
         if (!drives.contains(drive))
-            m_watcher->emitDriveAdded(drive);
+            emit driveAdded(drive);
     }
 
     foreach (const QString &drive, drives) {
         if (!allNewDrives.contains(drive))
-            m_watcher->emitDriveRemoved(drive);
+            emit driveRemoved(drive);
     }
 
     drives = allNewDrives;
@@ -101,6 +100,8 @@ void QDriveWatcherEngine::inotifyActivated()
 bool QDriveWatcher::start_sys()
 {
     engine = new QDriveWatcherEngine(this);
+    connect(engine, SIGNAL(driveAdded(QString)), this, SIGNAL(driveAdded(QString)));
+    connect(engine, SIGNAL(driveRemoved(QString)), this, SIGNAL(driveRemoved(QString)));
     return engine->isValid();
 }
 
