@@ -224,11 +224,33 @@ void QDriveWatcher::stop_sys()
 void setLastError(QDriveControllerPrivate *d, OSStatus status)
 {
     switch (status) {
-
+    case bdNamErr: // Bad filename or volume name.
+    case nsDrvErr: // No such drive.
+        d->error = QDriveController::MountErrorBadDevice;
+        d->error = QObject::tr("Bad Device");
+        break;
+    case wPrErr: // Volume is locked through hardware.
+    case vLckdErr: // Volume is locked through software.
+        d->error = QDriveController::MountErrorResourceBusy;
+        d->errorString = QObject::tr("Resource busy");
+        break;
+    case volOnLinErr: // Volume already online. // NOT SURE
+    case afpAlreadyMounted: // Volume already mounted.
+        d->error = QDriveController::MountErrorAlreadyMounted;
+        d->errorString = QObject::tr("Device or share already mounted");
+        break;
+    case afpAccessDenied: // User does not have the correct access to the file. Directory cannot be shared.
+        d->error = QDriveController::MountErrorAccessDenied;
+        d->errorString = QObject::tr("Access denied");
+        break;
+    case afpUserNotAuth: // User authentication failed.
+        d->error = QDriveController::MountErrorInvalidCredentials;
+        d->errorString = QObject::tr("Invalid Credentials");
+        break;
     default:
-        d->error = MountErrorUnknown;
-        d->errorString = QObject::tr("Unknown Error");
-        qWarning() << "error status is" << status;
+        d->error = QDriveController::MountErrorUnknown;
+        d->errorString = QObject::tr("Unknown error, system code %1").arg(status);
+        qWarning() << "QDriveController::MountErrorUnknown occured. Error status is" << status;
         break;
     }
 }

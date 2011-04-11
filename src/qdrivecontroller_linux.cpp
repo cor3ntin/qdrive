@@ -111,6 +111,31 @@ void QDriveWatcher::stop_sys()
     engine = 0;
 }
 
+void setLastError(QDriveControllerPrivate *d, inte errorCode)
+{
+    switch (errorCode) {
+    case EPERM:
+        d->error = QDriveController::MountErrorAccessDenied;
+        d->errorString = QObject::tr("Access denied");
+        break;
+    case EBUSY:
+        d->error = QDriveController::MountErrorResourceBusy;
+        d->errorString = QObject::tr("Resource busy");
+        break;
+    case ENAMETOOLONG:
+    case ENOENT:
+    case ENOTDIR:
+    case ELOOP:
+        d->error = QDriveController::MountErrorBadMountPoint;
+        d->errorString = QObject::tr("Bad mount point");
+        break;
+    default:
+        d->error = QDriveController::MountErrorUnknown;
+        d->errorString = QObject::tr("Unknown error, system code %1").arg(errorCode);
+        qWarning() << "QDriveController::MountErrorUnknown occured. Error status is" << errorCode;
+        break;
+    }
+}
 
 bool QDriveController::mount(const QString &device, const QString &path)
 {
