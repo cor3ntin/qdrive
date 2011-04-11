@@ -8,6 +8,16 @@
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 
+#ifndef USE_PRIVATE_HEADERS
+#  undef EINTR_LOOP
+#  define EINTR_LOOP(var, cmd)                    \
+    do {                                        \
+        var = cmd;                              \
+    } while (var == -1 && errno == EINTR)
+#else
+#  include <private/qcore_unix_p.h>
+#endif
+
 #if defined(QT_LARGEFILE_SUPPORT)
 #  define QT_STATFSBUF struct statvfs64
 #  define QT_STATFS    ::statvfs64
@@ -21,14 +31,6 @@
 #endif
 #ifndef _PATH_DISK_BY_LABEL
 #  define _PATH_DISK_BY_LABEL "/dev/disk/by-label"
-#endif
-
-// TODO: remove in QtCore;
-#ifndef EINTR_LOOP
-#define EINTR_LOOP(var, cmd)                    \
-    do {                                        \
-        var = cmd;                              \
-    } while (var == -1 && errno == EINTR)
 #endif
 
 
