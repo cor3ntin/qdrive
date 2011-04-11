@@ -28,11 +28,7 @@ public:
 Q_SIGNALS:
     void driveMounted(const QString &path);
     void driveUnmounted(const QString &path);
-// ### removeme!
-public Q_SLOTS:
-    void testDriveMounted(const QString &path);
-    void testDriveUnounted(const QString &path);
-//
+
 protected:
     Q_DECLARE_PRIVATE(QDriveController);
     QDriveControllerPrivate *const d;

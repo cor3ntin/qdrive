@@ -59,15 +59,3 @@ QDriveController::~QDriveController()
 
     delete d;
 }
-// ### removeme!
-#include <QDebug>
-void QDriveController::testDriveMounted(const QString &path)
-{
-    qDebug() << "We got new drive! Mounted at" << path;
-}
-
-void QDriveController::testDriveUnounted(const QString &path)
-{
-    qDebug() << "We lost drive! Was mounted at" << path;
-}
-//
