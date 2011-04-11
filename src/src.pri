@@ -8,10 +8,12 @@ HEADERS += qdriveinfo.h \
            qdriveinfo_p.h \
            qdrivecontroller.h \
            qdrivecontroller_p.h \
-           qdrive_global.h
+           qdrive_global.h \
+           qsystemerror_p.h
 
 SOURCES += qdriveinfo.cpp \
-           qdrivecontroller.cpp
+           qdrivecontroller.cpp \
+           qsystemerror.cpp
 
 win32 {
     SOURCES += qdriveinfo_win.cpp \
