@@ -223,6 +223,17 @@ void QDriveWatcher::stop_sys()
     engine = 0;
 }
 
+void setLastError(QDriveControllerPrivate *d, OSStatus status)
+{
+    switch (status) {
+
+    default:
+        d->error = MountErrorUnknown;
+        d->errorString = QObject::tr("Unknown Error");
+        qWarning() << "error status is" << status;
+        break;
+    }
+}
 
 bool QDriveController::mount(const QString &device, const QString &path)
 {
@@ -255,6 +266,7 @@ bool QDriveController::mount(const QString &device, const QString &path)
         if (status != noErr) {
             qDebug() << status;
             qDebug() << "failed mount";
+            setLastError(d_func(), status);
             result =  false;
         }
 
@@ -274,6 +286,7 @@ bool QDriveController::mount(const QString &device, const QString &path)
         if (status != noErr) {
             qDebug() << status;
             qDebug() << "failed mount";
+            setLastError(d_func(), status);
             result = false;
         }
         CFRelease(disk);

@@ -4,6 +4,15 @@
 #include <QtCore/QAtomicInt>
 #include <QtCore/QObject>
 
+#include "qdrivecontroller.h"
+
+class QDriveControllerPrivate
+{
+public:
+    QDriveController::MountError error;
+    QString errorString;
+};
+
 class QDriveWatcherEngine;
 
 class QDriveWatcher : public QObject

@@ -5,13 +5,21 @@
 
 #include "qdrive_global.h"
 
+class QDriveControllerPrivate;
 class QDRIVEINFO_EXPORT QDriveController : public QObject
 {
     Q_OBJECT
-
+    Q_DECLARE_PRIVATE(QDriveController);
 public:
     explicit QDriveController(QObject *parent = 0);
     ~QDriveController();
+
+    enum MountError { MountErrorNone = 0, MountErrorUnknown = 0xff };
+
+    Q_ENUMS(MountError);
+
+    MountError error() const;
+    QString errorString() const;
 
     bool mount(const QString &device, const QString &path);
     bool unmount(const QString &path);
@@ -25,6 +33,8 @@ public Q_SLOTS:
     void testDriveMounted(const QString &path);
     void testDriveUnounted(const QString &path);
 //
+protected:
+    QDriveControllerPrivate *d_ptr;
 };
 
 #endif // QDRIVECONTROLLER_H

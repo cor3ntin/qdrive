@@ -36,7 +36,8 @@ Q_GLOBAL_STATIC(QDriveWatcher, theWatcher);
 
 
 QDriveController::QDriveController(QObject *parent)
-    : QObject(parent)
+    : QObject(parent),
+      d_ptr(new QDriveControllerPrivate)
 {
     if (QDriveWatcher *watcher = theWatcher()) {
         connect(watcher, SIGNAL(driveAdded(QString)),
@@ -56,6 +57,8 @@ QDriveController::~QDriveController()
 {
     if (QDriveWatcher *watcher = theWatcher())
         watcher->stop();
+
+    delete d_ptr;
 }
 // ### removeme!
 #include <QDebug>
