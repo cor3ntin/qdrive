@@ -227,7 +227,7 @@ void setLastError(QDriveControllerPrivate *d, OSStatus status)
     case bdNamErr: // Bad filename or volume name.
     case nsDrvErr: // No such drive.
         d->error = QDriveController::MountErrorBadDevice;
-        d->error = QObject::tr("Bad Device");
+        d->errorString = QObject::tr("Bad Device");
         break;
     case wPrErr: // Volume is locked through hardware.
     case vLckdErr: // Volume is locked through software.
