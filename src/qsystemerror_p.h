@@ -60,7 +60,7 @@
 
 QT_BEGIN_NAMESPACE
 
-class Q_CORE_EXPORT QSystemError
+class QSystemError
 {
 public:
     enum ErrorScope
