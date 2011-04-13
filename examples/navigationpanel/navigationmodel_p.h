@@ -93,6 +93,11 @@ public:
 
     QDriveController *driveController;
 
+    NavigationModel::StandardLocations locations;
+
+    void insertItem(TreeItem *parent, const QString &name, const QString &path);
+    void removeItem(TreeItem *parent, const QString &path);
+
 public slots:
     void onDriveAdded(const QString &);
     void onDriveRemoved(const QString &);

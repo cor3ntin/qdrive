@@ -23,6 +23,24 @@ public:
     QString path(const QModelIndex &index) const;
 
     void addFolder(const QString &path);
+    void removeFolder(const QString &path);
+
+    enum StandardLocation {
+        NoLocation = 0x00,
+        DesktopLocation = 0x01,
+        DocumentsLocation = 0x02,
+        MusicLocation = 0x04,
+        MoviesLocation = 0x08,
+        PicturesLocation = 0x10,
+        HomeLocation = 0x20,
+        ApplicationsLocation = 0x40
+    };
+
+    Q_DECLARE_FLAGS(StandardLocations, StandardLocation)
+    Q_FLAGS(StandardLocations)
+
+    StandardLocations standardLocations() const;
+    void setStandardLocations(StandardLocations locations);
 
 signals:
 
