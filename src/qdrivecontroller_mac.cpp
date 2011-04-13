@@ -76,21 +76,7 @@ void mountCallback1(DADiskRef disk, CFArrayRef /*keys*/, void *context)
 // FIXME: here we get event when cdrom mounted? O_o
 void mountCallback2(DADiskRef disk, void *context)
 {
-    DADiskRef wholeDisk = DADiskCopyWholeDisk(disk);
-// only deal with whole disks here.. i.e. cdroms
-    if (wholeDisk) {
-        io_service_t mediaService;
-
-        mediaService = DADiskCopyIOMedia(wholeDisk);
-        if (mediaService) {
-            if (IOObjectConformsTo(mediaService, kIOCDMediaClass)
-                || IOObjectConformsTo(mediaService, kIODVDMediaClass)) {
-                checkNewDiskAndEmitSignal(disk, context);
-            }
-        }
-        IOObjectRelease(mediaService);
-        CFRelease(wholeDisk);
-    }
+    checkNewDiskAndEmitSignal(disk, context);
 }
 
 void unmountCallback(DADiskRef disk, void *context)
