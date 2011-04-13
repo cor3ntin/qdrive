@@ -4,8 +4,10 @@
 
 #include <QDriveController>
 
-Monitor::Monitor(QObject *parent) : QObject(parent)
+Monitor::Monitor(QDriveController *controller) : QObject(controller)
 {
+    connect(controller, SIGNAL(driveMounted(QString)), this, SLOT(driveMounted(QString)));
+    connect(controller, SIGNAL(driveUnmounted(QString)), this, SLOT(driveUnmounted(QString)));
 }
 
 Monitor::~Monitor()

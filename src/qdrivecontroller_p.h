@@ -11,11 +11,13 @@
 class QDriveControllerPrivate
 {
 public:
-//    QDriveController::MountError error;
-//    QString errorString;
+    inline void setLastError(int errorCode)
+    {
+        error.errorScope = QSystemError::NativeError;
+        error.errorCode = errorCode;
+    }
 
     QSystemError error;
-    void setLastError(int errorCode);
 };
 
 

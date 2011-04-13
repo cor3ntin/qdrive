@@ -3,12 +3,14 @@
 
 #include <QtCore/QObject>
 
+class QDriveController;
+
 class Monitor : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit Monitor(QObject *parent = 0);
+    Monitor(QDriveController *controller);
     ~Monitor();
 
 public Q_SLOTS:

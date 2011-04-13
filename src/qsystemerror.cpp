@@ -39,11 +39,10 @@
 **
 ****************************************************************************/
 
-#include <qglobal.h>
+#include "qsystemerror_p.h"
 
 #if QT_VERSION < 0x040800
 
-#include "qsystemerror_p.h"
 #if !defined(Q_OS_WINCE)
 #  include <errno.h>
 #  if defined(Q_CC_MSVC)
@@ -221,4 +220,4 @@ QString QSystemError::toString()
 
 QT_END_NAMESPACE
 
-#endif
+#endif // QT_VERSION
