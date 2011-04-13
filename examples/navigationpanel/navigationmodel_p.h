@@ -87,6 +87,7 @@ public:
     TreeItem *rootItem;
 
     TreeItem *drivesItem;
+    TreeItem *networkItem;
     TreeItem *foldersItem;
 
     QMap<QString, TreeItem*> mapToItem;

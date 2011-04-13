@@ -45,7 +45,10 @@ void NavigationModelPrivate::onDriveAdded(const QString &path)
 
     qDebug() << "onDriveAdded" << name << path;
 
-    insertItem(drivesItem, name, path);
+    if (info.type() == QDriveInfo::RemoteDrive)
+        insertItem(networkItem, name, path);
+    else
+        insertItem(drivesItem, name, path);
 }
 
 void NavigationModelPrivate::onDriveRemoved(const QString &path)
@@ -64,6 +67,7 @@ NavigationModel::NavigationModel(QObject *parent) :
     d->rootItem = new TreeItem();
 
     d->drivesItem = new TreeItem(d->rootItem, tr("Devices"));
+    d->networkItem = new TreeItem(d->rootItem, tr("Network"));
     d->foldersItem = new TreeItem(d->rootItem, tr("Folders"));
 
     d->driveController = new QDriveController(this);
@@ -75,9 +79,14 @@ NavigationModel::NavigationModel(QObject *parent) :
         QString name = info.name();
         QString path = info.rootPath();
 
-        qDebug() << name << path;
+        qDebug() << name << path << info.type();
 
-        TreeItem *item = new TreeItem(d->drivesItem, name, path);
+        TreeItem *item = 0;
+        if (info.type() == QDriveInfo::RemoteDrive)
+            item = new TreeItem(d->networkItem, name, path);
+        else
+            item = new TreeItem(d->drivesItem, name, path);
+
         d->mapToItem.insert(path, item);
     }
 
