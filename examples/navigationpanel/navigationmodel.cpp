@@ -103,8 +103,10 @@ NavigationModel::NavigationModel(QObject *parent) :
         else if (info.type() != QDriveInfo::InvalidDrive)
             item = new TreeItem(d->drivesItem, name, path);
 
-        item->icon = d->iconProvider.icon(QFileInfo(path));
-        d->mapToItem.insert(path, item);
+        if (item) {
+            item->icon = d->iconProvider.icon(QFileInfo(path));
+            d->mapToItem.insert(path, item);
+        }
     }
 
     StandardLocations locations(DesktopLocation | DocumentsLocation | HomeLocation | ApplicationsLocation);
