@@ -5,7 +5,6 @@
 #include <QDriveController>
 #include <QDesktopServices>
 #include <QFileInfo>
-#include <QDebug>
 
 NavigationModelPrivate::NavigationModelPrivate(NavigationModel *qq) :
     q_ptr(qq)
@@ -45,8 +44,6 @@ void NavigationModelPrivate::onDriveAdded(const QString &path)
     QDriveInfo info(path);
     QString name = info.name();
 
-    qDebug() << "onDriveAdded" << name << path;
-
     if (info.type() == QDriveInfo::RemoteDrive)
         insertItem(networkItem, name, path);
     else
@@ -55,8 +52,6 @@ void NavigationModelPrivate::onDriveAdded(const QString &path)
 
 void NavigationModelPrivate::onDriveRemoved(const QString &path)
 {
-    qDebug() << "onDriveRemoved" << path;
-
     removeItem(path);
 }
 
@@ -81,7 +76,15 @@ NavigationModel::NavigationModel(QObject *parent) :
         QString name = info.name();
         QString path = info.rootPath();
 
-        qDebug() << name << path << info.type();
+#ifdef Q_OS_WIN
+        if (!name.isEmpty())
+            name = QString("%1 (%2)").arg(path).arg(name);
+        else
+            name = QString("%1").arg(path);
+#elif Q_OS_LINUX
+        if (name.isEmpty())
+            name = path;
+#endif
 
         TreeItem *item = 0;
         if (info.type() == QDriveInfo::RemoteDrive)
@@ -207,8 +210,6 @@ void NavigationModel::addFolder(const QString &path)
 
     if (d->mapToItem.contains(info.canonicalFilePath()))
         return;
-
-    qDebug() << "addFolder" << name << path;
 
     d->insertItem(d->foldersItem, name, info.canonicalFilePath());
 }
