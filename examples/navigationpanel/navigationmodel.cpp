@@ -41,20 +41,29 @@ void NavigationModelPrivate::removeItem(const QString &path)
     q->endRemoveRows();
 }
 
-void NavigationModelPrivate::onDriveAdded(const QString &path)
+QString getDriveName(const QDriveInfo &info)
 {
-    QDriveInfo info(path);
     QString name = info.name();
 
 #ifdef Q_OS_WIN
-        if (!name.isEmpty())
-            name = QString("%1 (%2)").arg(path).arg(name);
-        else
-            name = QString("%1").arg(path);
+    QString path = info.rootPath();
+    if (!name.isEmpty())
+        name = QString("%1 (%2)").arg(path).arg(name);
+    else
+        name = QString("%1").arg(path);
 #elif Q_OS_LINUX
-        if (name.isEmpty())
-            name = path;
+    QString path = info.rootPath();
+    if (name.isEmpty())
+        name = path;
 #endif
+
+    return name;
+}
+
+void NavigationModelPrivate::onDriveAdded(const QString &path)
+{
+    QDriveInfo info(path);
+    QString name = getDriveName(info);
 
     if (info.type() == QDriveInfo::RemoteDrive)
         insertItem(networkItem, name, path);
@@ -85,18 +94,8 @@ NavigationModel::NavigationModel(QObject *parent) :
 
     QList<QDriveInfo> drives = QDriveInfo::drives();
     foreach (const QDriveInfo &info, drives) {
-        QString name = info.name();
+        QString name = getDriveName(info);
         QString path = info.rootPath();
-
-#ifdef Q_OS_WIN
-        if (!name.isEmpty())
-            name = QString("%1 (%2)").arg(path).arg(name);
-        else
-            name = QString("%1").arg(path);
-#elif Q_OS_LINUX
-        if (name.isEmpty())
-            name = path;
-#endif
 
         TreeItem *item = 0;
         if (info.type() == QDriveInfo::RemoteDrive)
