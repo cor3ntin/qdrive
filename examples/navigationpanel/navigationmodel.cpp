@@ -4,6 +4,7 @@
 #include <QDriveInfo>
 #include <QDriveController>
 #include <QDesktopServices>
+#include <QFileIconProvider>
 #include <QFileInfo>
 
 NavigationModelPrivate::NavigationModelPrivate(NavigationModel *qq) :
@@ -18,6 +19,7 @@ void NavigationModelPrivate::insertItem(TreeItem *parentItem, const QString &nam
     QModelIndex parent = q->createIndex(parentItem->row(), 0, parentItem);
     q->beginInsertRows(parent, parentItem->childCount(), parentItem->childCount());
     TreeItem *item = new TreeItem(parentItem, name, path);
+    item->icon = iconProvider.icon(QFileInfo(path));
     mapToItem.insert(path, item);
     q->endInsertRows();
 }
@@ -92,6 +94,7 @@ NavigationModel::NavigationModel(QObject *parent) :
         else
             item = new TreeItem(d->drivesItem, name, path);
 
+        item->icon = d->iconProvider.icon(QFileInfo(path));
         d->mapToItem.insert(path, item);
     }
 
@@ -121,6 +124,11 @@ QVariant NavigationModel::data(const QModelIndex &index, int role) const
     TreeItem *item = static_cast<TreeItem*>(index.internalPointer());
     if (role == Qt::DisplayRole) {
         return item->name;
+    } else if (role == Qt::DecorationRole) {
+//        if (item->type == TreeItem::ChildItem)
+            return item->icon;
+//        else
+//            return QVariant();
     } else if (role == Qt::UserRole) {
         if (item->type == TreeItem::ChildItem)
             return item->path;

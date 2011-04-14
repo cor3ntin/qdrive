@@ -3,6 +3,9 @@
 
 #include "navigationmodel.h"
 
+#include <QIcon>
+#include <QFileIconProvider>
+
 struct TreeItem
 {
     TreeItem *m_parent;
@@ -12,6 +15,7 @@ struct TreeItem
     Type type;
     QString name;
     QString path;
+    QIcon icon;
 
     explicit TreeItem(TreeItem *parent = 0)
     {
@@ -76,6 +80,7 @@ struct TreeItem
     }
 };
 
+class QFileIconProvider;
 class QDriveController;
 class NavigationModelPrivate : public QObject
 {
@@ -94,6 +99,8 @@ public:
     QMap<QString, TreeItem*> mapToItem;
 
     QDriveController *driveController;
+
+    QFileIconProvider iconProvider;
 
     NavigationModel::StandardLocations locations;
 
