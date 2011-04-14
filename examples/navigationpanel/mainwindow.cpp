@@ -20,7 +20,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     model = new QFileSystemModel(this);
     model->setRootPath("/");
-    model->setFilter(QDir::AllDirs | QDir::System | QDir::Hidden /*| QDir::NoDotAndDotDot*/);
+    model->setFilter(QDir::AllDirs | QDir::System | QDir::Hidden | QDir::Files /*| QDir::NoDotAndDotDot*/);
 
     view = new QTreeView(this);
     view->setModel(model);
