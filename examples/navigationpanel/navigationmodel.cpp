@@ -100,7 +100,7 @@ NavigationModel::NavigationModel(QObject *parent) :
         TreeItem *item = 0;
         if (info.type() == QDriveInfo::RemoteDrive)
             item = new TreeItem(d->networkItem, name, path);
-        else
+        else if (info.type() != QDriveInfo::InvalidDrive)
             item = new TreeItem(d->drivesItem, name, path);
 
         item->icon = d->iconProvider.icon(QFileInfo(path));
