@@ -8,10 +8,10 @@ struct TreeItem
     TreeItem *m_parent;
     QList<TreeItem *> m_children;
 
-    QString name;
-    QString path;
     enum Type { RootItem = 0, GroupItem, ChildItem };
     Type type;
+    QString name;
+    QString path;
 
     explicit TreeItem(TreeItem *parent = 0)
     {
@@ -82,10 +82,11 @@ class NavigationModelPrivate : public QObject
     Q_OBJECT
     Q_DECLARE_PUBLIC(NavigationModel)
     NavigationModel *q_ptr;
+
 public:
     NavigationModelPrivate(NavigationModel *qq);
-    TreeItem *rootItem;
 
+    TreeItem *rootItem;
     TreeItem *drivesItem;
     TreeItem *networkItem;
     TreeItem *foldersItem;

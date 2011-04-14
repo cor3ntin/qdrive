@@ -20,5 +20,3 @@ HEADERS  += mainwindow.h \
         navigationpanel.h \
     navigationmodel.h \
     navigationmodel_p.h
-
-FORMS    += mainwindow.ui
