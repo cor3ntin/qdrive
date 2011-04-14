@@ -23,13 +23,15 @@ void NavigationModelPrivate::insertItem(TreeItem *parentItem, const QString &nam
     q->endInsertRows();
 }
 
-void NavigationModelPrivate::removeItem(TreeItem *parentItem, const QString &path)
+void NavigationModelPrivate::removeItem(const QString &path)
 {
     Q_Q(NavigationModel);
 
     TreeItem *item = mapToItem.value(path);
     if (!item)
         return;
+
+    TreeItem *parentItem = item->parent();
 
     QModelIndex parent = q->createIndex(parentItem->row(), 0, parentItem);
     q->beginRemoveRows(parent, item->row(), item->row());
@@ -55,7 +57,7 @@ void NavigationModelPrivate::onDriveRemoved(const QString &path)
 {
     qDebug() << "onDriveRemoved" << path;
 
-    removeItem(drivesItem, path);
+    removeItem(path);
 }
 
 NavigationModel::NavigationModel(QObject *parent) :
@@ -215,7 +217,7 @@ void NavigationModel::removeFolder(const QString &path)
 {
     Q_D(NavigationModel);
 
-    d->removeItem(d->foldersItem, path);
+    d->removeItem(path);
 }
 
 NavigationModel::StandardLocations NavigationModel::standardLocations() const
