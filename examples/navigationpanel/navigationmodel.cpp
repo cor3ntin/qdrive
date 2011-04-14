@@ -67,7 +67,7 @@ void NavigationModelPrivate::onDriveAdded(const QString &path)
 
     if (info.type() == QDriveInfo::RemoteDrive)
         insertItem(networkItem, name, path);
-    else
+    else if (info.type() != QDriveInfo::InvalidDrive)
         insertItem(drivesItem, name, path);
 }
 
@@ -220,6 +220,9 @@ void NavigationModel::addFolder(const QString &path)
     Q_D(NavigationModel);
 
     QFileInfo info(path);
+    if (!info.isDir() || !info.exists())
+        return;
+
     QString canonicalPath = info.canonicalFilePath();
     QString name = info.fileName();
 
