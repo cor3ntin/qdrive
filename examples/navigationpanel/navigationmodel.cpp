@@ -45,13 +45,13 @@ QString getDriveName(const QDriveInfo &info)
 {
     QString name = info.name();
 
-#ifdef Q_OS_WIN
+#if defined(Q_OS_WIN)
     QString path = info.rootPath();
     if (!name.isEmpty())
         name = QString("%1 (%2)").arg(path).arg(name);
     else
         name = QString("%1").arg(path);
-#elif Q_OS_LINUX
+#elif defined(Q_OS_LINUX)
     QString path = info.rootPath();
     if (name.isEmpty())
         name = path;
