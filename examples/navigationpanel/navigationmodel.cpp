@@ -125,13 +125,8 @@ QVariant NavigationModel::data(const QModelIndex &index, int role) const
     if (role == Qt::DisplayRole) {
         return item->name;
     } else if (role == Qt::DecorationRole) {
-//        if (item->type == TreeItem::ChildItem)
-            return item->icon;
-//        else
-//            return QVariant();
-    } else if (role == Qt::UserRole) {
         if (item->type == TreeItem::ChildItem)
-            return item->path;
+            return item->icon;
         else
             return QVariant();
     }
@@ -203,10 +198,10 @@ QString NavigationModel::path(const QModelIndex &index) const
         return "";
 
     TreeItem *item = static_cast<TreeItem*>(index.internalPointer());
-    if (item->type == TreeItem::GroupItem)
-        return "";
-    else
+    if (item->type == TreeItem::ChildItem)
         return item->path;
+    else
+        return "";
 }
 
 void NavigationModel::addFolder(const QString &path)
@@ -214,12 +209,13 @@ void NavigationModel::addFolder(const QString &path)
     Q_D(NavigationModel);
 
     QFileInfo info(path);
+    QString canonicalPath = info.canonicalFilePath();
     QString name = info.fileName();
 
-    if (d->mapToItem.contains(info.canonicalFilePath()))
+    if (d->mapToItem.contains(canonicalPath))
         return;
 
-    d->insertItem(d->foldersItem, name, info.canonicalFilePath());
+    d->insertItem(d->foldersItem, name, canonicalPath);
 }
 
 void NavigationModel::removeFolder(const QString &path)
@@ -285,5 +281,4 @@ void NavigationModel::setStandardLocations(StandardLocations locations)
         addFolder(path);
     else
         removeFolder(path);
-
 }
