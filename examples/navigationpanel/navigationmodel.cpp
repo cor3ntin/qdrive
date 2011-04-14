@@ -46,6 +46,16 @@ void NavigationModelPrivate::onDriveAdded(const QString &path)
     QDriveInfo info(path);
     QString name = info.name();
 
+#ifdef Q_OS_WIN
+        if (!name.isEmpty())
+            name = QString("%1 (%2)").arg(path).arg(name);
+        else
+            name = QString("%1").arg(path);
+#elif Q_OS_LINUX
+        if (name.isEmpty())
+            name = path;
+#endif
+
     if (info.type() == QDriveInfo::RemoteDrive)
         insertItem(networkItem, name, path);
     else
