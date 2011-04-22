@@ -10,7 +10,7 @@
 
 #ifndef USE_PRIVATE_HEADERS
 #  undef EINTR_LOOP
-#  define EINTR_LOOP(var, cmd)                    \
+#  define EINTR_LOOP(var, cmd)                  \
     do {                                        \
         var = cmd;                              \
     } while (var == -1 && errno == EINTR)
@@ -201,7 +201,9 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
             drive.d_ptr->data->rootPath = QFile::decodeName(mnt->mnt_dir);
             drive.d_ptr->data->device = QByteArray(mnt->mnt_fsname);
             drive.d_ptr->data->fileSystemName = QByteArray(mnt->mnt_type);
-            drive.d_ptr->data->setCachedFlag(CachedRootPathFlag | CachedFileSystemNameFlag | CachedDeviceFlag);
+            drive.d_ptr->data->setCachedFlag(CachedRootPathFlag |
+                                             CachedFileSystemNameFlag |
+                                             CachedDeviceFlag);
             drives.append(drive);
         }
         ::endmntent(fp);

@@ -30,7 +30,14 @@ void QDriveInfoPrivate::initRootPath()
 
     HFSUniStr255 volumeName;
     FSRef rootDirectory;
-    if (FSGetVolumeInfo(catalogInfo.volume, 0, 0, kFSVolInfoFSInfo, 0, &volumeName, &rootDirectory) == noErr) {
+    OSErr error = FSGetVolumeInfo(catalogInfo.volume,
+                                  0,
+                                  0,
+                                  kFSVolInfoFSInfo,
+                                  0,
+                                  &volumeName,
+                                  &rootDirectory);
+    if (error == noErr) {
         CFURLRef url = CFURLCreateFromFSRef(NULL, &rootDirectory);
         CFStringRef stringRef;
         stringRef = CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
@@ -84,7 +91,8 @@ static inline QDriveInfo::DriveType determineType(const QByteArray &device)
     }
 
     CFBooleanRef boolRef;
-    boolRef = (CFBooleanRef)CFDictionaryGetValue(descriptionDictionary, kDADiskDescriptionVolumeNetworkKey);
+    boolRef = (CFBooleanRef)CFDictionaryGetValue(descriptionDictionary,
+                                                 kDADiskDescriptionVolumeNetworkKey);
     if (boolRef && CFBooleanGetValue(boolRef)){
         CFRelease(descriptionDictionary);
         CFRelease(diskRef);
@@ -92,7 +100,8 @@ static inline QDriveInfo::DriveType determineType(const QByteArray &device)
         return QDriveInfo::RemoteDrive;
     }
 
-    boolRef = (CFBooleanRef)CFDictionaryGetValue(descriptionDictionary, kDADiskDescriptionMediaRemovableKey);
+    boolRef = (CFBooleanRef)CFDictionaryGetValue(descriptionDictionary,
+                                                 kDADiskDescriptionMediaRemovableKey);
     if (boolRef)
         drivetype = CFBooleanGetValue(boolRef) ? QDriveInfo::RemovableDrive : QDriveInfo::InternalDrive;
 
@@ -185,7 +194,13 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
     for (ItemCount volumeIndex = 1; result == noErr || result != nsvErr; volumeIndex++) {
         FSVolumeRefNum actualVolume;
         FSRef rootDirectory;
-        result = FSGetVolumeInfo(kFSInvalidVolumeRefNum, volumeIndex, &actualVolume, 0, 0, 0, &rootDirectory);
+        result = FSGetVolumeInfo(kFSInvalidVolumeRefNum,
+                                 volumeIndex,
+                                 &actualVolume,
+                                 0,
+                                 0,
+                                 0,
+                                 &rootDirectory);
         if (result == noErr) {
             CFURLRef url = CFURLCreateFromFSRef(NULL, &rootDirectory);
             CFStringRef stringRef = CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
