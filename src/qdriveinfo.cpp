@@ -11,21 +11,20 @@ QDriveInfoPrivate::QDriveInfoPrivate(QDriveInfoPrivate *other)
 {
 }
 
-
 /*!
     \class QDriveInfo
     \reentrant
-    \brief QDriveInfo provides provides information about currently mounted drives or volumes.
+    \brief QDriveInfo provides information about currently mounted drives and volumes.
 
     \ingroup io
     \ingroup shared
 
-    QDriveInfo provides provides information about currently mounted drives or volumes.
-    It gives you information about drive's space, it's mount point, label, filesystem name and type.
+    QDriveInfo provides information about currently mounted drives and volumes.
+    It alows to retrieve information about drive's space, it's mount point, label, filesystem name and type.
 
     You can create QDriveInfo and pass path to drive's mount point as a constructor parameter,
-    or you can set it via setRootPath() method. Also, you can get all filesystems mounted in
-    system using drives() method.
+    or you can set it via setRootPath() method. Also, you can get list of all mounted filesystems
+    using drives() method.
 
     QDriveInfo always caches the retreived information but you can call refresh() to invalidate the cache.
 */
@@ -34,11 +33,11 @@ QDriveInfoPrivate::QDriveInfoPrivate(QDriveInfoPrivate *other)
     \enum QDriveInfo::DriveType
     This enum describes the type of drive or volume
 
-    \value InvalidDrive          Drive type undetermined.
+    \value InvalidDrive          Drive type cannot be determined.
     \value InternalDrive         Is internal mass storage drive like a harddrive.
-    \value RemovableDrive        Is a removable disk like flash or MMC.
+    \value RemovableDrive        Is a removable disk like flash disk or MMC.
     \value RemoteDrive           Is a network drive.
-    \value CdromDrive            Is a cd rom drive.
+    \value CdromDrive            Is a cd rom or dvd drive.
     \value InternalFlashDrive    Is an internal flash disk, or Phone Memory.
     \value RamDrive              Is a virtual drive made in RAM memory.
 */
@@ -46,7 +45,7 @@ QDriveInfoPrivate::QDriveInfoPrivate(QDriveInfoPrivate *other)
 /*!
     Constructs an empty QDriveInfo object.
 
-    This object is not ready, invalid and all it's parameters are empty.
+    This object is not ready for use, invalid and all it's parameters are empty.
 
     \sa setRootPath(), ready(), valid()
 */
@@ -59,6 +58,7 @@ QDriveInfo::QDriveInfo()
     Constructs a new QDriveInfo that gives information about the drive, mounted at
     \a rootPath.
 
+    If passed folder or a file, will contain information about volume that folder or file located on.
     You can check if \a rootPath is correct using valid() method.
 
     \sa setRootPath()
@@ -173,7 +173,7 @@ quint64 QDriveInfo::bytesAvailable() const
 
 /*!
     Returns free size (in bytes) available on drive. Note, that if there is some kind
-    of qoutas on the filesystem, this value can be bigger than bytesAvailable()
+    of quotas on the filesystem, this value can be bigger than bytesAvailable()
 
     \sa bytesTotal(), bytesAvailable()
 */
@@ -303,7 +303,7 @@ QDriveInfo::DriveType QDriveInfo::type() const
     Resets QDriveInfo inner cache.
 
     QDriveInfo caches information about drives to speed up performance. Some information can be retrieved
-    by only 1 native funciton call, so, if you call bytesTotal(), QDriveInfo will also cache information
+    by only 1 native function call, so, if you call bytesTotal(), QDriveInfo will also cache information
     for bytesAvailable() and bytesFree(). Also, QDriveInfo won't update information for future calls and
     you have to manually reset cache when needed.
 */
@@ -317,7 +317,7 @@ void QDriveInfo::refresh()
 
     On Windows, this returnes drives presented in 'My Computer' folder. On Unix operation systems,
     returns list of all mounted filesystems (exept for Mac, where devfs is ignored). In Linux, you
-    will get a lot of pseudo filesystems by calling this function, you can filter them out
+    will get a lot of pseudo filesystems by calling this function, but you can filter them out
     by using type() (as they always have an InvalidDrive type).
 
     \sa rootDrive()
@@ -329,6 +329,8 @@ QList<QDriveInfo> QDriveInfo::drives()
 
 /*!
     Returns a QDriveInfo object that represents a system root volume or drive.
+
+    On Unix systems this call returns '/' volume, on Windows - volume where operating system is installed.
 
     \sa isRoot()
 */
