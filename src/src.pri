@@ -32,6 +32,7 @@ macx-* {
 linux-*:!symbian {
     SOURCES += qdriveinfo_linux.cpp \
                qdrivecontroller_linux.cpp
+    QT *= dbus
 }
 
 symbian {

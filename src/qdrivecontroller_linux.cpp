@@ -9,6 +9,12 @@
 #include <QtCore/QSocketNotifier>
 #include <QtCore/QTimer>
 
+#if !defined(QT_NO_UDISKS)
+#include <QtDBus/QDBusConnection>
+#include <QtDBus/QDBusInterface>
+#include <QtDBus/QDBusReply>
+#endif // QT_NO_UDISKS
+
 #include <QDebug>
 
 #include <sys/inotify.h>
@@ -26,6 +32,17 @@
 #ifndef _PATH_MOUNTED
 #  define _PATH_MOUNTED "/etc/mtab"
 #endif
+
+#if !defined(QT_NO_UDISKS)
+static const QString UDISKS_SERVICE(QString::fromAscii("org.freedesktop.UDisks"));
+static const QString UDISKS_PATH(QString::fromAscii("/org/freedesktop/UDisks"));
+static const QString UDISKS_INTERFACE(QString::fromAscii("org.freedesktop.UDisks"));
+static const QString UDISKS_DEVICE_INTERFACE(QString::fromAscii("org.freedesktop.UDisks.Device"));
+
+static const QString UDISKS_FIND_DEVICE(QString::fromAscii("FindDeviceByDeviceFile"));
+static const QString UDISKS_MOUNT(QString::fromAscii("FilesystemMount"));
+static const QString UDISKS_UNMOUNT(QString::fromAscii("FilesystemUnmount"));
+#endif // QT_NO_UDISKS
 
 class QDriveWatcherEngine : public QObject
 {
@@ -138,98 +155,81 @@ void QDriveWatcher::stop_sys()
     engine = 0;
 }
 
-static bool mountUdisks(const QString &device, QString &mount_point, QString &status, const QString &fs, const QString &options)
+static bool mountUdisks(const QString &device,
+                         QString &mount_point,
+                         const QString &fs,
+                         const QStringList &options,
+                         QDriveControllerPrivate::Error &error)
 {
-    QProcess mount;
-    QString command = "udisks";
-    QStringList args;
+#if !defined(QT_NO_UDISKS)
+    QDBusMessage findDeviceMethod = QDBusMessage::createMethodCall(UDISKS_SERVICE, UDISKS_PATH, UDISKS_INTERFACE, UDISKS_FIND_DEVICE);
+    findDeviceMethod.setArguments(QVariantList() << device);
 
-    mount.setProcessChannelMode(QProcess::MergedChannels);
+    QDBusReply<QDBusObjectPath> findDeviceReply = QDBusConnection::systemBus().call(findDeviceMethod);
+    if (findDeviceReply.isValid()) {
 
-    args << "--mount";
+        QDBusObjectPath device = findDeviceReply.value();
+        QDBusInterface interface(UDISKS_SERVICE, device.path(), UDISKS_DEVICE_INTERFACE, QDBusConnection::systemBus());
+        if (interface.isValid()) {
+            QDBusReply<QString> reply = interface.call(UDISKS_MOUNT, fs, options);
+            if (reply.isValid()) {
+                mount_point = reply.value();
+            } else {
+                error.code = reply.error().type();
+                error.string = reply.error().message();
+                return false;
+            }
+        }
 
-    if (!fs.isEmpty()) {
-        args << "--mount-fstype" << fs;
-    }
-
-    if (!options.isEmpty()) {
-        args << "--mount-options" << options;
-    }
-
-    args << device;
-
-    mount.start(command, args);
-    if (!mount.waitForStarted()) {
-        status = "Trouble with mount: start issue";
-        return false;
-    }
-
-    if (!mount.waitForFinished()) {
-        status = "Trouble with mount: finish issue";
-        return false;
-    }
-
-    //int code       = mount.exitCode();
-    bool is_ok     = false;
-    QString buffer = mount.readAll();
-
-
-    // Stupid 'udisks' in any cases return 0 exit status!
-    is_ok = !buffer.contains(QRegExp("^Mount failed:", Qt::CaseInsensitive));
-
-    if (is_ok) {
-        QStringList list = buffer.trimmed().split(" ", QString::SkipEmptyParts);
-        if (list.count() == 4)
-            mount_point = list.at(3);
-        status = "Ok";
     } else {
-        status = buffer;
+        error.code = findDeviceReply.error().type();
+        error.string = findDeviceReply.error().message();
+        return false;
     }
-
-    return is_ok;
+    return true;
+#else
+    return false;
+#endif
 }
 
-static bool unmountUdisks(const QString &device, QString &status)
+static bool unmountUdisks(const QString &device,
+                           const QStringList &options,
+                           QDriveControllerPrivate::Error &error)
 {
-    QProcess unmount;
-    QString command = "udisks";
-    QStringList args;
+#if !defined(QT_NO_UDISKS)
+    QDBusMessage findDeviceMethod = QDBusMessage::createMethodCall(UDISKS_SERVICE, UDISKS_PATH, UDISKS_INTERFACE, UDISKS_FIND_DEVICE);
+    findDeviceMethod.setArguments(QVariantList() << device);
 
-    unmount.setProcessChannelMode(QProcess::MergedChannels);
+    QDBusReply<QDBusObjectPath> findDeviceReply = QDBusConnection::systemBus().call(findDeviceMethod);
+    if (findDeviceReply.isValid()) {
 
-    args << "--unmount" << device;
+        QDBusObjectPath device = findDeviceReply.value();
+        QDBusInterface interface(UDISKS_SERVICE, device.path(), UDISKS_DEVICE_INTERFACE, QDBusConnection::systemBus());
+        if (interface.isValid()) {
+            QDBusReply<void> reply = interface.call(UDISKS_UNMOUNT, options);
+            if (!reply.isValid()) {
+                error.code = reply.error().type();
+                error.string = reply.error().message();
+                return false;
+            }
+        }
 
-    unmount.start(command, args);
-    if (!unmount.waitForStarted()) {
-        status = "Trouble with unmount: start issue";
+    } else {
+        error.code = findDeviceReply.error().type();
+        error.string = findDeviceReply.error().message();
         return false;
     }
-
-    if (!unmount.waitForFinished()) {
-        status = "Trouble with unmount: finish issue";
-        return false;
-    }
-
-    //int code       = unmount.exitCode();
-    bool is_ok = false;
-    QString buffer = unmount.readAll();
-
-    // Stupid 'udisks' in any cases return 0 exit status!
-    is_ok = !buffer.contains(QRegExp("^Unmount failed:", Qt::CaseInsensitive));
-
-    if (is_ok)
-        status = "Ok";
-    else
-        status = buffer;
-
-    return is_ok;
+    return true;
+#else
+    return false;
+#endif
 }
 
 bool QDriveController::mount(const QString &device, const QString &path)
 {
     QString status;
     QString mountPath = path;
-    bool result = mountUdisks(device, mountPath, status, QString(), QString());
+    bool result = mountUdisks(device, mountPath, QString(), QStringList(), d->error);
     if (!result) {
         qWarning() << "error mounting" << status;
     }
@@ -239,7 +239,7 @@ bool QDriveController::mount(const QString &device, const QString &path)
 bool QDriveController::unmount(const QString &path)
 {
     QString status;
-    bool result = unmountUdisks(QDriveInfo(path).device(), status);
+    bool result = unmountUdisks(QDriveInfo(path).device(), QStringList(), d->error);
     if (!result) {
         qWarning() << "error mounting" << status;
     }
@@ -255,7 +255,7 @@ bool QDriveController::eject(const QString &device)
 
     int fd = ::open(QFile::encodeName(device), O_RDONLY | O_NONBLOCK);
     if (fd == -1) {
-        d->setLastError(errno);
+        d->setError(errno);
         return false;
     }
 
@@ -267,7 +267,7 @@ bool QDriveController::eject(const QString &device)
 
     int result = ::ioctl(fd, CDROMEJECT);
     if (result == -1) {
-        d->setLastError(errno);
+        d->setError(errno);
         close(fd);
         return false;
     }
