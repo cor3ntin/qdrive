@@ -4,9 +4,10 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
-#include <QtCore/QTimer>
+#include <QtCore/QProcess>
 #include <QtCore/QSet>
 #include <QtCore/QSocketNotifier>
+#include <QtCore/QTimer>
 
 #include <QDebug>
 
@@ -19,6 +20,8 @@
 #include <fcntl.h>
 #include <mntent.h>
 #include <linux/cdrom.h>
+
+#include  "qdriveinfo.h"
 
 #ifndef _PATH_MOUNTED
 #  define _PATH_MOUNTED "/etc/mtab"
@@ -135,42 +138,120 @@ void QDriveWatcher::stop_sys()
     engine = 0;
 }
 
-bool QDriveController::mount(const QString &device, const QString &path)
+static bool mountUdisks(const QString &device, QString &mount_point, QString &status, const QString &fs, const QString &options)
 {
-    QString targetPath = QDir::toNativeSeparators(path);
-    if (!targetPath.endsWith('/'))
-        targetPath.append('/');
+    QProcess mount;
+    QString command = "udisks";
+    QStringList args;
 
-    // TODO: guess filesystem
-    int result = ::mount(QFile::encodeName(device), QFile::encodeName(targetPath), "ext4", 0, 0);
-    if (result) {
-        d->setLastError(result);
+    mount.setProcessChannelMode(QProcess::MergedChannels);
+
+    args << "--mount";
+
+    if (!fs.isEmpty()) {
+        args << "--mount-fstype" << fs;
+    }
+
+    if (!options.isEmpty()) {
+        args << "--mount-options" << options;
+    }
+
+    args << device;
+
+    mount.start(command, args);
+    if (!mount.waitForStarted()) {
+        status = "Trouble with mount: start issue";
         return false;
     }
-    return true;
+
+    if (!mount.waitForFinished()) {
+        status = "Trouble with mount: finish issue";
+        return false;
+    }
+
+    //int code       = mount.exitCode();
+    bool is_ok     = false;
+    QString buffer = mount.readAll();
+
+
+    // Stupid 'udisks' in any cases return 0 exit status!
+    is_ok = !buffer.contains(QRegExp("^Mount failed:", Qt::CaseInsensitive));
+
+    if (is_ok) {
+        QStringList list = buffer.trimmed().split(" ", QString::SkipEmptyParts);
+        if (list.count() == 4)
+            mount_point = list.at(3);
+        status = "Ok";
+    } else {
+        status = buffer;
+    }
+
+    return is_ok;
+}
+
+static bool unmountUdisks(const QString &device, QString &status)
+{
+    QProcess unmount;
+    QString command = "udisks";
+    QStringList args;
+
+    unmount.setProcessChannelMode(QProcess::MergedChannels);
+
+    args << "--unmount" << device;
+
+    unmount.start(command, args);
+    if (!unmount.waitForStarted()) {
+        status = "Trouble with unmount: start issue";
+        return false;
+    }
+
+    if (!unmount.waitForFinished()) {
+        status = "Trouble with unmount: finish issue";
+        return false;
+    }
+
+    //int code       = unmount.exitCode();
+    bool is_ok = false;
+    QString buffer = unmount.readAll();
+
+    // Stupid 'udisks' in any cases return 0 exit status!
+    is_ok = !buffer.contains(QRegExp("^Unmount failed:", Qt::CaseInsensitive));
+
+    if (is_ok)
+        status = "Ok";
+    else
+        status = buffer;
+
+    return is_ok;
+}
+
+bool QDriveController::mount(const QString &device, const QString &path)
+{
+    QString status;
+    QString mountPath = path;
+    bool result = mountUdisks(device, mountPath, status, QString(), QString());
+    if (!result) {
+        qWarning() << "error mounting" << status;
+    }
+    return result;
 }
 
 bool QDriveController::unmount(const QString &path)
 {
-    QString targetPath = QDir::toNativeSeparators(path);
-    if (!targetPath.endsWith('/'))
-        targetPath.append('/');
-
-    int result = ::umount(QFile::encodeName(targetPath));
-    if (result) {
-        d->setLastError(result);
-        return false;
+    QString status;
+    bool result = unmountUdisks(QDriveInfo(path).device(), status);
+    if (!result) {
+        qWarning() << "error mounting" << status;
     }
-    return true;
+    return result;
 }
 
 bool QDriveController::eject(const QString &device)
 {
-// TODO: unmount ?
-//    if (!unmount(device)) {
-//        qDebug() << "failed to unmount";
-//        return false;
-//    }
+    if (!unmount(device)) {
+        qDebug() << "failed to unmount";
+        return false;
+    }
 
     int fd = ::open(QFile::encodeName(device), O_RDONLY | O_NONBLOCK);
     if (fd == -1) {
