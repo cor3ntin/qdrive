@@ -5,6 +5,23 @@
 #include <driveinfo.h>
 #endif
 
+#include <e32base.h>
+#include <f32file.h>
+
+class QDriveWatcherEngine : public CActive
+{
+public:
+    QDriveWatcherEngine(QDriveWatcher *watcher);
+    ~QDriveWatcherEngine();
+
+protected:  //from CActive
+    void DoCancel();
+    void RunL();
+
+private:
+    QDriveWatcher *m_watcher;
+};
+
 QDriveWatcherEngine::QDriveWatcherEngine(QDriveWatcher *watcher)
     : CActive(EPriorityStandard),
       m_watcher(watcher)

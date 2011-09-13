@@ -8,7 +8,6 @@
 #include <QtCore/QSet>
 #include <QtCore/QSocketNotifier>
 
-
 #include <QDebug>
 
 #include <sys/inotify.h>
@@ -24,6 +23,31 @@
 #ifndef _PATH_MOUNTED
 #  define _PATH_MOUNTED "/etc/mtab"
 #endif
+
+class QDriveWatcherEngine : public QObject
+{
+    Q_OBJECT
+
+public:
+    QDriveWatcherEngine(QObject *parent);
+    ~QDriveWatcherEngine();
+
+    inline bool isValid() const
+    { return mtabWatchA > 0; }
+
+Q_SIGNALS:
+    void driveAdded(const QString &path);
+    void driveRemoved(const QString &path);
+
+private Q_SLOTS:
+    void deviceChanged();
+    void inotifyActivated();
+
+private:
+    QSet<QString> drives;
+    int inotifyFD;
+    int mtabWatchA;
+};
 
 static QSet<QString> getDrives()
 {
@@ -169,3 +193,5 @@ bool QDriveController::eject(const QString &device)
     close(fd);
     return true;
 }
+
+#include "qdrivecontroller_linux.moc"

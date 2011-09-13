@@ -3,9 +3,13 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QFile>
+#include <QtCore/QSet>
+#include <QtCore/QThread>
 
 #include <CoreServices/CoreServices.h>
 #include <CoreFoundation/CFRunLoop.h>
+
+#include <DiskArbitration/DiskArbitration.h>
 
 #include <IOKit/storage/IOCDMedia.h>
 #include <IOKit/storage/IODVDMedia.h>
@@ -16,6 +20,36 @@
 #include "qdriveinfo.h"
 
 #define TIME_INTERVAL 1
+
+class QDriveWatcherEngine : public QThread
+{
+    Q_OBJECT
+
+public:
+    QDriveWatcherEngine();
+    ~QDriveWatcherEngine();
+
+    void stop();
+
+    void addDrive(const QString &path);
+    void removeDrive(const QString &path);
+    void updateDrives();
+
+protected:
+    void run();
+
+Q_SIGNALS:
+    void driveAdded(const QString &path);
+    void driveRemoved(const QString &path);
+
+private:
+    void populateVolumes();
+
+    volatile bool m_running;
+
+    DASessionRef m_session;
+    QSet<QString> volumes;
+};
 
 QString CFStringToQString(CFStringRef string)
 {
@@ -91,7 +125,6 @@ void unmountCallback(DADiskRef disk, void *context)
         watcher->updateDrives();
     }
 }
-
 
 QDriveWatcherEngine::QDriveWatcherEngine()
     : QThread(),
@@ -191,7 +224,6 @@ void QDriveWatcherEngine::updateDrives()
             emit driveAdded(path);
     }
 }
-
 
 bool QDriveWatcher::start_sys()
 {
@@ -332,3 +364,5 @@ bool QDriveController::eject(const QString &path)
 
     return true;
 }
+
+#include "qdrivecontroller_mac.moc"
