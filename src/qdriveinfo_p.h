@@ -1,6 +1,17 @@
 #ifndef QDRIVEINFO_P_H
 #define QDRIVEINFO_P_H
 
+//
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the Qt API.  It exists purely as an
+// implementation detail.  This header file may change from version to
+// version without notice, or even be removed.
+//
+// We mean it.
+//
+
 #include "qdriveinfo.h"
 
 #include <QtCore/QExplicitlySharedDataPointer>
@@ -8,11 +19,24 @@
 
 #include <qplatformdefs.h>
 
-class QDriveInfoPrivate
+class QDriveInfoPrivate : public QSharedData
 {
 public:
-    QDriveInfoPrivate();
-    QDriveInfoPrivate(QDriveInfoPrivate *other);
+
+    inline QDriveInfoPrivate() : QSharedData(),
+        bytesTotal(0), bytesFree(0), bytesAvailable(0),
+        type(QDriveInfo::InvalidDrive),
+        readOnly(false), ready(false), valid(false),
+        cachedFlags(0)
+    {}
+
+    QDriveInfoPrivate(const QDriveInfoPrivate &other) : QSharedData(other),
+        rootPath(other.rootPath),
+        bytesTotal(0), bytesFree(0), bytesAvailable(0),
+        type(QDriveInfo::InvalidDrive),
+        readOnly(false), ready(false), valid(false),
+        cachedFlags(0)
+    {}
 
     enum CachedFlags {
         CachedRootPathFlag = 0x001,
@@ -28,63 +52,28 @@ public:
         CachedValidFlag = 0x800
     };
 
-    struct Data : public QSharedData
+    inline void clear()
     {
-        Data() : QSharedData(),
-            bytesTotal(0), bytesFree(0), bytesAvailable(0),
-            type(QDriveInfo::InvalidDrive),
-            readOnly(false), ready(false), valid(false),
-            cachedFlags(0)
-        {}
-        Data(const Data &other) : QSharedData(other),
-            rootPath(other.rootPath),
-            bytesTotal(0), bytesFree(0), bytesAvailable(0),
-            type(QDriveInfo::InvalidDrive),
-            readOnly(false), ready(false), valid(false),
-            cachedFlags(0)
-        {}
+        device.clear();
+        fileSystemName.clear();
+        name.clear();
 
-        inline void clear()
-        {
-            device.clear();
-            fileSystemName.clear();
-            name.clear();
+        bytesTotal = 0;
+        bytesFree = 0;
+        bytesAvailable = 0;
 
-            bytesTotal = 0;
-            bytesFree = 0;
-            bytesAvailable = 0;
+        type = QDriveInfo::InvalidDrive;
+        readOnly = false;
+        ready = false;
+        valid = false;
 
-            type = QDriveInfo::InvalidDrive;
-            readOnly = false;
-            ready = false;
-            valid = false;
+        cachedFlags = 0;
+    }
 
-            cachedFlags = 0;
-        }
-
-        inline bool getCachedFlag(uint c) const
-        { return !((cachedFlags & c) ^ c); }
-        inline void setCachedFlag(uint c)
-        { cachedFlags |= c; }
-
-        QString rootPath;
-        QByteArray device;
-        QByteArray fileSystemName;
-        QString name;
-
-        quint64 bytesTotal;
-        quint64 bytesFree;
-        quint64 bytesAvailable;
-
-        ushort type : 8;
-        ushort readOnly : 1;
-        ushort ready : 1;
-        ushort valid : 1;
-        ushort reserved : 5;
-
-        uint cachedFlags;
-    };
-    QExplicitlySharedDataPointer<Data> data;
+    inline bool getCachedFlag(uint c) const
+    { return !((cachedFlags & c) ^ c); }
+    inline void setCachedFlag(uint c)
+    { cachedFlags |= c; }
 
     void initRootPath();
     void doStat(uint requiredFlags);
@@ -97,6 +86,24 @@ protected:
 #if defined(Q_OS_WIN)
     void getDiskFreeSpace();
 #endif
+
+public:
+    QString rootPath;
+    QByteArray device;
+    QByteArray fileSystemName;
+    QString name;
+
+    quint64 bytesTotal;
+    quint64 bytesFree;
+    quint64 bytesAvailable;
+
+    ushort type : 8;
+    ushort readOnly : 1;
+    ushort ready : 1;
+    ushort valid : 1;
+    ushort reserved : 5;
+
+    uint cachedFlags;
 };
 
 #endif // QDRIVEINFO_P_H

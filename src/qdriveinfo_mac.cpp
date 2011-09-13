@@ -16,13 +16,13 @@
 
 void QDriveInfoPrivate::initRootPath()
 {
-    if (data->rootPath.isEmpty())
+    if (rootPath.isEmpty())
         return;
 
     FSRef ref;
-    FSPathMakeRef((UInt8*)QFile::encodeName(data->rootPath).constData(), &ref, 0);
+    FSPathMakeRef((UInt8*)QFile::encodeName(rootPath).constData(), &ref, 0);
 
-    data->rootPath.clear();
+    rootPath.clear();
 
     FSCatalogInfo catalogInfo;
     if (FSGetCatalogInfo(&ref, kFSCatInfoVolume, &catalogInfo, 0, 0, 0) != noErr)
@@ -46,7 +46,7 @@ void QDriveInfoPrivate::initRootPath()
             CFIndex length = CFStringGetLength(stringRef) + 1;
             char *volname = NewPtr(length);
             CFStringGetCString(stringRef, volname, length, kCFStringEncodingMacRoman);
-            data->rootPath = QFile::decodeName(volname);
+            rootPath = QFile::decodeName(volname);
             CFRelease(stringRef);
             DisposePtr(volname);
         }
@@ -58,7 +58,7 @@ void QDriveInfoPrivate::initRootPath()
             CFIndex length = CFStringGetLength(stringRef) + 1;
             char *volname = NewPtr(length);
             CFStringGetCString(stringRef, volname, length, kCFStringEncodingMacRoman);
-            data->name = QFile::decodeName(volname);
+            name = QFile::decodeName(volname);
             CFRelease(stringRef);
             DisposePtr(volname);
         }
@@ -129,18 +129,18 @@ static inline QDriveInfo::DriveType determineType(const QByteArray &device)
 
 void QDriveInfoPrivate::doStat(uint requiredFlags)
 {
-    if (data->getCachedFlag(requiredFlags))
+    if (getCachedFlag(requiredFlags))
         return;
 
-    if (!data->getCachedFlag(CachedRootPathFlag | CachedNameFlag)) {
+    if (!getCachedFlag(CachedRootPathFlag | CachedNameFlag)) {
         initRootPath();
-        data->setCachedFlag(CachedRootPathFlag | CachedNameFlag);
+        setCachedFlag(CachedRootPathFlag | CachedNameFlag);
     }
 
-    if (data->rootPath.isEmpty() || (data->getCachedFlag(CachedValidFlag) && !data->valid))
+    if (rootPath.isEmpty() || (getCachedFlag(CachedValidFlag) && !valid))
         return;
 
-    if (!data->getCachedFlag(CachedValidFlag))
+    if (!getCachedFlag(CachedValidFlag))
         requiredFlags |= CachedValidFlag; // force drive validation
 
     if (requiredFlags & CachedTypeFlag)
@@ -154,35 +154,35 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
               CachedReadOnlyFlag | CachedReadyFlag | CachedValidFlag;
     if (requiredFlags & bitmask) {
         getVolumeInfo();
-        data->setCachedFlag(bitmask);
+        setCachedFlag(bitmask);
 
-        if (!data->valid)
+        if (!valid)
             return;
     }
 
     bitmask = CachedTypeFlag;
     if (requiredFlags & bitmask) {
-        data->type = determineType(data->device);
-        data->setCachedFlag(bitmask);
+        type = determineType(device);
+        setCachedFlag(bitmask);
     }
 }
 
 void QDriveInfoPrivate::getVolumeInfo()
 {
     QT_STATFSBUF statfs_buf;
-    int result = QT_STATFS(QFile::encodeName(data->rootPath).constData(), &statfs_buf);
+    int result = QT_STATFS(QFile::encodeName(rootPath).constData(), &statfs_buf);
     if (result == 0) {
-        data->valid = true;
-        data->ready = true;
+        valid = true;
+        ready = true;
 
-        data->device = QByteArray(statfs_buf.f_mntfromname);
-        data->fileSystemName = QByteArray(statfs_buf.f_fstypename);
+        device = QByteArray(statfs_buf.f_mntfromname);
+        fileSystemName = QByteArray(statfs_buf.f_fstypename);
 
-        data->bytesTotal = statfs_buf.f_blocks * statfs_buf.f_bsize;
-        data->bytesFree = statfs_buf.f_bfree * statfs_buf.f_bsize;
-        data->bytesAvailable = statfs_buf.f_bavail * statfs_buf.f_bsize;
+        bytesTotal = statfs_buf.f_blocks * statfs_buf.f_bsize;
+        bytesFree = statfs_buf.f_bfree * statfs_buf.f_bsize;
+        bytesAvailable = statfs_buf.f_bavail * statfs_buf.f_bsize;
 
-        data->readOnly = (statfs_buf.f_flags & MNT_RDONLY);
+        readOnly = (statfs_buf.f_flags & MNT_RDONLY) != 0;
     }
 }
 
@@ -210,8 +210,8 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
                 CFStringGetCString(stringRef, volname, length, kCFStringEncodingMacRoman);
                 {
                     QDriveInfo drive;
-                    drive.d_ptr->data->rootPath = QFile::decodeName(volname);
-                    drive.d_ptr->data->setCachedFlag(CachedRootPathFlag);
+                    drive.d_ptr->rootPath = QFile::decodeName(volname);
+                    drive.d_ptr->setCachedFlag(CachedRootPathFlag);
                     drives.append(drive);
                 }
                 CFRelease(stringRef);

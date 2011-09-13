@@ -7,11 +7,11 @@
 
 void QDriveInfoPrivate::initRootPath()
 {
-    if (data->rootPath.isEmpty())
+    if (rootPath.isEmpty())
         return;
 
-    QString path = QDir::toNativeSeparators(data->rootPath);
-    data->rootPath.clear();
+    QString path = QDir::toNativeSeparators(rootPath);
+    rootPath.clear();
 
     if (path.startsWith(QLatin1String("\\\\?\\")))
         path = path.mid(4);
@@ -29,7 +29,7 @@ void QDriveInfoPrivate::initRootPath()
     // ### test if disk mounted to folder on other disk
     wchar_t buffer[MAX_PATH + 1];
     if (::GetVolumePathName((wchar_t *)path.utf16(), buffer, MAX_PATH))
-        data->rootPath = QDir::fromNativeSeparators(QString::fromWCharArray(buffer));
+        rootPath = QDir::fromNativeSeparators(QString::fromWCharArray(buffer));
 }
 
 static inline QByteArray getDevice(const QString &rootPath)
@@ -76,18 +76,18 @@ static inline QDriveInfo::DriveType determineType(const QString &rootPath)
 
 void QDriveInfoPrivate::doStat(uint requiredFlags)
 {
-    if (data->getCachedFlag(requiredFlags))
+    if (getCachedFlag(requiredFlags))
         return;
 
-    if (!data->getCachedFlag(CachedRootPathFlag)) {
+    if (!getCachedFlag(CachedRootPathFlag)) {
         initRootPath();
-        data->setCachedFlag(CachedRootPathFlag);
+        setCachedFlag(CachedRootPathFlag);
     }
 
-    if (data->rootPath.isEmpty() || (data->getCachedFlag(CachedValidFlag) && !data->valid))
+    if (rootPath.isEmpty() || (getCachedFlag(CachedValidFlag) && !valid))
         return;
 
-    if (!data->getCachedFlag(CachedValidFlag))
+    if (!getCachedFlag(CachedValidFlag))
         requiredFlags |= CachedValidFlag; // force drive validation
 
 
@@ -97,30 +97,30 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
               CachedReadOnlyFlag | CachedReadyFlag | CachedValidFlag;
     if (requiredFlags & bitmask) {
         getVolumeInfo();
-        if (data->valid && !data->ready)
+        if (valid && !ready)
             bitmask = CachedValidFlag;
-        data->setCachedFlag(bitmask);
+        setCachedFlag(bitmask);
 
-        if (!data->valid)
+        if (!valid)
             return;
     }
 
     bitmask = CachedDeviceFlag;
     if (requiredFlags & bitmask) {
-        data->device = getDevice(data->rootPath);
-        data->setCachedFlag(bitmask);
+        device = getDevice(rootPath);
+        setCachedFlag(bitmask);
     }
 
     bitmask = CachedBytesTotalFlag | CachedBytesFreeFlag | CachedBytesAvailableFlag;
     if (requiredFlags & bitmask) {
         getDiskFreeSpace();
-        data->setCachedFlag(bitmask);
+        setCachedFlag(bitmask);
     }
 
     bitmask = CachedTypeFlag;
     if (requiredFlags & bitmask) {
-        data->type = determineType(data->rootPath);
-        data->setCachedFlag(bitmask);
+        type = determineType(rootPath);
+        setCachedFlag(bitmask);
     }
 }
 
@@ -128,7 +128,7 @@ void QDriveInfoPrivate::getVolumeInfo()
 {
     UINT oldmode = ::SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
 
-    QString path = QDir::toNativeSeparators(data->rootPath);
+    QString path = QDir::toNativeSeparators(rootPath);
     wchar_t nameBuf[MAX_PATH + 1];
     DWORD fileSystemFlags = 0;
     wchar_t fileSystemNameBuf[MAX_PATH + 1];
@@ -138,16 +138,16 @@ void QDriveInfoPrivate::getVolumeInfo()
                                          &fileSystemFlags,
                                          fileSystemNameBuf, MAX_PATH);
     if (!result) {
-        data->ready = false;
-        data->valid = (::GetLastError() == ERROR_NOT_READY);
+        ready = false;
+        valid = (::GetLastError() == ERROR_NOT_READY);
     } else {
-        data->ready = true;
-        data->valid = true;
+        ready = true;
+        valid = true;
 
-        data->fileSystemName = QString::fromWCharArray(fileSystemNameBuf).toLatin1();
-        data->name = QString::fromWCharArray(nameBuf);
+        fileSystemName = QString::fromWCharArray(fileSystemNameBuf).toLatin1();
+        name = QString::fromWCharArray(nameBuf);
 
-        data->readOnly = (fileSystemFlags & FILE_READ_ONLY_VOLUME);
+        readOnly = (fileSystemFlags & FILE_READ_ONLY_VOLUME) != 0;
     }
 
     ::SetErrorMode(oldmode);
@@ -157,11 +157,11 @@ void QDriveInfoPrivate::getDiskFreeSpace()
 {
     UINT oldmode = ::SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
 
-    QString path = QDir::toNativeSeparators(data->rootPath);
+    QString path = QDir::toNativeSeparators(rootPath);
     ::GetDiskFreeSpaceEx((wchar_t *)path.utf16(),
-                         (PULARGE_INTEGER)&data->bytesAvailable,
-                         (PULARGE_INTEGER)&data->bytesTotal,
-                         (PULARGE_INTEGER)&data->bytesFree);
+                         (PULARGE_INTEGER)&bytesAvailable,
+                         (PULARGE_INTEGER)&bytesTotal,
+                         (PULARGE_INTEGER)&bytesFree);
 
     ::SetErrorMode(oldmode);
 }
@@ -175,8 +175,8 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
     while (driveBits) {
         if (driveBits & 1) {
             QDriveInfo drive;
-            drive.d_ptr->data->rootPath = QLatin1String(driveName);
-            drive.d_ptr->data->setCachedFlag(CachedRootPathFlag);
+            drive.d_ptr->rootPath = QLatin1String(driveName);
+            drive.d_ptr->setCachedFlag(CachedRootPathFlag);
             drives.append(drive);
         }
         driveName[0]++;

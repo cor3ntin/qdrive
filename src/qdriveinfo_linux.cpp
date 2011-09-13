@@ -33,17 +33,16 @@
 #  define _PATH_DISK_BY_LABEL "/dev/disk/by-label"
 #endif
 
-
 void QDriveInfoPrivate::initRootPath()
 {
-    if (data->rootPath.isEmpty())
+    if (rootPath.isEmpty())
         return;
 
     FILE *fp = ::setmntent(_PATH_MOUNTED, "r");
     if (fp) {
         quint32 maxLength = 0;
-        QString oldRootPath = data->rootPath;
-        data->rootPath.clear();
+        QString oldRootPath = rootPath;
+        rootPath.clear();
 
         struct mntent *mnt;
         while ((mnt = ::getmntent(fp))) {
@@ -51,9 +50,9 @@ void QDriveInfoPrivate::initRootPath()
             // we try to find most suitable entry
             if (oldRootPath.startsWith(mountDir) && maxLength < (quint32)mountDir.length()) {
                 maxLength = mountDir.length();
-                data->rootPath = mountDir;
-                data->device = QByteArray(mnt->mnt_fsname);
-                data->fileSystemName = QByteArray(mnt->mnt_type);
+                rootPath = mountDir;
+                device = QByteArray(mnt->mnt_fsname);
+                fileSystemName = QByteArray(mnt->mnt_type);
             }
         }
         ::endmntent(fp);
@@ -123,18 +122,18 @@ static inline QString getName(const QByteArray &device)
 
 void QDriveInfoPrivate::doStat(uint requiredFlags)
 {
-    if (data->getCachedFlag(requiredFlags))
+    if (getCachedFlag(requiredFlags))
         return;
 
-    if (!data->getCachedFlag(CachedRootPathFlag | CachedDeviceFlag | CachedFileSystemNameFlag)) {
+    if (!getCachedFlag(CachedRootPathFlag | CachedDeviceFlag | CachedFileSystemNameFlag)) {
         initRootPath();
-        data->setCachedFlag(CachedRootPathFlag | CachedDeviceFlag | CachedFileSystemNameFlag);
+        setCachedFlag(CachedRootPathFlag | CachedDeviceFlag | CachedFileSystemNameFlag);
     }
 
-    if (data->rootPath.isEmpty() || (data->getCachedFlag(CachedValidFlag) && !data->valid))
+    if (rootPath.isEmpty() || (getCachedFlag(CachedValidFlag) && !valid))
         return;
 
-    if (!data->getCachedFlag(CachedValidFlag))
+    if (!getCachedFlag(CachedValidFlag))
         requiredFlags |= CachedValidFlag; // force drive validation
 
 
@@ -144,31 +143,31 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
               CachedReadOnlyFlag | CachedReadyFlag | CachedValidFlag;
     if (requiredFlags & bitmask) {
         getVolumeInfo();
-        data->setCachedFlag(bitmask);
+        setCachedFlag(bitmask);
 
-        if (!data->valid)
+        if (!valid)
             return;
     }
 
     bitmask = CachedNameFlag;
     if (requiredFlags & bitmask) {
-        data->name = getName(data->device);
-        data->setCachedFlag(bitmask);
+        name = getName(device);
+        setCachedFlag(bitmask);
     }
 
     bitmask = CachedTypeFlag;
     if (requiredFlags & bitmask) {
-        data->type = determineType(data->device);
-        if (data->type == QDriveInfo::InvalidDrive) {
+        type = determineType(device);
+        if (type == QDriveInfo::InvalidDrive) {
             // test for UNC shares
-            if (data->rootPath.startsWith(QLatin1String("//"))
-                || data->fileSystemName == "nfs"
-                || data->fileSystemName == "cifs"
-                || data->fileSystemName.startsWith("smb")) {
-                data->type = QDriveInfo::RemoteDrive;
+            if (rootPath.startsWith(QLatin1String("//"))
+                || fileSystemName == "nfs"
+                || fileSystemName == "cifs"
+                || fileSystemName.startsWith("smb")) {
+                type = QDriveInfo::RemoteDrive;
             }
         }
-        data->setCachedFlag(bitmask);
+        setCachedFlag(bitmask);
     }
 }
 
@@ -176,16 +175,16 @@ void QDriveInfoPrivate::getVolumeInfo()
 {
     QT_STATFSBUF statfs_buf;
     int result;
-    EINTR_LOOP(result, QT_STATFS(QFile::encodeName(data->rootPath).constData(), &statfs_buf));
+    EINTR_LOOP(result, QT_STATFS(QFile::encodeName(rootPath).constData(), &statfs_buf));
     if (result == 0) {
-        data->valid = true;
-        data->ready = true;
+        valid = true;
+        ready = true;
 
-        data->bytesTotal = statfs_buf.f_blocks * statfs_buf.f_bsize;
-        data->bytesFree = statfs_buf.f_bfree * statfs_buf.f_bsize;
-        data->bytesAvailable = statfs_buf.f_bavail * statfs_buf.f_bsize;
+        bytesTotal = statfs_buf.f_blocks * statfs_buf.f_bsize;
+        bytesFree = statfs_buf.f_bfree * statfs_buf.f_bsize;
+        bytesAvailable = statfs_buf.f_bavail * statfs_buf.f_bsize;
 
-        data->readOnly = (statfs_buf.f_flag & ST_RDONLY);
+        readOnly = (statfs_buf.f_flag & ST_RDONLY) != 0;
     }
 }
 
@@ -198,10 +197,10 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
         struct mntent *mnt;
         while ((mnt = ::getmntent(fp))) {
             QDriveInfo drive;
-            drive.d_ptr->data->rootPath = QFile::decodeName(mnt->mnt_dir);
-            drive.d_ptr->data->device = QByteArray(mnt->mnt_fsname);
-            drive.d_ptr->data->fileSystemName = QByteArray(mnt->mnt_type);
-            drive.d_ptr->data->setCachedFlag(CachedRootPathFlag |
+            drive.d_ptr->rootPath = QFile::decodeName(mnt->mnt_dir);
+            drive.d_ptr->device = QByteArray(mnt->mnt_fsname);
+            drive.d_ptr->fileSystemName = QByteArray(mnt->mnt_type);
+            drive.d_ptr->setCachedFlag(CachedRootPathFlag |
                                              CachedFileSystemNameFlag |
                                              CachedDeviceFlag);
             drives.append(drive);

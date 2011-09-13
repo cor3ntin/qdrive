@@ -4,6 +4,7 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QList>
 #include <QtCore/QString>
+#include <QtCore/QExplicitlySharedDataPointer>
 
 #ifdef QDRIVEINFO_DLL
 #  include <QtCore/QtGlobal>
@@ -65,10 +66,22 @@ public:
     static QDriveInfo rootDrive();
 
 protected:
-    QDriveInfoPrivate *d_ptr;
+    QExplicitlySharedDataPointer<QDriveInfoPrivate> d_ptr;
 
 private:
-    Q_DECLARE_PRIVATE(QDriveInfo);
+    void detach();
+
+    inline QDriveInfoPrivate* d_func()
+    {
+        detach();
+        return const_cast<QDriveInfoPrivate*>(d_ptr.constData());
+    }
+
+    inline const QDriveInfoPrivate* d_func() const
+    {
+        return d_ptr.constData();
+    }
+    friend class QDriveInfoPrivate;
 };
 
 inline bool QDriveInfo::operator!=(const QDriveInfo &other) const
