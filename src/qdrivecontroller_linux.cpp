@@ -162,16 +162,17 @@ static bool mountUdisks(const QString &device,
                          QDriveControllerPrivate::Error &error)
 {
 #if !defined(QT_NO_UDISKS)
-    QDBusMessage findDeviceMethod = QDBusMessage::createMethodCall(UDISKS_SERVICE, UDISKS_PATH, UDISKS_INTERFACE, UDISKS_FIND_DEVICE);
-    findDeviceMethod.setArguments(QVariantList() << device);
+    QDBusMessage findDevice =
+            QDBusMessage::createMethodCall(UDISKS_SERVICE, UDISKS_PATH, UDISKS_INTERFACE, UDISKS_FIND_DEVICE);
+    findDevice.setArguments(QVariantList() << device);
 
-    QDBusReply<QDBusObjectPath> findDeviceReply = QDBusConnection::systemBus().call(findDeviceMethod);
-    if (findDeviceReply.isValid()) {
+    QDBusReply<QDBusObjectPath> reply = QDBusConnection::systemBus().call(findDevice);
+    if (reply.isValid()) {
 
-        QDBusObjectPath device = findDeviceReply.value();
-        QDBusInterface interface(UDISKS_SERVICE, device.path(), UDISKS_DEVICE_INTERFACE, QDBusConnection::systemBus());
-        if (interface.isValid()) {
-            QDBusReply<QString> reply = interface.call(UDISKS_MOUNT, fs, options);
+        QDBusObjectPath devicePath = reply.value();
+        QDBusInterface device(UDISKS_SERVICE, devicePath.path(), UDISKS_DEVICE_INTERFACE, QDBusConnection::systemBus());
+        if (device.isValid()) {
+            QDBusReply<QString> reply = device.call(UDISKS_MOUNT, fs, options);
             if (reply.isValid()) {
                 mount_point = reply.value();
             } else {
@@ -182,8 +183,8 @@ static bool mountUdisks(const QString &device,
         }
 
     } else {
-        error.code = findDeviceReply.error().type();
-        error.string = findDeviceReply.error().message();
+        error.code = reply.error().type();
+        error.string = reply.error().message();
         return false;
     }
     return true;
@@ -197,16 +198,17 @@ static bool unmountUdisks(const QString &device,
                            QDriveControllerPrivate::Error &error)
 {
 #if !defined(QT_NO_UDISKS)
-    QDBusMessage findDeviceMethod = QDBusMessage::createMethodCall(UDISKS_SERVICE, UDISKS_PATH, UDISKS_INTERFACE, UDISKS_FIND_DEVICE);
-    findDeviceMethod.setArguments(QVariantList() << device);
+    QDBusMessage findDevice =
+            QDBusMessage::createMethodCall(UDISKS_SERVICE, UDISKS_PATH, UDISKS_INTERFACE, UDISKS_FIND_DEVICE);
+    findDevice.setArguments(QVariantList() << device);
 
-    QDBusReply<QDBusObjectPath> findDeviceReply = QDBusConnection::systemBus().call(findDeviceMethod);
-    if (findDeviceReply.isValid()) {
+    QDBusReply<QDBusObjectPath> reply = QDBusConnection::systemBus().call(findDevice);
+    if (reply.isValid()) {
 
-        QDBusObjectPath device = findDeviceReply.value();
-        QDBusInterface interface(UDISKS_SERVICE, device.path(), UDISKS_DEVICE_INTERFACE, QDBusConnection::systemBus());
-        if (interface.isValid()) {
-            QDBusReply<void> reply = interface.call(UDISKS_UNMOUNT, options);
+        QDBusObjectPath devicePath = reply.value();
+        QDBusInterface device(UDISKS_SERVICE, devicePath.path(), UDISKS_DEVICE_INTERFACE, QDBusConnection::systemBus());
+        if (device.isValid()) {
+            QDBusReply<void> reply = device.call(UDISKS_UNMOUNT, options);
             if (!reply.isValid()) {
                 error.code = reply.error().type();
                 error.string = reply.error().message();
@@ -215,8 +217,8 @@ static bool unmountUdisks(const QString &device,
         }
 
     } else {
-        error.code = findDeviceReply.error().type();
-        error.string = findDeviceReply.error().message();
+        error.code = reply.error().type();
+        error.string = reply.error().message();
         return false;
     }
     return true;
@@ -227,23 +229,13 @@ static bool unmountUdisks(const QString &device,
 
 bool QDriveController::mount(const QString &device, const QString &path)
 {
-    QString status;
     QString mountPath = path;
-    bool result = mountUdisks(device, mountPath, QString(), QStringList(), d->error);
-    if (!result) {
-        qWarning() << "error mounting" << status;
-    }
-    return result;
+    return mountUdisks(device, mountPath, QString(), QStringList(), d->error);
 }
 
 bool QDriveController::unmount(const QString &path)
 {
-    QString status;
-    bool result = unmountUdisks(QDriveInfo(path).device(), QStringList(), d->error);
-    if (!result) {
-        qWarning() << "error mounting" << status;
-    }
-    return result;
+    return unmountUdisks(QDriveInfo(path).device(), QStringList(), d->error);
 }
 
 bool QDriveController::eject(const QString &device)
