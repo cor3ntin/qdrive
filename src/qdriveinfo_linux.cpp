@@ -33,6 +33,7 @@
 #  define _PATH_DISK_BY_LABEL "/dev/disk/by-label"
 #endif
 
+#include <QDebug>
 void QDriveInfoPrivate::initRootPath()
 {
     if (rootPath.isEmpty())
@@ -48,7 +49,8 @@ void QDriveInfoPrivate::initRootPath()
         while ((mnt = ::getmntent(fp))) {
             QString mountDir = QFile::decodeName(mnt->mnt_dir);
             // we try to find most suitable entry
-            if (oldRootPath.startsWith(mountDir) && maxLength < (quint32)mountDir.length()) {
+            if ( (oldRootPath.startsWith(mountDir) && maxLength < (quint32)mountDir.length()) ||
+                    oldRootPath == QFile::decodeName(mnt->mnt_fsname) ) {
                 maxLength = mountDir.length();
                 rootPath = mountDir;
                 device = QByteArray(mnt->mnt_fsname);
@@ -56,6 +58,9 @@ void QDriveInfoPrivate::initRootPath()
             }
         }
         ::endmntent(fp);
+// may be we should return old path, dunno:)
+//        if (rootPath.isEmpty())
+//            rootPath = oldRootPath;
     }
 }
 
