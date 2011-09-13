@@ -33,7 +33,6 @@
 #  define _PATH_DISK_BY_LABEL "/dev/disk/by-label"
 #endif
 
-#include <QDebug>
 void QDriveInfoPrivate::initRootPath()
 {
     if (rootPath.isEmpty())
