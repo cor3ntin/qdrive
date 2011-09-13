@@ -27,11 +27,22 @@ void Monitor::driveUnmounted(const QString &path)
 void Monitor::testMount()
 {
     QDriveController c;
-//    qDebug() << "mounting" << c.mount("/dev/sdd", QString());
+    bool result = true;
+//    result = c.mount("/dev/sdd", QString());
+    if (result)
+        qDebug() << "Mounting succeeded";
+    else
+        qDebug() << "Mounting failed:" << c.errorString();
 }
 
 void Monitor::testUnmount()
 {
     QDriveController c;
-//    qDebug() << "unmounting" << c.unmount("/dev/sdd");
+    bool result = true;
+//    result = c.unmount("/dev/sdd");
+
+    if (result)
+        qDebug() << "Unmounting succeeded";
+    else
+        qDebug() << "Unmounting failed:" << c.errorString();
 }
