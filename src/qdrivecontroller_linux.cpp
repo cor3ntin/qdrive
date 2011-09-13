@@ -94,10 +94,12 @@ QDriveWatcherEngine::QDriveWatcherEngine(QObject *parent)
 {
     drives = getDrives();
     inotifyFD = ::inotify_init();
-    mtabWatchA = ::inotify_add_watch(inotifyFD, _PATH_MOUNTED, IN_MODIFY);
-    if (mtabWatchA > 0) {
-        QSocketNotifier *notifier = new QSocketNotifier(inotifyFD, QSocketNotifier::Read, this);
-        connect(notifier, SIGNAL(activated(int)), this, SLOT(inotifyActivated()));
+    if (inotifyFD != -1) {
+        mtabWatchA = ::inotify_add_watch(inotifyFD, _PATH_MOUNTED, IN_MODIFY);
+        if (mtabWatchA > 0) {
+            QSocketNotifier *notifier = new QSocketNotifier(inotifyFD, QSocketNotifier::Read/*, this*/);
+            connect(notifier, SIGNAL(activated(int)), this, SLOT(inotifyActivated()));
+        }
     }
 }
 
