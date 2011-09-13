@@ -16,6 +16,9 @@ public:
 public Q_SLOTS:
     void driveMounted(const QString &path);
     void driveUnmounted(const QString &path);
+
+    void testMount();
+    void testUnmount();
 };
 
 #endif // MONITOR_H

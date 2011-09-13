@@ -23,3 +23,15 @@ void Monitor::driveUnmounted(const QString &path)
 {
     qDebug() << "We lost a drive! Was mounted at" << path;
 }
+
+void Monitor::testMount()
+{
+    QDriveController c;
+//    qDebug() << "mounting" << c.mount("/dev/sdd", QString());
+}
+
+void Monitor::testUnmount()
+{
+    QDriveController c;
+//    qDebug() << "unmounting" << c.unmount("/dev/sdd");
+}
