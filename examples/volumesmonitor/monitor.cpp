@@ -29,6 +29,8 @@ void Monitor::testMount()
     QDriveController c;
     bool result = true;
 //    result = c.mount("/dev/sdd", QString());
+//    result = c.mount("/dev/disk1", "/Volumes/NO NAME");
+
     if (result)
         qDebug() << "Mounting succeeded";
     else
@@ -40,6 +42,7 @@ void Monitor::testUnmount()
     QDriveController c;
     bool result = true;
 //    result = c.unmount("/dev/sdd");
+//    result = c.unmount("/Volumes/NO NAME");
 
     if (result)
         qDebug() << "Unmounting succeeded";
