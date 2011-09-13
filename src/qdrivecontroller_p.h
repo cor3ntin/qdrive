@@ -11,13 +11,31 @@
 class QDriveControllerPrivate
 {
 public:
-    inline void setLastError(int errorCode)
+    struct Error
     {
-        error.errorScope = QSystemError::NativeError;
-        error.errorCode = errorCode;
+        int code;
+        QString string;
+    };
+
+    inline void setError(int errorCode, const QString& errorString)
+    {
+        error.code = errorCode;
+        error.string = errorString;
     }
 
-    QSystemError error;
+    inline void setError(int errorCode)
+    {
+        QSystemError systemError(errorCode, QSystemError::NativeError);
+        error.code = systemError.errorCode;
+        error.string = systemError.toString();
+    }
+
+    inline void setError(Error error)
+    {
+        error = error;
+    }
+
+    Error error;
 };
 
 class QDriveWatcherEngine;

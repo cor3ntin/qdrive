@@ -219,7 +219,7 @@ bool QDriveController::mount(const QString &device, const QString &path)
 
         bool result = SetVolumeMountPoint((wchar_t*)targetPath.utf16(), (wchar_t*)device.utf16());
         if (!result) {
-            d->setLastError(GetLastError());
+            d->setError(GetLastError());
             return false;
         }
 
@@ -233,7 +233,7 @@ bool QDriveController::mount(const QString &device, const QString &path)
 
         DWORD result = WNetAddConnection2(&resource, 0, 0, CONNECT_UPDATE_PROFILE);
         if (result != NO_ERROR) {
-            d->setLastError(result);
+            d->setError(result);
             return false;
         }
 
@@ -262,7 +262,7 @@ bool QDriveController::unmount(const QString &path)
 
         DWORD result = WNetCancelConnection2((wchar_t*)targetPath.utf16(), CONNECT_UPDATE_PROFILE, true);
         if (result != NO_ERROR) {
-            d->setLastError(result);
+            d->setError(result);
             return false;
         }
 
@@ -273,7 +273,7 @@ bool QDriveController::unmount(const QString &path)
 
         bool result = DeleteVolumeMountPoint((wchar_t*)targetPath.utf16());
         if (!result) {
-            d->setLastError(GetLastError());
+            d->setError(GetLastError());
             return false;
         }
 

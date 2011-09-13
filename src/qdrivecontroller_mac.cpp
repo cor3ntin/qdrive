@@ -270,7 +270,7 @@ bool QDriveController::mount(const QString &device, const QString &path)
         if (status != noErr) {
             qDebug() << status;
             qDebug() << "failed mount";
-            d->setLastError(status);
+            d->setError(status);
             result =  false;
         }
 
@@ -290,7 +290,7 @@ bool QDriveController::mount(const QString &device, const QString &path)
         if (status != noErr) {
             qDebug() << status;
             qDebug() << "failed mount";
-            d->setLastError(status);
+            d->setError(status);
             result = false;
         }
         CFRelease(disk);

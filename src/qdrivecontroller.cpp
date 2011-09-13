@@ -56,10 +56,10 @@ QDriveController::~QDriveController()
 
 int QDriveController::error() const
 {
-    return d->error.error();
+    return d->error.code;
 }
 
 QString QDriveController::errorString() const
 {
-    return d->error.toString();
+    return d->error.string;
 }
