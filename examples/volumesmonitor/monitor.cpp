@@ -30,6 +30,7 @@ void Monitor::testMount()
     bool result = true;
 //    result = c.mount("/dev/sdd", QString());
 //    result = c.mount("/dev/disk1", "/Volumes/NO NAME");
+//    result = c.mount("\\\\vmware-host\\Shared Folders\\arch", "Z:");
 
     if (result)
         qDebug() << "Mounting succeeded";
@@ -43,6 +44,7 @@ void Monitor::testUnmount()
     bool result = true;
 //    result = c.unmount("/dev/sdd");
 //    result = c.unmount("/Volumes/NO NAME");
+//    result = c.unmount("Z:/");
 
     if (result)
         qDebug() << "Unmounting succeeded";

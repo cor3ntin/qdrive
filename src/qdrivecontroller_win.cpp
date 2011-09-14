@@ -212,8 +212,8 @@ void QDriveWatcher::stop_sys()
 bool QDriveController::mount(const QString &device, const QString &path)
 {
     QString targetPath = QDir::toNativeSeparators(path);
-    if (!targetPath.endsWith('\\'))
-        targetPath.append('\\');
+    if (targetPath.endsWith(QLatin1Char('\\')))
+        targetPath = targetPath.left(targetPath.length()-1);
 
     if (device.startsWith(QLatin1String("\\\\?\\"))) { // GUID
 
@@ -243,8 +243,10 @@ bool QDriveController::mount(const QString &device, const QString &path)
             QDriveInfo driveInfo(device);
             QString guid = driveInfo.device();
             return mount(guid, targetPath);
+        } else {
+            d->setError(ERROR_BAD_PATHNAME);
+            return false;
         }
-        return false;
 
     }
 
