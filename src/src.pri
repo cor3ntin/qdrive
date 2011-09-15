@@ -19,7 +19,7 @@ win32 {
     SOURCES += qdriveinfo_win.cpp \
                qdrivecontroller_win.cpp
 
-    LIBS += -luserenv -lNetapi32 -lMpr -luser32
+    LIBS += -luserenv -lNetapi32 -lMpr -luser32 -lWinmm
 }
 
 macx-* {

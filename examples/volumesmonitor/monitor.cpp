@@ -47,7 +47,7 @@ void Monitor::testUnmount()
     QDriveController c;
     bool result = true;
 #ifdef Q_OS_MAC
-    result = c.unmount("/Volumes/NO NAME"); // ok
+//    result = c.unmount("/Volumes/NO NAME"); // ok
 //    result = c.unmount("/dev/disk1"); // fail
 #elif defined(Q_OS_WIN)
 //    result = c.unmount("Z:/"); // ok
@@ -69,7 +69,8 @@ void Monitor::testEject()
     result = c.eject("/Volumes/NO NAME"); // ok
 //    result = c.eject("/dev/disk1"); // fail
 #elif defined(Q_OS_WIN)
-    result = c.eject("Z:/");
+//    result = c.eject("Z:/");
+//    result = c.eject("D:/");
 #else
 //    result = c.eject("/dev/sdd");
 #endif

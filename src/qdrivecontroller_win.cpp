@@ -298,7 +298,40 @@ bool QDriveController::unmount(const QString &path)
     return true;
 }
 
+static bool ejectCDRom(bool eject, const QString &drive, QDriveControllerPrivate::Error &error)
+{
+    wchar_t buffer[255] = L"";
+    MCI_OPEN_PARMS open;
+    DWORD flags;
+
+    ZeroMemory(&open, sizeof(MCI_OPEN_PARMS));
+
+    open.lpstrDeviceType = (LPWSTR) MCI_DEVTYPE_CD_AUDIO;
+    open.lpstrElementName = (wchar_t*)drive.utf16();
+
+    flags = MCI_OPEN_TYPE | MCI_OPEN_TYPE_ID;
+
+    MCIERROR result = mciSendCommand(0, MCI_OPEN, flags, (DWORD) &open);
+    if (result == 0) {
+        result = mciSendCommand(open.wDeviceID, MCI_SET, (eject) ? MCI_SET_DOOR_OPEN : MCI_SET_DOOR_CLOSED, 0);
+        mciSendCommand(open.wDeviceID, MCI_CLOSE, MCI_WAIT, 0);
+    }
+
+    if (result) {
+        mciGetErrorString(result, buffer, 255);
+        error.code = result;
+        error.string = QString::fromWCharArray(buffer, 255);
+        return false;
+    }
+
+    return true;
+}
+
 bool QDriveController::eject(const QString &path)
 {
+    QDriveInfo info(path);
+    if (info.type() == QDriveInfo::CdromDrive)
+        return ejectCDRom(true, info.rootPath(), d->error);
+
     return unmount(path);
 }
