@@ -17,7 +17,7 @@ public:
     int error() const;
     QString errorString() const;
 
-    bool mount(const QString &device, const QString &path);
+    bool mount(const QString &device, const QString &path = QString());
     bool unmount(const QString &path);
     bool eject(const QString &path);
 

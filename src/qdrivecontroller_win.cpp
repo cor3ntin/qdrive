@@ -209,9 +209,23 @@ void QDriveWatcher::stop_sys()
     }
 }
 
+QString getEmptyLetter()
+{
+    char driveName[] = "Z:";
+    quint32 driveBits = quint32(::GetLogicalDrives()) & 0x3ffffff;
+
+    for (int i = 25; i >= 0; i--) {
+        if (driveBits & (1 << i)) {
+            driveName[0] -= 25 - i;
+            break;
+        }
+    }
+    return QLatin1String(driveName);
+}
+
 bool QDriveController::mount(const QString &device, const QString &path)
 {
-    QString targetPath = QDir::toNativeSeparators(path);
+    QString targetPath = QDir::toNativeSeparators(path.isEmpty() ? getEmptyLetter() : path);
     if (targetPath.endsWith(QLatin1Char('\\')))
         targetPath = targetPath.left(targetPath.length()-1);
 
