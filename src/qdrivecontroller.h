@@ -26,7 +26,6 @@ Q_SIGNALS:
     void driveUnmounted(const QString &path);
 
 protected:
-    Q_DECLARE_PRIVATE(QDriveController);
     QDriveControllerPrivate *const d;
 };
 
