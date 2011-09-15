@@ -29,11 +29,11 @@ void Monitor::testMount()
     QDriveController c;
     bool result = true;
 #if defined(Q_OS_MAC)
-    result = c.mount("/dev/disk1");
+//    result = c.mount("/dev/disk1");
 #elif defined(Q_OS_WIN)
-//    result = c.mount("/dev/sdd", QString());
-#else
 //    result = c.mount("\\\\vmware-host\\Shared Folders\\arch", "Z:");
+#else
+//    result = c.mount("/dev/sdd", QString());
 #endif
 
     if (result)
@@ -50,7 +50,7 @@ void Monitor::testUnmount()
     result = c.unmount("/Volumes/NO NAME"); // ok
 //    result = c.unmount("/dev/disk1"); // fail
 #elif defined(Q_OS_WIN)
-//    result = c.unmount("Z:/");
+//    result = c.unmount("Z:/"); // ok
 #else
 //    result = c.unmount("/dev/sdd");
 #endif
@@ -69,7 +69,7 @@ void Monitor::testEject()
     result = c.eject("/Volumes/NO NAME"); // ok
 //    result = c.eject("/dev/disk1"); // fail
 #elif defined(Q_OS_WIN)
-//    result = c.eject("Z:/");
+    result = c.eject("Z:/");
 #else
 //    result = c.eject("/dev/sdd");
 #endif

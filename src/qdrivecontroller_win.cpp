@@ -297,3 +297,8 @@ bool QDriveController::unmount(const QString &path)
 
     return true;
 }
+
+bool QDriveController::eject(const QString &path)
+{
+    return unmount(path);
+}
