@@ -253,8 +253,8 @@ bool QDriveController::mount(const QString &device, const QString &path)
 
     } else {
 
-        if (QFileInfo(device).isDir()) {
-            QDriveInfo driveInfo(device);
+        QDriveInfo driveInfo(device);
+        if (driveInfo.isValid()) {
             QString guid = driveInfo.device();
             return mount(guid, targetPath);
         } else {
