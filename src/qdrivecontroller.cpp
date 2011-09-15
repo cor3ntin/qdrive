@@ -1,9 +1,10 @@
 #include "qdrivecontroller.h"
 #include "qdrivecontroller_p.h"
 
-QDriveWatcher::QDriveWatcher(QObject *parent)
-    : QObject(parent),
-      startStopCounter(0), engine(0)
+QDriveWatcher::QDriveWatcher(QObject *parent) :
+    QObject(parent),
+    startStopCounter(0),
+    engine(0)
 {
 }
 
@@ -30,11 +31,10 @@ void QDriveWatcher::stop()
         stop_sys();
 }
 
-Q_GLOBAL_STATIC(QDriveWatcher, theWatcher);
+Q_GLOBAL_STATIC(QDriveWatcher, theWatcher)
 
-
-QDriveController::QDriveController(QObject *parent)
-    : QObject(parent), d(new QDriveControllerPrivate)
+QDriveController::QDriveController(QObject *parent) :
+    QObject(parent), d(new QDriveControllerPrivate)
 {
     if (QDriveWatcher *watcher = theWatcher()) {
         connect(watcher, SIGNAL(driveAdded(QString)),

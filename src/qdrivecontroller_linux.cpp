@@ -49,11 +49,10 @@ class QDriveWatcherEngine : public QObject
     Q_OBJECT
 
 public:
-    QDriveWatcherEngine(QObject *parent);
+    explicit QDriveWatcherEngine(QObject *parent);
     ~QDriveWatcherEngine();
 
-    inline bool isValid() const
-    { return mtabWatchA > 0; }
+    inline bool isValid() const { return mtabWatchA > 0; }
 
 Q_SIGNALS:
     void driveAdded(const QString &path);
@@ -88,9 +87,8 @@ static QSet<QString> getDrives()
     return result;
 }
 
-
-QDriveWatcherEngine::QDriveWatcherEngine(QObject *parent)
-    : QObject(parent)
+QDriveWatcherEngine::QDriveWatcherEngine(QObject *parent) :
+    QObject(parent)
 {
     drives = getDrives();
     inotifyFD = ::inotify_init();
@@ -141,7 +139,6 @@ void QDriveWatcherEngine::inotifyActivated()
         }
     }
 }
-
 
 bool QDriveWatcher::start_sys()
 {
@@ -253,19 +250,17 @@ bool QDriveController::eject(const QString &device)
         return false;
     }
 
-//#if defined(CDROMEJECT)
-//	status = ioctl(fd, CDROMEJECT);
-//#elif defined(CDIOCEJECT)
-//	status = ioctl(fd, CDIOCEJECT);
-//#else
-
-    int result = ::ioctl(fd, CDROMEJECT);
+#if defined(CDROMEJECT)
+      int result = ::ioctl(fd, CDROMEJECT);
+#elif defined(CDIOCEJECT)
+      int result = ::ioctl(fd, CDIOCEJECT);
+#else
     if (result == -1) {
         d->setError(errno);
         close(fd);
         return false;
     }
-    close(fd);
+    ::close(fd);
     return true;
 }
 
