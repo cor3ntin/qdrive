@@ -15,7 +15,8 @@ int main(int argc, char *argv[])
     Monitor m(&c);
 
     QTimer::singleShot(1000, &m, SLOT(testMount()));
-    QTimer::singleShot(2500, &m, SLOT(testUnmount()));
+//    QTimer::singleShot(1500, &m, SLOT(testUnmount()));
+    QTimer::singleShot(2000, &m, SLOT(testEject()));
 
     QTimer::singleShot(15000, &app, SLOT(quit()));
 

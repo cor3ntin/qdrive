@@ -28,9 +28,13 @@ void Monitor::testMount()
 {
     QDriveController c;
     bool result = true;
+#if defined(Q_OS_MAC)
+    result = c.mount("/dev/disk1");
+#elif defined(Q_OS_WIN)
 //    result = c.mount("/dev/sdd", QString());
-//    result = c.mount("/dev/disk1", "/Volumes/NO NAME");
+#else
 //    result = c.mount("\\\\vmware-host\\Shared Folders\\arch", "Z:");
+#endif
 
     if (result)
         qDebug() << "Mounting succeeded";
@@ -42,12 +46,36 @@ void Monitor::testUnmount()
 {
     QDriveController c;
     bool result = true;
-//    result = c.unmount("/dev/sdd");
-//    result = c.unmount("/Volumes/NO NAME");
+#ifdef Q_OS_MAC
+    result = c.unmount("/Volumes/NO NAME"); // ok
+//    result = c.unmount("/dev/disk1"); // fail
+#elif defined(Q_OS_WIN)
 //    result = c.unmount("Z:/");
+#else
+//    result = c.unmount("/dev/sdd");
+#endif
 
     if (result)
         qDebug() << "Unmounting succeeded";
     else
         qDebug() << "Unmounting failed:" << c.errorString();
+}
+
+void Monitor::testEject()
+{
+    QDriveController c;
+    bool result = true;
+#ifdef Q_OS_MAC
+    result = c.eject("/Volumes/NO NAME"); // ok
+//    result = c.eject("/dev/disk1"); // fail
+#elif defined(Q_OS_WIN)
+//    result = c.eject("Z:/");
+#else
+//    result = c.eject("/dev/sdd");
+#endif
+
+    if (result)
+        qDebug() << "Ejecting succeeded";
+    else
+        qDebug() << "Ejecting failed:" << c.errorString();
 }

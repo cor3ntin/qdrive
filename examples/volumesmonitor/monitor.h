@@ -19,6 +19,7 @@ public Q_SLOTS:
 
     void testMount();
     void testUnmount();
+    void testEject();
 };
 
 #endif // MONITOR_H
