@@ -250,11 +250,12 @@ bool QDriveController::eject(const QString &device)
         return false;
     }
 
+    int result = 0;
 #if defined(CDROMEJECT)
-      int result = ::ioctl(fd, CDROMEJECT);
+    result = ::ioctl(fd, CDROMEJECT);
 #elif defined(CDIOCEJECT)
-      int result = ::ioctl(fd, CDIOCEJECT);
-#else
+    result = ::ioctl(fd, CDIOCEJECT);
+#endif
     if (result == -1) {
         d->setError(errno);
         close(fd);
