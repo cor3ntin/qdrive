@@ -14,7 +14,6 @@
 #include <IOKit/storage/IOCDMedia.h>
 #include <IOKit/storage/IODVDMedia.h>
 
-#include <QDebug>
 #include <QChar>
 
 #include "qdriveinfo.h"

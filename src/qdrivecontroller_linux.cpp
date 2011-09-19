@@ -15,8 +15,6 @@
 #include <QtDBus/QDBusReply>
 #endif // QT_NO_UDISKS
 
-#include <QDebug>
-
 #include <sys/inotify.h>
 #include <sys/mount.h>
 #include <sys/ioctl.h>
@@ -239,10 +237,8 @@ bool QDriveController::unmount(const QString &path)
 
 bool QDriveController::eject(const QString &device)
 {
-    if (!unmount(device)) {
-        qDebug() << "failed to unmount";
+    if (!unmount(device))
         return false;
-    }
 
     int fd = ::open(QFile::encodeName(device), O_RDONLY | O_NONBLOCK);
     if (fd == -1) {
