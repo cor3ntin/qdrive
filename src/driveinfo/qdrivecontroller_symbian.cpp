@@ -58,7 +58,7 @@ void QDriveWatcherEngine::RunL()
         TChar volumeChar;
         QString volume;
         if (RFs::DriveToChar(driveLetter, volumeChar) == KErrNone)
-            volume = QChar(volumeChar).toAscii();
+            volume = QChar(volumeChar).toLatin1();
 
         foreach (MStorageStatusObserver *observer, m_observers)
             observer->storageStatusChanged(driveInserted, volume);
@@ -116,14 +116,14 @@ void QDriveWatcherEngine::CompareDriveLists(const TDriveList &aDriveList)
             TChar volumeChar;
             QString volume;
             if (iFs.DriveToChar(i, volumeChar) == KErrNone)
-                volume = QChar(volumeChar).toAscii();
+                volume = QChar(volumeChar).toLatin1();
 
             m_watcher->emitDriveRemoved(volume);
         } else if (aDriveList[i] > KDriveAbsent && m_previousDriveList[i] == KDriveAbsent) {
             TChar volumeChar;
             QString volume;
             if (iFs.DriveToChar(i, volumeChar) == KErrNone)
-                volume = QChar(volumeChar).toAscii();
+                volume = QChar(volumeChar).toLatin1();
 
             m_watcher->emitDriveAdded(volume);
         }

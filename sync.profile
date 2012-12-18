@@ -1,5 +1,5 @@
 %modules = ( # path to module name map
-    "QtDriveInfo" => "$basedir/src",
+    "QtDriveInfo" => "$basedir/src/driveinfo",
 );
 %moduleheaders = ( # restrict the module headers to those found in relative path
 );

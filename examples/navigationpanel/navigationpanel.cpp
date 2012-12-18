@@ -2,8 +2,8 @@
 
 #include "navigationmodel.h"
 
-#include <QtGui/QTreeView>
-#include <QtGui/QResizeEvent>
+#include <QTreeView>
+#include <QResizeEvent>
 
 NavigationPanel::NavigationPanel(QWidget *parent) :
     QWidget(parent),

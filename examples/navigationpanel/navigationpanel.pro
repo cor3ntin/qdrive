@@ -1,10 +1,4 @@
-#-------------------------------------------------
-#
-# Project created by QtCreator 2010-06-20T14:31:59
-#
-#-------------------------------------------------
-
-QT       += core gui
+QT       += core gui widgets
 
 TARGET = NavigationPanel
 TEMPLATE = app

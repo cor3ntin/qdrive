@@ -3,7 +3,7 @@
 
 #include <QDriveInfo>
 #include <QDriveController>
-#include <QDesktopServices>
+#include <QStandardPaths>
 #include <QFileIconProvider>
 #include <QFileInfo>
 
@@ -254,43 +254,43 @@ void NavigationModel::setStandardLocations(StandardLocations locations)
 
     QString path;
 
-    path = QDesktopServices::storageLocation(QDesktopServices::DesktopLocation);
+    path = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
     if (locations & DesktopLocation)
         addFolder(path);
     else
         removeFolder(path);
 
-    path = QDesktopServices::storageLocation(QDesktopServices::HomeLocation);
+    path = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
     if (locations & HomeLocation)
         addFolder(path);
     else
         removeFolder(path);
 
-    path = QDesktopServices::storageLocation(QDesktopServices::ApplicationsLocation);
+    path = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation);
     if (locations & ApplicationsLocation)
         addFolder(path);
     else
         removeFolder(path);
 
-    path = QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation);
+    path = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
     if (locations & DocumentsLocation)
         addFolder(path);
     else
         removeFolder(path);
 
-    path = QDesktopServices::storageLocation(QDesktopServices::MusicLocation);
+    path = QStandardPaths::writableLocation(QStandardPaths::MusicLocation);
     if (locations & MusicLocation)
         addFolder(path);
     else
         removeFolder(path);
 
-    path = QDesktopServices::storageLocation(QDesktopServices::MoviesLocation);
+    path = QStandardPaths::writableLocation(QStandardPaths::MoviesLocation);
     if (locations & MoviesLocation)
         addFolder(path);
     else
         removeFolder(path);
 
-    path = QDesktopServices::storageLocation(QDesktopServices::PicturesLocation);
+    path = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
     if (locations & PicturesLocation)
         addFolder(path);
     else

@@ -3,7 +3,7 @@
 #include <QDockWidget>
 #include <QTreeView>
 #include <QFileSystemModel>
-#include <QDesktopServices>
+#include <QStandardPaths>
 
 #include "navigationpanel.h"
 
@@ -26,7 +26,7 @@ MainWindow::MainWindow(QWidget *parent) :
     view->setModel(model);
     view->setItemsExpandable(false);
     view->setRootIsDecorated(false);
-    view->setRootIndex(model->index(QDesktopServices::storageLocation(QDesktopServices::HomeLocation)));
+    view->setRootIndex(model->index(QStandardPaths::writableLocation(QStandardPaths::HomeLocation)));
 
     setCentralWidget(view);
 

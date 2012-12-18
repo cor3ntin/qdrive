@@ -24,15 +24,15 @@
 #endif
 
 #if !defined(QT_NO_UDISKS)
-static const QString UDISKS_SERVICE(QString::fromAscii("org.freedesktop.UDisks"));
-static const QString UDISKS_PATH(QString::fromAscii("/org/freedesktop/UDisks"));
-static const QString UDISKS_INTERFACE(QString::fromAscii("org.freedesktop.UDisks"));
-static const QString UDISKS_DEVICE_INTERFACE(QString::fromAscii("org.freedesktop.UDisks.Device"));
+static const QString UDISKS_SERVICE(QString::fromLatin1("org.freedesktop.UDisks"));
+static const QString UDISKS_PATH(QString::fromLatin1("/org/freedesktop/UDisks"));
+static const QString UDISKS_INTERFACE(QString::fromLatin1("org.freedesktop.UDisks"));
+static const QString UDISKS_DEVICE_INTERFACE(QString::fromLatin1("org.freedesktop.UDisks.Device"));
 
-static const QString UDISKS_DEVICE_JOB_CHANGED(QString::fromAscii("DeviceJobChanged"));
-static const QString UDISKS_FIND_DEVICE(QString::fromAscii("FindDeviceByDeviceFile"));
-static const QString UDISKS_MOUNT(QString::fromAscii("FilesystemMount"));
-static const QString UDISKS_UNMOUNT(QString::fromAscii("FilesystemUnmount"));
+static const QString UDISKS_DEVICE_JOB_CHANGED(QString::fromLatin1("DeviceJobChanged"));
+static const QString UDISKS_FIND_DEVICE(QString::fromLatin1("FindDeviceByDeviceFile"));
+static const QString UDISKS_MOUNT(QString::fromLatin1("FilesystemMount"));
+static const QString UDISKS_UNMOUNT(QString::fromLatin1("FilesystemUnmount"));
 #endif // QT_NO_UDISKS
 
 class QDriveWatcherEngine : public QObject

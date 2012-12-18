@@ -6,7 +6,11 @@
 #include <QtCore/QString>
 #include <QtCore/QExplicitlySharedDataPointer>
 
-#include <qtdriveinfoglobal.h>
+#include <QtDriveInfo/qtdriveinfoglobal.h>
+
+QT_BEGIN_HEADER
+
+QT_BEGIN_NAMESPACE
 
 class QDriveInfoPrivate;
 class Q_DRIVEINFO_EXPORT QDriveInfo
@@ -79,5 +83,9 @@ inline bool QDriveInfo::operator!=(const QDriveInfo &other) const
 
 inline bool QDriveInfo::isRoot() const
 { return *this == QDriveInfo::rootDrive(); }
+
+QT_END_NAMESPACE
+
+QT_END_HEADER
 
 #endif // QDRIVEINFO_H
