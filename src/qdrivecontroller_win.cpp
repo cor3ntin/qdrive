@@ -1,13 +1,13 @@
 #include "qdrivecontroller.h"
 #include "qdrivecontroller_p.h"
 
+#include <QtCore/QDebug>
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
 #include <QtCore/QStringList>
-#include <QDriveInfo>
-#include <QDebug>
 
-#define _WIN32_WINNT 0x0500
+#include <QtDriveInfo/QDriveInfo>
+
 #include <qt_windows.h>
 #include <dbt.h>
 

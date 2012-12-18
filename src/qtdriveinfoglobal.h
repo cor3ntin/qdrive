@@ -1,0 +1,27 @@
+#ifndef QTDRIVEINFOGLOBAL_H
+#define QTDRIVEINFOGLOBAL_H
+
+#include <QtCore/qglobal.h>
+
+QT_BEGIN_HEADER
+
+QT_BEGIN_NAMESPACE
+
+#ifndef Q_DRIVEINFO_EXPORT
+#  ifndef QT_STATIC
+#    if defined(QT_BUILD_DRIVEINFO_LIB)
+#      define Q_DRIVEINFO_EXPORT Q_DECL_EXPORT
+#    else
+#      define Q_DRIVEINFO_EXPORT Q_DECL_IMPORT
+#    endif
+#  endif
+#endif
+#ifndef Q_DRIVEINFO_EXPORT
+#  define Q_DRIVEINFO_EXPORT
+#endif
+
+QT_END_NAMESPACE
+
+QT_END_HEADER
+
+#endif // QTDRIVEINFOGLOBAL_H

@@ -1,21 +1,24 @@
-CONFIG *= qt
-QT *= core
+TARGET = QtDriveInfo
+QT = core core-private
 
-INCLUDEPATH *= $$PWD/../include
-DEPENDPATH  *= $$PWD
+CONFIG -= rtti exceptions
 
+win32-msvc*|win32-icc:QMAKE_LFLAGS += /BASE:0x66000000
+solaris-cc*:QMAKE_CXXFLAGS_RELEASE -= -O2
+
+load(qt_module)
+
+DEFINES *= QT_NO_CAST_FROM_BYTEARRAY QT_NO_CAST_FROM_ASCII QT_NO_CAST_TO_ASCII
+
+HEADERS += qtdriveinfoglobal.h
 HEADERS += qdriveinfo.h \
            qdriveinfo_p.h \
            qdrivecontroller.h \
-           qdrivecontroller_p.h \
-           qdrive_global.h \
-           qsystemerror_p.h
-
+           qdrivecontroller_p.h
 SOURCES += qdriveinfo.cpp \
-           qdrivecontroller.cpp \
-           qsystemerror.cpp
+           qdrivecontroller.cpp
 
-win32 {
+win* {
     SOURCES += qdriveinfo_win.cpp \
                qdrivecontroller_win.cpp
 
@@ -35,9 +38,9 @@ linux-*:!symbian {
     QT *= dbus
 }
 
-symbian {
-    SOURCES += qdriveinfo_symbian.cpp \
-               qdrivecontroller_symbian.cpp
-
-    LIBS += -lefsrv
-}
+#symbian {
+#    SOURCES += qdriveinfo_symbian.cpp \
+#               qdrivecontroller_symbian.cpp
+#
+#    LIBS += -lefsrv
+#}

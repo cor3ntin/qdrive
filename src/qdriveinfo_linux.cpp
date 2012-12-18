@@ -2,21 +2,12 @@
 
 #include <QtCore/QDirIterator>
 #include <QtCore/QTextStream>
+#include <QtCore/private/qcore_unix_p.h>
 
 #include <errno.h>
 #include <mntent.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
-
-#ifndef USE_PRIVATE_HEADERS
-#  undef EINTR_LOOP
-#  define EINTR_LOOP(var, cmd)                  \
-    do {                                        \
-        var = cmd;                              \
-    } while (var == -1 && errno == EINTR)
-#else
-#  include <private/qcore_unix_p.h>
-#endif
 
 #if defined(QT_LARGEFILE_SUPPORT)
 #  define QT_STATFSBUF struct statvfs64

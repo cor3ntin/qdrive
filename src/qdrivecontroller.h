@@ -3,10 +3,10 @@
 
 #include <QtCore/QObject>
 
-#include "qdrive_global.h"
+#include <qtdriveinfoglobal.h>
 
 class QDriveControllerPrivate;
-class QDRIVEINFO_EXPORT QDriveController : public QObject
+class Q_DRIVEINFO_EXPORT QDriveController : public QObject
 {
     Q_OBJECT
 

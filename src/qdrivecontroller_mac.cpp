@@ -5,6 +5,7 @@
 #include <QtCore/QFile>
 #include <QtCore/QSet>
 #include <QtCore/QThread>
+#include <QtCore/private/qcore_mac_p.h>
 
 #include <CoreServices/CoreServices.h>
 #include <CoreFoundation/CFRunLoop.h>

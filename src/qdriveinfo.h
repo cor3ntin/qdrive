@@ -6,20 +6,10 @@
 #include <QtCore/QString>
 #include <QtCore/QExplicitlySharedDataPointer>
 
-#ifdef QDRIVEINFO_DLL
-#  include <QtCore/QtGlobal>
-#  ifdef QDRIVEINFO_MAKEDLL
-#    define QDRIVEINFO_EXPORT Q_DECL_EXPORT
-#  else
-#    define QDRIVEINFO_EXPORT Q_DECL_IMPORT
-#  endif
-#endif
-#ifndef QDRIVEINFO_EXPORT
-#  define QDRIVEINFO_EXPORT
-#endif
+#include <qtdriveinfoglobal.h>
 
 class QDriveInfoPrivate;
-class QDRIVEINFO_EXPORT QDriveInfo
+class Q_DRIVEINFO_EXPORT QDriveInfo
 {
 public:
     enum DriveType {

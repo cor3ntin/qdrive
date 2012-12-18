@@ -3,6 +3,7 @@
 
 #include <QtCore/QFile>
 #include <QtCore/QSet>
+#include <QtCore/private/qcore_unix_p.h>
 
 #if !defined(QT_NO_UDISKS)
 #include <QtDBus/QDBusConnection>

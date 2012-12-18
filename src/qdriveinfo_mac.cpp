@@ -1,5 +1,7 @@
 #include "qdriveinfo_p.h"
 
+#include <QtCore/private/qcore_mac_p.h>
+
 #include <CoreServices/CoreServices.h>
 #include <IOKit/storage/IOCDMedia.h>
 #include <IOKit/storage/IODVDMedia.h>

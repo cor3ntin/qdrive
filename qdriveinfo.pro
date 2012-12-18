@@ -1,5 +1,1 @@
-CONFIG += ordered
-TEMPLATE = subdirs
-SUBDIRS  = lib \
-           examples \
-           tests
+load(qt_parts)

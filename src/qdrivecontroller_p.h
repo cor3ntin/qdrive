@@ -5,8 +5,7 @@
 
 #include <QtCore/QAtomicInt>
 #include <QtCore/QObject>
-
-#include "qsystemerror_p.h"
+#include <QtCore/private/qsystemerror_p.h>
 
 class QDriveControllerPrivate
 {
