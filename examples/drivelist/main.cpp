@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
                 qDebug() << "   " << "freeSize:" << drive.bytesFree()/1000/1000 << "MB";
                 qDebug() << "   " << "availableSize:" << drive.bytesAvailable()/1000/1000 << "MB";
                 switch(drive.type()) {
-                case QDriveInfo::InvalidDrive:
+                case QDriveInfo::UnknownDrive:
                     qDebug() << "   " << "type:" << "QDriveInfo::InvalidDrive";
                     break;
                 case QDriveInfo::InternalDrive:
