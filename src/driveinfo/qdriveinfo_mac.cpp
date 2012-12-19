@@ -54,15 +54,18 @@ void QDriveInfoPrivate::initRootPath()
     if (rootPath.isEmpty())
         return;
 
+    // deprecated:
     FSRef ref;
     FSPathMakeRef((UInt8*)QFile::encodeName(rootPath).constData(), &ref, 0);
 
     rootPath.clear();
 
+    // deprecated (use CFURLCopyResourcePropertiesForKeys)
     FSCatalogInfo catalogInfo;
     if (FSGetCatalogInfo(&ref, kFSCatInfoVolume, &catalogInfo, 0, 0, 0) != noErr)
         return;
 
+    // deprecated (use CFURLCopyResourcePropertiesForKeys)
     HFSUniStr255 volumeName;
     FSRef rootDirectory;
     OSErr error = FSGetVolumeInfo(catalogInfo.volume,
@@ -205,6 +208,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
 void QDriveInfoPrivate::getVolumeInfo()
 {
     QT_STATFSBUF statfs_buf;
+    // deprecated
     int result = QT_STATFS(QFile::encodeName(rootPath).constData(), &statfs_buf);
     if (result == 0) {
         valid = true;
@@ -225,6 +229,7 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
 {
     QList<QDriveInfo> drives;
 
+    // deprecate (use CFURLEnumeratorCreateForMountedVolumes)
     OSErr result = noErr;
     for (ItemCount volumeIndex = 1; result == noErr || result != nsvErr; volumeIndex++) {
         FSVolumeRefNum actualVolume;
