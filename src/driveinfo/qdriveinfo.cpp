@@ -1,7 +1,42 @@
+/****************************************************************************
+**
+** Copyright (C) 2012 Ivan Komissarov
+** Contact: http://www.qt-project.org/
+**
+** This file is part of the QtCore module of the Qt Toolkit.
+**
+** $QT_BEGIN_LICENSE:LGPL$
+** GNU Lesser General Public License Usage
+** This file may be used under the terms of the GNU Lesser General Public
+** License version 2.1 as published by the Free Software Foundation and
+** appearing in the file LICENSE.LGPL included in the packaging of this
+** file. Please review the following information to ensure the GNU Lesser
+** General Public License version 2.1 requirements will be met:
+** http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+**
+** GNU General Public License Usage
+** Alternatively, this file may be used under the terms of the GNU General
+** Public License version 3.0 as published by the Free Software Foundation
+** and appearing in the file LICENSE.GPL included in the packaging of this
+** file. Please review the following information to ensure the GNU General
+** Public License version 3.0 requirements will be met:
+** http://www.gnu.org/copyleft/gpl.html.
+**
+**
+**
+**
+**
+**
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
 #include "qdriveinfo.h"
 #include "qdriveinfo_p.h"
 
 #include <QtCore/QMutex>
+
+QT_BEGIN_NAMESPACE
 
 /*!
     \class QDriveInfo
@@ -32,7 +67,7 @@
     \enum QDriveInfo::DriveType
     This enum describes the type of a drive or volume
 
-    \value InvalidDrive          Drive type cannot be determined.
+    \value UnknownDrive          Drive type cannot be determined.
     \value InternalDrive         Is internal mass storage drive like a hard drive.
     \value RemovableDrive        Is a removable disk like flash disk or MMC.
     \value RemoteDrive           Is a network drive.
@@ -57,8 +92,8 @@ QDriveInfo::QDriveInfo()
     Constructs a new QDriveInfo that gives information about the drive, mounted at
     \a rootPath.
 
-    If you pass a folder or file, the QDriveInfo object will refer to the volume where
-    this folder or file is located.
+    If you pass a directory or file, the QDriveInfo object will refer to the volume where
+    this directory or file is located.
     You can check if \a rootPath is correct using isValid() method.
 
     The following example shows how to get drive on which application is located.
@@ -126,11 +161,11 @@ bool QDriveInfo::operator==(const QDriveInfo &other) const
 /*!
     Returns mount point of the filesystem this QDriveInfo object represents.
 
-    On Windows, returns drive letter in case the drive is not mounted to folder.
+    On Windows, returns drive letter in case the drive is not mounted to directory.
 
     Note that the value returned by rootPath() is the real mount point of a drive
     and may not be equal to the value passed to constructor or setRootPath() method.
-    For example, if you have only the root drive in the system and pass '/folder'
+    For example, if you have only the root drive in the system and pass '/directory'
     to setRootPath(), then this method will return '/'.
 
     \sa setRootPath(), device()
@@ -144,7 +179,7 @@ QString QDriveInfo::rootPath() const
 /*!
     Sets QDriveInfo to the filesystem mounted at \a rootPath.
 
-    You can also pass a path to the folder on the drive, in that case the rootPath()
+    You can also pass a path to the directory on the drive, in that case the rootPath()
     will return path that represents the drive's mount point.
 
     \sa rootPath()
@@ -160,10 +195,9 @@ void QDriveInfo::setRootPath(const QString &rootPath)
 }
 
 /*!
-    Returns the size (in bytes) available for current user (not root).
+    Returns the size (in bytes) available for current user. If user is a root, returns all available size.
 
-    This size can be less than the free size, returned by bytesFree() function (except for
-    Symbian OS where these sizes are always equal).
+    This size can be less thant or equal to the free size, returned by bytesFree() function.
 
     \sa bytesTotal(), bytesFree()
 */
@@ -175,7 +209,7 @@ quint64 QDriveInfo::bytesAvailable() const
 
 /*!
     Returns the free size (in bytes) available on drive. Note, that if there is some kind
-    of quotas on the filesystem, this value can be bigger than bytesAvailable()
+    of quotas on the filesystem, this value can be bigger than bytesAvailable().
 
     \sa bytesTotal(), bytesAvailable()
 */
@@ -222,8 +256,6 @@ QByteArray QDriveInfo::fileSystemName() const
 
     On Windows, returns UNC path starting with \\\\?\\ for local drives (i.e. volume GUID).
 
-    On Symbian OS, the first byte of the returned byte array is a drive number.
-
     \sa rootPath()
 */
 QByteArray QDriveInfo::device() const
@@ -252,6 +284,9 @@ QString QDriveInfo::name() const
     \fn bool QDriveInfo::isRoot() const
 
     Returns true if this QDriveInfo represents the system root volume or drive; false otherwise.
+
+    On Unix filesystems, root drive is a drive mounted at "/", on Windows root drive is a drive
+    where OS is installed.
 
     \sa rootDrive()
 */
@@ -325,7 +360,7 @@ void QDriveInfo::refresh()
     On Windows, this returns drives presented in 'My Computer' folder. On Unix operation systems,
     returns list of all mounted filesystems (except for Mac, where devfs is ignored). In Linux, you
     will get a lot of pseudo filesystems by calling this function, but you can filter them out
-    by using type() (as they always have an InvalidDrive type).
+    by using type() (as they always have an UnknownDrive type).
 
     The example shows how to retrieve all drives present in system and skip read-only drives.
 
@@ -370,3 +405,5 @@ void QDriveInfo::detach()
 {
     d_ptr.detach();
 }
+
+QT_END_NAMESPACE

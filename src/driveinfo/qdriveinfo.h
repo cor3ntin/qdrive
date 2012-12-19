@@ -1,3 +1,36 @@
+/****************************************************************************
+**
+** Copyright (C) 2012 Ivan Komissarov
+** Contact: http://www.qt-project.org/
+**
+** This file is part of the QtCore module of the Qt Toolkit.
+**
+** $QT_BEGIN_LICENSE:LGPL$
+** GNU Lesser General Public License Usage
+** This file may be used under the terms of the GNU Lesser General Public
+** License version 2.1 as published by the Free Software Foundation and
+** appearing in the file LICENSE.LGPL included in the packaging of this
+** file. Please review the following information to ensure the GNU Lesser
+** General Public License version 2.1 requirements will be met:
+** http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+**
+** GNU General Public License Usage
+** Alternatively, this file may be used under the terms of the GNU General
+** Public License version 3.0 as published by the Free Software Foundation
+** and appearing in the file LICENSE.GPL included in the packaging of this
+** file. Please review the following information to ensure the GNU General
+** Public License version 3.0 requirements will be met:
+** http://www.gnu.org/copyleft/gpl.html.
+**
+**
+**
+**
+**
+**
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
 #ifndef QDRIVEINFO_H
 #define QDRIVEINFO_H
 
@@ -6,18 +39,18 @@
 #include <QtCore/QString>
 #include <QtCore/QExplicitlySharedDataPointer>
 
-#include <QtDriveInfo/qtdriveinfoglobal.h>
-
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
+QT_MODULE(Core)
+
 class QDriveInfoPrivate;
-class Q_DRIVEINFO_EXPORT QDriveInfo
+class Q_CORE_EXPORT QDriveInfo
 {
 public:
     enum DriveType {
-        InvalidDrive = 0,
+        UnknownDrive = 0,
         InternalDrive,
         RemovableDrive,
         RemoteDrive,

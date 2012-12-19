@@ -1,9 +1,44 @@
+/****************************************************************************
+**
+** Copyright (C) 2012 Ivan Komissarov
+** Contact: http://www.qt-project.org/
+**
+** This file is part of the QtCore module of the Qt Toolkit.
+**
+** $QT_BEGIN_LICENSE:LGPL$
+** GNU Lesser General Public License Usage
+** This file may be used under the terms of the GNU Lesser General Public
+** License version 2.1 as published by the Free Software Foundation and
+** appearing in the file LICENSE.LGPL included in the packaging of this
+** file. Please review the following information to ensure the GNU Lesser
+** General Public License version 2.1 requirements will be met:
+** http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+**
+** GNU General Public License Usage
+** Alternatively, this file may be used under the terms of the GNU General
+** Public License version 3.0 as published by the Free Software Foundation
+** and appearing in the file LICENSE.GPL included in the packaging of this
+** file. Please review the following information to ensure the GNU General
+** Public License version 3.0 requirements will be met:
+** http://www.gnu.org/copyleft/gpl.html.
+**
+**
+**
+**
+**
+**
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
 #include "qdriveinfo_p.h"
 
 #include <QtCore/QDir>
 #include <QtCore/QVarLengthArray>
 
 #include <Userenv.h>
+
+QT_BEGIN_NAMESPACE
 
 void QDriveInfoPrivate::initRootPath()
 {
@@ -71,7 +106,7 @@ static inline QDriveInfo::DriveType determineType(const QString &rootPath)
 #else
     Q_UNUSED(rootPath)
 #endif
-    return QDriveInfo::InvalidDrive;
+    return QDriveInfo::UnknownDrive;
 }
 
 void QDriveInfoPrivate::doStat(uint requiredFlags)
@@ -201,3 +236,5 @@ QDriveInfo QDriveInfoPrivate::rootDrive()
 
     return QDriveInfo();
 }
+
+QT_END_NAMESPACE

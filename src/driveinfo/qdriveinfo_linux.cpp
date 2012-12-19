@@ -1,13 +1,47 @@
+/****************************************************************************
+**
+** Copyright (C) 2012 Ivan Komissarov
+** Contact: http://www.qt-project.org/
+**
+** This file is part of the QtCore module of the Qt Toolkit.
+**
+** $QT_BEGIN_LICENSE:LGPL$
+** GNU Lesser General Public License Usage
+** This file may be used under the terms of the GNU Lesser General Public
+** License version 2.1 as published by the Free Software Foundation and
+** appearing in the file LICENSE.LGPL included in the packaging of this
+** file. Please review the following information to ensure the GNU Lesser
+** General Public License version 2.1 requirements will be met:
+** http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+**
+** GNU General Public License Usage
+** Alternatively, this file may be used under the terms of the GNU General
+** Public License version 3.0 as published by the Free Software Foundation
+** and appearing in the file LICENSE.GPL included in the packaging of this
+** file. Please review the following information to ensure the GNU General
+** Public License version 3.0 requirements will be met:
+** http://www.gnu.org/copyleft/gpl.html.
+**
+**
+**
+**
+**
+**
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
 #include "qdriveinfo_p.h"
 
 #include <QtCore/QDirIterator>
 #include <QtCore/QTextStream>
-#include <QtCore/private/qcore_unix_p.h>
 
 #include <errno.h>
 #include <mntent.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
+
+#include <private/qcore_unix_p.h>
 
 #if defined(QT_LARGEFILE_SUPPORT)
 #  define QT_STATFSBUF struct statvfs64
@@ -39,8 +73,7 @@ void QDriveInfoPrivate::initRootPath()
         while ((mnt = ::getmntent(fp))) {
             QString mountDir = QFile::decodeName(mnt->mnt_dir);
             // we try to find most suitable entry
-            if ( (oldRootPath.startsWith(mountDir) && maxLength < (quint32)mountDir.length()) ||
-                    oldRootPath == QFile::decodeName(mnt->mnt_fsname) ) {
+            if (oldRootPath.startsWith(mountDir) && maxLength < (quint32)mountDir.length()) {
                 maxLength = mountDir.length();
                 rootPath = mountDir;
                 device = QByteArray(mnt->mnt_fsname);
@@ -48,9 +81,6 @@ void QDriveInfoPrivate::initRootPath()
             }
         }
         ::endmntent(fp);
-// may be we should return old path, dunno:)
-//        if (rootPath.isEmpty())
-//            rootPath = oldRootPath;
     }
 }
 
@@ -65,7 +95,7 @@ static inline QDriveInfo::DriveType determineType(const QByteArray &device)
         if (result == 0)
             dmFile = QLatin1String("dm-") + QString::number(stat_buf.st_rdev & 0377);
         else
-            return QDriveInfo::InvalidDrive;
+            return QDriveInfo::UnknownDrive;
     } else {
         dmFile = QString(device).section(QLatin1Char('/'), 2, 3);
         if (dmFile.startsWith(QLatin1String("mmc"))) {
@@ -93,7 +123,7 @@ static inline QDriveInfo::DriveType determineType(const QByteArray &device)
     if (device.startsWith("/dev"))
         return QDriveInfo::InternalDrive;
 
-    return QDriveInfo::InvalidDrive;
+    return QDriveInfo::UnknownDrive;
 }
 
 // we need udev to be present in system to get label name
@@ -153,7 +183,7 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
     bitmask = CachedTypeFlag;
     if (requiredFlags & bitmask) {
         type = determineType(device);
-        if (type == QDriveInfo::InvalidDrive) {
+        if (type == QDriveInfo::UnknownDrive) {
             // test for UNC shares
             if (rootPath.startsWith(QLatin1String("//"))
                 || fileSystemName == "nfs"

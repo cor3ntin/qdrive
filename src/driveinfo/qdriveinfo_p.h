@@ -1,3 +1,36 @@
+/****************************************************************************
+**
+** Copyright (C) 2012 Ivan Komissarov
+** Contact: http://www.qt-project.org/
+**
+** This file is part of the QtCore module of the Qt Toolkit.
+**
+** $QT_BEGIN_LICENSE:LGPL$
+** GNU Lesser General Public License Usage
+** This file may be used under the terms of the GNU Lesser General Public
+** License version 2.1 as published by the Free Software Foundation and
+** appearing in the file LICENSE.LGPL included in the packaging of this
+** file. Please review the following information to ensure the GNU Lesser
+** General Public License version 2.1 requirements will be met:
+** http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+**
+** GNU General Public License Usage
+** Alternatively, this file may be used under the terms of the GNU General
+** Public License version 3.0 as published by the Free Software Foundation
+** and appearing in the file LICENSE.GPL included in the packaging of this
+** file. Please review the following information to ensure the GNU General
+** Public License version 3.0 requirements will be met:
+** http://www.gnu.org/copyleft/gpl.html.
+**
+**
+**
+**
+**
+**
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
 #ifndef QDRIVEINFO_P_H
 #define QDRIVEINFO_P_H
 
@@ -19,13 +52,15 @@
 
 #include <qplatformdefs.h>
 
+QT_BEGIN_NAMESPACE
+
 class QDriveInfoPrivate : public QSharedData
 {
 public:
 
     inline QDriveInfoPrivate() : QSharedData(),
         bytesTotal(0), bytesFree(0), bytesAvailable(0),
-        type(QDriveInfo::InvalidDrive),
+        type(QDriveInfo::UnknownDrive),
         readOnly(false), ready(false), valid(false),
         cachedFlags(0)
     {}
@@ -33,7 +68,7 @@ public:
     QDriveInfoPrivate(const QDriveInfoPrivate &other) : QSharedData(other),
         rootPath(other.rootPath),
         bytesTotal(0), bytesFree(0), bytesAvailable(0),
-        type(QDriveInfo::InvalidDrive),
+        type(QDriveInfo::UnknownDrive),
         readOnly(false), ready(false), valid(false),
         cachedFlags(0)
     {}
@@ -62,7 +97,7 @@ public:
         bytesFree = 0;
         bytesAvailable = 0;
 
-        type = QDriveInfo::InvalidDrive;
+        type = QDriveInfo::UnknownDrive;
         readOnly = false;
         ready = false;
         valid = false;
@@ -105,5 +140,7 @@ public:
 
     uint cachedFlags;
 };
+
+QT_END_NAMESPACE
 
 #endif // QDRIVEINFO_P_H

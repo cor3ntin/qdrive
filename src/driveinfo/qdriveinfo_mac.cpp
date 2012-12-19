@@ -1,6 +1,37 @@
-#include "qdriveinfo_p.h"
+/****************************************************************************
+**
+** Copyright (C) 2012 Ivan Komissarov
+** Contact: http://www.qt-project.org/
+**
+** This file is part of the QtCore module of the Qt Toolkit.
+**
+** $QT_BEGIN_LICENSE:LGPL$
+** GNU Lesser General Public License Usage
+** This file may be used under the terms of the GNU Lesser General Public
+** License version 2.1 as published by the Free Software Foundation and
+** appearing in the file LICENSE.LGPL included in the packaging of this
+** file. Please review the following information to ensure the GNU Lesser
+** General Public License version 2.1 requirements will be met:
+** http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+**
+** GNU General Public License Usage
+** Alternatively, this file may be used under the terms of the GNU General
+** Public License version 3.0 as published by the Free Software Foundation
+** and appearing in the file LICENSE.GPL included in the packaging of this
+** file. Please review the following information to ensure the GNU General
+** Public License version 3.0 requirements will be met:
+** http://www.gnu.org/copyleft/gpl.html.
+**
+**
+**
+**
+**
+**
+** $QT_END_LICENSE$
+**
+****************************************************************************/
 
-#include <QtCore/private/qcore_mac_p.h>
+#include "qdriveinfo_p.h"
 
 #include <CoreServices/CoreServices.h>
 #include <IOKit/storage/IOCDMedia.h>
@@ -15,6 +46,8 @@
 #  define QT_STATFSBUF struct statfs
 #  define QT_STATFS    ::statfs
 #endif
+
+QT_BEGIN_NAMESPACE
 
 void QDriveInfoPrivate::initRootPath()
 {
@@ -69,7 +102,7 @@ void QDriveInfoPrivate::initRootPath()
 
 static inline QDriveInfo::DriveType determineType(const QByteArray &device)
 {
-    QDriveInfo::DriveType drivetype = QDriveInfo::InvalidDrive;
+    QDriveInfo::DriveType drivetype = QDriveInfo::UnknownDrive;
 
     DASessionRef sessionRef;
     DADiskRef diskRef;
@@ -77,12 +110,12 @@ static inline QDriveInfo::DriveType determineType(const QByteArray &device)
 
     sessionRef = DASessionCreate(NULL);
     if (sessionRef == NULL)
-        return QDriveInfo::InvalidDrive;
+        return QDriveInfo::UnknownDrive;
 
     diskRef = DADiskCreateFromBSDName(NULL, sessionRef, device.constData());
     if (diskRef == NULL) {
         CFRelease(sessionRef);
-        return QDriveInfo::InvalidDrive;
+        return QDriveInfo::UnknownDrive;
     }
 
     descriptionDictionary = DADiskCopyDescription(diskRef);
@@ -230,3 +263,5 @@ QDriveInfo QDriveInfoPrivate::rootDrive()
 {
     return QDriveInfo(QLatin1String("/"));
 }
+
+QT_END_NAMESPACE
