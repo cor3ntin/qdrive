@@ -34,10 +34,14 @@
 #include "qdriveinfo_p.h"
 
 #include <CoreServices/CoreServices.h>
+#include <CoreFoundation/CoreFoundation.h>
+#include <CoreFoundation/CFURLEnumerator.h>
 #include <IOKit/storage/IOCDMedia.h>
 #include <IOKit/storage/IODVDMedia.h>
 
 #include <sys/mount.h>
+#include <private/qcore_mac_p.h>
+#include <QDebug>
 
 #if defined(QT_LARGEFILE_SUPPORT)
 #  define QT_STATFSBUF struct statfs64
@@ -229,38 +233,27 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
 {
     QList<QDriveInfo> drives;
 
-    // deprecate (use CFURLEnumeratorCreateForMountedVolumes)
-    OSErr result = noErr;
-    for (ItemCount volumeIndex = 1; result == noErr || result != nsvErr; volumeIndex++) {
-        FSVolumeRefNum actualVolume;
-        FSRef rootDirectory;
-        result = FSGetVolumeInfo(kFSInvalidVolumeRefNum,
-                                 volumeIndex,
-                                 &actualVolume,
-                                 0,
-                                 0,
-                                 0,
-                                 &rootDirectory);
-        if (result == noErr) {
-            CFURLRef url = CFURLCreateFromFSRef(NULL, &rootDirectory);
-            CFStringRef stringRef = CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
-            if (stringRef) {
-                CFIndex length = CFStringGetLength(stringRef) + 1;
-                char *volname = NewPtr(length);
-                CFStringGetCString(stringRef, volname, length, kCFStringEncodingMacRoman);
-                {
-                    QDriveInfo drive;
-                    drive.d_ptr->rootPath = QFile::decodeName(volname);
-                    drive.d_ptr->setCachedFlag(CachedRootPathFlag);
-                    drives.append(drive);
-                }
-                CFRelease(stringRef);
-                DisposePtr(volname);
-            }
-            CFRelease(url);
-        }
-    }
+    CFURLEnumeratorRef enumerator;
+    enumerator = CFURLEnumeratorCreateForMountedVolumes(NULL,
+                                                        kCFURLEnumeratorSkipInvisibles,
+                                                        NULL);
 
+    CFURLEnumeratorResult result = kCFURLEnumeratorSuccess;
+    do {
+        CFURLRef url;
+        CFErrorRef error;
+        result = CFURLEnumeratorGetNextURL(enumerator, &url, &error);
+        if (result == kCFURLEnumeratorSuccess) {
+            QCFString urlString = CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
+
+            QDriveInfo drive;
+            drive.d_ptr->rootPath = urlString;
+            drive.d_ptr->setCachedFlag(CachedRootPathFlag);
+            drives.append(drive);
+        }
+    } while (result != kCFURLEnumeratorEnd);
+
+    CFRelease(enumerator);
     return drives;
 }
 
