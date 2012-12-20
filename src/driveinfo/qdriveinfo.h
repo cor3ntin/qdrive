@@ -39,12 +39,14 @@
 #include <QtCore/QString>
 #include <QtCore/QExplicitlySharedDataPointer>
 
+#include "qtdriveinfoglobal.h"
+
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
 class QDriveInfoPrivate;
-class Q_CORE_EXPORT QDriveInfo
+class Q_DRIVEINFO_EXPORT QDriveInfo
 {
 public:
     enum DriveType {

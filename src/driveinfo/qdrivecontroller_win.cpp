@@ -17,7 +17,7 @@
 
 #define QDRIVECONTROLLER_DEBUG 1
 
-Q_CORE_EXPORT HINSTANCE qWinAppInst();
+Q_DRIVEINFO_EXPORT HINSTANCE qWinAppInst();
 
 class QDriveWatcherEngine
 {
