@@ -43,8 +43,6 @@ QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-QT_MODULE(Core)
-
 class QDriveInfoPrivate;
 class Q_CORE_EXPORT QDriveInfo
 {
