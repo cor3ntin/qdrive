@@ -59,6 +59,17 @@ public:
         RamDrive
     };
 
+    enum Capability {
+        SupportsSymbolicLinks = 0x01,
+        SupportsHardLinks = 0x02,
+        SupportsCaseSensitiveNames = 0x04,
+        SupportsCasePreservedNames = 0x08,
+        SupportsJournaling = 0x10,
+        SupportsSparseFiles = 0x20,
+        SupportsPersistentIDs = 0x40
+    };
+    Q_DECLARE_FLAGS(Capabilities, Capability)
+
     QDriveInfo();
     explicit QDriveInfo(const QString &rootPath);
     QDriveInfo(const QDriveInfo &other);
@@ -86,6 +97,9 @@ public:
     bool isValid() const;
 
     DriveType type() const;
+
+    Capabilities capabilities() const;
+    bool hasCapability(Capability capability) const;
 
     void refresh();
 

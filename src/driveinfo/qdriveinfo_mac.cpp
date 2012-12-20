@@ -156,7 +156,8 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
     }
 
     bitmask = CachedFileSystemNameFlag |
-              CachedBytesTotalFlag | CachedBytesFreeFlag | CachedBytesAvailableFlag;
+              CachedBytesTotalFlag | CachedBytesFreeFlag | CachedBytesAvailableFlag |
+              CachedCapabilitiesFlag;
     if (requiredFlags & bitmask) {
         getUrlProperties();
         setCachedFlag(bitmask);
@@ -196,6 +197,11 @@ static inline QString CFDictionaryGetQString(CFDictionaryRef dictionary, const v
      return QCFString::toQString((CFStringRef)CFDictionaryGetValue(dictionary, key));
 }
 
+static inline bool CFDictionaryGetBool(CFDictionaryRef dictionary, const void *key)
+{
+     return CFBooleanGetValue((CFBooleanRef)CFDictionaryGetValue(dictionary, key));
+}
+
 void QDriveInfoPrivate::getUrlProperties(bool initRootPath)
 {
     const void *rootPathKey[] = { kCFURLVolumeURLKey };
@@ -204,12 +210,18 @@ void QDriveInfoPrivate::getUrlProperties(bool initRootPath)
                                    kCFURLVolumeLocalizedFormatDescriptionKey,
                                    kCFURLVolumeTotalCapacityKey,
                                    kCFURLVolumeAvailableCapacityKey,
+                                   kCFURLVolumeSupportsPersistentIDsKey,
                                    kCFURLVolumeSupportsSymbolicLinksKey,
+                                   kCFURLVolumeSupportsHardLinksKey,
+                                   kCFURLVolumeSupportsJournalingKey,
+                                   kCFURLVolumeSupportsSparseFilesKey,
+                                   kCFURLVolumeSupportsCaseSensitiveNamesKey,
+                                   kCFURLVolumeSupportsCasePreservedNamesKey,
                                    // kCFURLVolumeIsReadOnlyKey // 10.7
                                  };
     CFArrayRef keys = CFArrayCreate(kCFAllocatorDefault,
                                     initRootPath ? rootPathKey : propertyKeys,
-                                    initRootPath ? 1 : 4,
+                                    initRootPath ? 1 : 10,
                                     0);
 
     if (!keys)
@@ -254,6 +266,22 @@ void QDriveInfoPrivate::getUrlProperties(bool initRootPath)
     bytesTotal = CFDictionaryGetUInt64(map, kCFURLVolumeTotalCapacityKey);
     bytesAvailable = CFDictionaryGetUInt64(map, kCFURLVolumeAvailableCapacityKey);
     bytesFree = bytesAvailable;
+
+    capabilities = 0;
+    if (CFDictionaryGetBool(map, kCFURLVolumeSupportsPersistentIDsKey))
+        capabilities |= QDriveInfo::SupportsPersistentIDs;
+    if (CFDictionaryGetBool(map, kCFURLVolumeSupportsSymbolicLinksKey))
+        capabilities |= QDriveInfo::SupportsSymbolicLinks;
+    if (CFDictionaryGetBool(map, kCFURLVolumeSupportsHardLinksKey))
+        capabilities |= QDriveInfo::SupportsHardLinks;
+    if (CFDictionaryGetBool(map, kCFURLVolumeSupportsJournalingKey))
+        capabilities |= QDriveInfo::SupportsJournaling;
+    if (CFDictionaryGetBool(map, kCFURLVolumeSupportsSparseFilesKey))
+        capabilities |= QDriveInfo::SupportsSparseFiles;
+    if (CFDictionaryGetBool(map, kCFURLVolumeSupportsCaseSensitiveNamesKey))
+        capabilities |= QDriveInfo::SupportsCaseSensitiveNames;
+    if (CFDictionaryGetBool(map, kCFURLVolumeSupportsCasePreservedNamesKey))
+        capabilities |= QDriveInfo::SupportsCasePreservedNames;
 
     CFRelease(map);
 }

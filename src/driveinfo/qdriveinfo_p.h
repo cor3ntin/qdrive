@@ -84,7 +84,8 @@ public:
         CachedTypeFlag = 0x100,
         CachedReadOnlyFlag = 0x200,
         CachedReadyFlag = 0x400,
-        CachedValidFlag = 0x800
+        CachedValidFlag = 0x800,
+        CachedCapabilitiesFlag = 0x1000
     };
 
     inline void clear()
@@ -136,6 +137,8 @@ public:
     quint64 bytesTotal;
     quint64 bytesFree;
     quint64 bytesAvailable;
+
+    QDriveInfo::Capabilities capabilities;
 
     ushort type : 8;
     ushort readOnly : 1;

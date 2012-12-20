@@ -341,6 +341,23 @@ QDriveInfo::DriveType QDriveInfo::type() const
 }
 
 /*!
+    Returns the flags supported by drive's filesystem.
+*/
+QDriveInfo::Capabilities QDriveInfo::capabilities() const
+{
+    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedCapabilitiesFlag);
+    return d_func()->capabilities;
+}
+
+/*!
+    Returns true if drive's filesystem supports specified \a capability.
+*/
+bool QDriveInfo::hasCapability(QDriveInfo::Capability capability) const
+{
+    return capabilities() & capability;
+}
+
+/*!
     Resets QDriveInfo's inner cache.
 
     QDriveInfo caches information about drives to speed up performance. Some information can be

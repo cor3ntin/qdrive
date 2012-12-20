@@ -3,8 +3,33 @@
 
 #include <QDriveInfo>
 #include <QTimer>
+#include <QStringList>
 
 #include <QDriveController>
+
+static QString capabilityToString(QDriveInfo::Capability capability)
+{
+    switch (capability) {
+    case QDriveInfo::SupportsSymbolicLinks: return "SupportsSymbolicLinks";
+    case QDriveInfo::SupportsHardLinks: return "SupportsHardLinks";
+    case QDriveInfo::SupportsCaseSensitiveNames: return "SupportsCaseSensitiveNames";
+    case QDriveInfo::SupportsCasePreservedNames: return "SupportsCasePreservedNames";
+    case QDriveInfo::SupportsJournaling: return "SupportsJournaling";
+    case QDriveInfo::SupportsSparseFiles: return "SupportsSparseFiles";
+    case QDriveInfo::SupportsPersistentIDs: return "SupportsPersistentIDs";
+    }
+    return QString();
+}
+
+static QString capabilitiesToString(QDriveInfo::Capabilities capabilities)
+{
+    QStringList result;
+    for (int i = 1; i != QDriveInfo::SupportsPersistentIDs << 1; i = i << 1) {
+        if (capabilities & i)
+            result.append(capabilityToString(QDriveInfo::Capability(i)));
+    }
+    return result.join(" | ");
+}
 
 int main(int argc, char *argv[])
 {
@@ -74,6 +99,7 @@ int main(int argc, char *argv[])
                 default:
                     break;
                 }
+                qDebug() << "   " << "capabilities:" << capabilitiesToString(drive.capabilities());
             } else {
                 qDebug() << "    " <<  drive.rootPath() << "is not ready";
             }
