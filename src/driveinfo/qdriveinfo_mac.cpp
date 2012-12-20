@@ -193,7 +193,7 @@ static inline quint64 CFDictionaryGetUInt64(CFDictionaryRef dictionary, const vo
 
 static inline QString CFDictionaryGetQString(CFDictionaryRef dictionary, const void *key)
 {
-     return QCFString((CFStringRef)CFDictionaryGetValue(dictionary, key));
+     return QCFString::toQString((CFStringRef)CFDictionaryGetValue(dictionary, key));
 }
 
 void QDriveInfoPrivate::getUrlProperties(bool initRootPath)
