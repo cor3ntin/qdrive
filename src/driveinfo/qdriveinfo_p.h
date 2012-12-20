@@ -117,9 +117,14 @@ public:
     static QDriveInfo rootDrive();
 
 protected:
-    void getVolumeInfo();
 #if defined(Q_OS_WIN)
     void getDiskFreeSpace();
+#elif defined(Q_OS_MAC)
+    void getPosixInfo();
+    void getUrlProperties(bool initRootPath = false);
+    void getLabel();
+#elif defined(Q_OS_UNIX)
+    void getVolumeInfo();
 #endif
 
 public:

@@ -58,53 +58,7 @@ void QDriveInfoPrivate::initRootPath()
     if (rootPath.isEmpty())
         return;
 
-    // deprecated:
-    FSRef ref;
-    FSPathMakeRef((UInt8*)QFile::encodeName(rootPath).constData(), &ref, 0);
-
-    rootPath.clear();
-
-    // deprecated (use CFURLCopyResourcePropertiesForKeys)
-    FSCatalogInfo catalogInfo;
-    if (FSGetCatalogInfo(&ref, kFSCatInfoVolume, &catalogInfo, 0, 0, 0) != noErr)
-        return;
-
-    // deprecated (use CFURLCopyResourcePropertiesForKeys)
-    HFSUniStr255 volumeName;
-    FSRef rootDirectory;
-    OSErr error = FSGetVolumeInfo(catalogInfo.volume,
-                                  0,
-                                  0,
-                                  kFSVolInfoFSInfo,
-                                  0,
-                                  &volumeName,
-                                  &rootDirectory);
-    if (error == noErr) {
-        CFURLRef url = CFURLCreateFromFSRef(NULL, &rootDirectory);
-        CFStringRef stringRef;
-        stringRef = CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
-        if (stringRef) {
-            // TODO : use utf-16 ??
-            CFIndex length = CFStringGetLength(stringRef) + 1;
-            char *volname = NewPtr(length);
-            CFStringGetCString(stringRef, volname, length, kCFStringEncodingMacRoman);
-            rootPath = QFile::decodeName(volname);
-            CFRelease(stringRef);
-            DisposePtr(volname);
-        }
-        CFRelease(url);
-
-        stringRef = FSCreateStringFromHFSUniStr(NULL, &volumeName);
-        if (stringRef) {
-            // TODO : use utf-16 ??
-            CFIndex length = CFStringGetLength(stringRef) + 1;
-            char *volname = NewPtr(length);
-            CFStringGetCString(stringRef, volname, length, kCFStringEncodingMacRoman);
-            name = QFile::decodeName(volname);
-            CFRelease(stringRef);
-            DisposePtr(volname);
-        }
-    }
+    getUrlProperties(true);
 }
 
 static inline QDriveInfo::DriveType determineType(const QByteArray &device)
@@ -174,32 +128,38 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
     if (getCachedFlag(requiredFlags))
         return;
 
-    if (!getCachedFlag(CachedRootPathFlag | CachedNameFlag)) {
+    if (!getCachedFlag(CachedValidFlag))
+        requiredFlags |= CachedValidFlag; // force drive validation
+
+    if (!getCachedFlag(CachedRootPathFlag | CachedValidFlag | CachedReadyFlag)) {
         initRootPath();
-        setCachedFlag(CachedRootPathFlag | CachedNameFlag);
+        setCachedFlag(CachedRootPathFlag | CachedValidFlag | CachedReadyFlag);
     }
 
     if (rootPath.isEmpty() || (getCachedFlag(CachedValidFlag) && !valid))
         return;
 
-    if (!getCachedFlag(CachedValidFlag))
-        requiredFlags |= CachedValidFlag; // force drive validation
+    if (!getCachedFlag(CachedNameFlag)) {
+        getLabel();
+        setCachedFlag(CachedNameFlag);
+    }
 
-    if (requiredFlags & CachedTypeFlag)
-        requiredFlags |= CachedDeviceFlag;
-
+//    if (requiredFlags & CachedTypeFlag) // ???
+//        requiredFlags |= CachedDeviceFlag;
 
     uint bitmask = 0;
 
-    bitmask = CachedDeviceFlag | CachedFileSystemNameFlag |
-              CachedBytesTotalFlag | CachedBytesFreeFlag | CachedBytesAvailableFlag |
-              CachedReadOnlyFlag | CachedReadyFlag | CachedValidFlag;
+    bitmask = CachedDeviceFlag | CachedReadOnlyFlag;
     if (requiredFlags & bitmask) {
-        getVolumeInfo();
+        getPosixInfo();
         setCachedFlag(bitmask);
+    }
 
-        if (!valid)
-            return;
+    bitmask = CachedFileSystemNameFlag |
+              CachedBytesTotalFlag | CachedBytesFreeFlag | CachedBytesAvailableFlag;
+    if (requiredFlags & bitmask) {
+        getUrlProperties();
+        setCachedFlag(bitmask);
     }
 
     bitmask = CachedTypeFlag;
@@ -209,24 +169,117 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
     }
 }
 
-void QDriveInfoPrivate::getVolumeInfo()
+void QDriveInfoPrivate::getPosixInfo()
 {
     QT_STATFSBUF statfs_buf;
     // deprecated
     int result = QT_STATFS(QFile::encodeName(rootPath).constData(), &statfs_buf);
     if (result == 0) {
+        device = QByteArray(statfs_buf.f_mntfromname);
+        readOnly = (statfs_buf.f_flags & MNT_RDONLY) != 0;
+    }
+}
+
+static inline quint64 CFDictionaryGetUInt64(CFDictionaryRef dictionary, const void *key)
+{
+    CFNumberRef cfNumber = (CFNumberRef)CFDictionaryGetValue(dictionary, key);
+    Q_ASSERT(cfNumber);
+    quint64 result;
+    bool ok = CFNumberGetValue(cfNumber, kCFNumberSInt64Type, &result);
+    Q_ASSERT(ok);
+    Q_UNUSED(ok);
+    return result;
+}
+
+static inline QString CFDictionaryGetQString(CFDictionaryRef dictionary, const void *key)
+{
+     return QCFString((CFStringRef)CFDictionaryGetValue(dictionary, key));
+}
+
+void QDriveInfoPrivate::getUrlProperties(bool initRootPath)
+{
+    const void *rootPathKey[] = { kCFURLVolumeURLKey };
+    const void *propertyKeys[] = { // kCFURLVolumeNameKey, // 10.7
+                                   // kCFURLVolumeLocalizedNameKey, // 10.7
+                                   kCFURLVolumeLocalizedFormatDescriptionKey,
+                                   kCFURLVolumeTotalCapacityKey,
+                                   kCFURLVolumeAvailableCapacityKey,
+                                   kCFURLVolumeSupportsSymbolicLinksKey,
+                                   // kCFURLVolumeIsReadOnlyKey // 10.7
+                                 };
+    CFArrayRef keys = CFArrayCreate(kCFAllocatorDefault,
+                                    initRootPath ? rootPathKey : propertyKeys,
+                                    initRootPath ? 1 : 4,
+                                    0);
+
+    if (!keys)
+        return;
+
+    QCFString cfPath = rootPath;
+    if (initRootPath)
+        rootPath.clear();
+
+    CFURLRef url = CFURLCreateWithFileSystemPath(kCFAllocatorDefault,
+                                                 cfPath,
+                                                 kCFURLPOSIXPathStyle,
+                                                 true);
+    if (!url) {
+        CFRelease(keys);
+        return;
+    }
+
+    CFErrorRef error;
+    CFDictionaryRef map = CFURLCopyResourcePropertiesForKeys(url, keys, &error);
+    CFRelease(url);
+    CFRelease(keys);
+
+    if (!map)
+        return;
+
+    if (initRootPath) {
+        CFURLRef rootUrl = (CFURLRef)CFDictionaryGetValue(map, kCFURLVolumeURLKey);
+        if (!rootUrl)
+            return;
+
+        rootPath = QCFString(CFURLCopyFileSystemPath(rootUrl, kCFURLPOSIXPathStyle));
         valid = true;
         ready = true;
 
-        device = QByteArray(statfs_buf.f_mntfromname);
-        fileSystemName = QByteArray(statfs_buf.f_fstypename);
-
-        bytesTotal = statfs_buf.f_blocks * statfs_buf.f_bsize;
-        bytesFree = statfs_buf.f_bfree * statfs_buf.f_bsize;
-        bytesAvailable = statfs_buf.f_bavail * statfs_buf.f_bsize;
-
-        readOnly = (statfs_buf.f_flags & MNT_RDONLY) != 0;
+        CFRelease(map);
+        return;
     }
+
+    fileSystemName = CFDictionaryGetQString(map, kCFURLVolumeLocalizedFormatDescriptionKey).toLatin1();
+
+    bytesTotal = CFDictionaryGetUInt64(map, kCFURLVolumeTotalCapacityKey);
+    bytesAvailable = CFDictionaryGetUInt64(map, kCFURLVolumeAvailableCapacityKey);
+    bytesFree = bytesAvailable;
+
+    CFRelease(map);
+}
+
+void QDriveInfoPrivate::getLabel()
+{
+    // deprecated:
+    FSRef ref;
+    FSPathMakeRef((UInt8*)QFile::encodeName(rootPath).constData(), &ref, 0);
+
+    // deprecated
+    FSCatalogInfo catalogInfo;
+    if (FSGetCatalogInfo(&ref, kFSCatInfoVolume, &catalogInfo, 0, 0, 0) != noErr)
+        return;
+
+    // deprecated (use CFURLCopyResourcePropertiesForKeys for 10.7 and higher)
+    HFSUniStr255 volumeName;
+    OSErr error = FSGetVolumeInfo(catalogInfo.volume,
+                                  0,
+                                  0,
+                                  kFSVolInfoFSInfo,
+                                  0,
+                                  &volumeName,
+                                  0);
+    if (error == noErr)
+        name = QCFString(FSCreateStringFromHFSUniStr(NULL, &volumeName));
 }
 
 QList<QDriveInfo> QDriveInfoPrivate::drives()
