@@ -119,6 +119,7 @@ public:
 
 protected:
 #if defined(Q_OS_WIN)
+    void getVolumeInfo();
     void getDiskFreeSpace();
 #elif defined(Q_OS_MAC)
     void getPosixInfo();

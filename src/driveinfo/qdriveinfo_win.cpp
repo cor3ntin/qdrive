@@ -183,6 +183,22 @@ void QDriveInfoPrivate::getVolumeInfo()
         name = QString::fromWCharArray(nameBuf);
 
         readOnly = (fileSystemFlags & FILE_READ_ONLY_VOLUME) != 0;
+
+        capabilities = 0;
+        if (fileSystemFlags & FILE_SUPPORTS_OBJECT_IDS) // ?
+            capabilities |= QDriveInfo::SupportsPersistentIDs;
+        if (fileSystemName.toLower() == "ntfs")
+            capabilities |= QDriveInfo::SupportsSymbolicLinks;
+        if (fileSystemFlags & FILE_SUPPORTS_HARD_LINKS)
+            capabilities |= QDriveInfo::SupportsHardLinks;
+        if (fileSystemFlags & FILE_SUPPORTS_USN_JOURNAL) // ?
+            capabilities |= QDriveInfo::SupportsJournaling;
+        if (fileSystemFlags & FILE_SUPPORTS_SPARSE_FILES)
+            capabilities |= QDriveInfo::SupportsSparseFiles;
+        if (fileSystemFlags & FILE_CASE_SENSITIVE_SEARCH)
+            capabilities |= QDriveInfo::SupportsCaseSensitiveNames;
+        if (fileSystemFlags & FILE_CASE_PRESERVED_NAMES)
+            capabilities |= QDriveInfo::SupportsCasePreservedNames;
     }
 
     ::SetErrorMode(oldmode);
