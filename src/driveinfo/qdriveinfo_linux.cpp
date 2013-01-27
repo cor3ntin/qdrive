@@ -97,7 +97,7 @@ static inline QDriveInfo::DriveType determineType(const QByteArray &device)
         else
             return QDriveInfo::UnknownDrive;
     } else {
-        dmFile = QString(device).section(QLatin1Char('/'), 2, 3);
+        dmFile = QString::fromLatin1(device).section(QLatin1Char('/'), 2, 3);
         if (dmFile.startsWith(QLatin1String("mmc"))) {
             // assume this dev is removable sd/mmc card.
             return QDriveInfo::RemovableDrive;

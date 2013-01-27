@@ -235,7 +235,7 @@ bool QDriveController::mount(const QString &device, const QString &path)
 
 bool QDriveController::unmount(const QString &path)
 {
-    return unmountUdisks(QDriveInfo(path).device(), QStringList(), d->error);
+    return unmountUdisks(QString::fromLatin1(QDriveInfo(path).device()), QStringList(), d->error);
 }
 
 bool QDriveController::eject(const QString &device)
@@ -243,7 +243,7 @@ bool QDriveController::eject(const QString &device)
     if (!unmount(device))
         return false;
 
-    int fd = ::open(QFile::encodeName(device), O_RDONLY | O_NONBLOCK);
+    int fd = ::open(QFile::encodeName(device).data(), O_RDONLY | O_NONBLOCK);
     if (fd == -1) {
         d->setError(errno);
         return false;
