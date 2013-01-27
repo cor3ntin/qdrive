@@ -127,6 +127,7 @@ protected:
     void getLabel();
 #elif defined(Q_OS_UNIX)
     void getVolumeInfo();
+    void getCapabilities();
 #endif
 
 public:

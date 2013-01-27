@@ -150,6 +150,9 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
     if (getCachedFlag(requiredFlags))
         return;
 
+    if (requiredFlags & CachedCapabilitiesFlag) // force fs name
+        requiredFlags |= CachedFileSystemNameFlag;
+
     if (!getCachedFlag(CachedRootPathFlag | CachedDeviceFlag | CachedFileSystemNameFlag)) {
         initRootPath();
         setCachedFlag(CachedRootPathFlag | CachedDeviceFlag | CachedFileSystemNameFlag);
@@ -177,6 +180,12 @@ void QDriveInfoPrivate::doStat(uint requiredFlags)
     bitmask = CachedNameFlag;
     if (requiredFlags & bitmask) {
         name = getName(device);
+        setCachedFlag(bitmask);
+    }
+
+    bitmask = CachedCapabilitiesFlag;
+    if (requiredFlags & bitmask) {
+        getCapabilities();
         setCachedFlag(bitmask);
     }
 
@@ -212,6 +221,52 @@ void QDriveInfoPrivate::getVolumeInfo()
         readOnly = (statfs_buf.f_flag & ST_RDONLY) != 0;
     }
 }
+
+void QDriveInfoPrivate::getCapabilities()
+{
+    uint flags = 0;
+
+    QByteArray fileSystem = fileSystemName.toLower();
+    if (fileSystem == "ext4"
+            || fileSystem == "ext3"
+            || fileSystem == "ext3cow"
+            || fileSystem == "reiserfs"
+            || fileSystem == "jfs"
+            || fileSystem == "xfs"
+            || fileSystem == "ntfs"
+            || fileSystem == "hfsplus")
+        flags = QDriveInfo::SupportsSymbolicLinks
+                | QDriveInfo::SupportsHardLinks
+                | QDriveInfo::SupportsCaseSensitiveNames
+                | QDriveInfo::SupportsCasePreservedNames
+                | QDriveInfo::SupportsJournaling
+                | QDriveInfo::SupportsSparseFiles;
+    else if (fileSystem == "ext2"
+             || fileSystem == "reiser4"
+             || fileSystem == "btrfs"
+             || fileSystem == "zfs")
+        flags = QDriveInfo::SupportsSymbolicLinks
+                | QDriveInfo::SupportsHardLinks
+                | QDriveInfo::SupportsCaseSensitiveNames
+                | QDriveInfo::SupportsCasePreservedNames
+                | QDriveInfo::SupportsSparseFiles;
+    else if (fileSystem == "ntfs-3g")
+        flags = QDriveInfo::SupportsSparseFiles;
+    else if (fileSystem == "fat12"
+             || fileSystem == "fat16"
+             || fileSystem == "fat32"
+             || fileSystem == "vfat")
+        flags = 0;
+    else if (fileSystem == "exfat")
+        flags = QDriveInfo::SupportsCasePreservedNames;
+    else if (fileSystem == "hfs")
+        flags = QDriveInfo::SupportsSymbolicLinks
+                | QDriveInfo::SupportsCasePreservedNames
+                | QDriveInfo::SupportsSparseFiles;
+
+    capabilities = QDriveInfo::Capabilities(flags);
+}
+
 
 QList<QDriveInfo> QDriveInfoPrivate::drives()
 {
