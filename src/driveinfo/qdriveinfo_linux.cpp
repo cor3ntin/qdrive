@@ -263,6 +263,10 @@ void QDriveInfoPrivate::getCapabilities()
         flags = QDriveInfo::SupportsSymbolicLinks
                 | QDriveInfo::SupportsCasePreservedNames
                 | QDriveInfo::SupportsSparseFiles;
+    else if (fileSystem == "nfs"
+             || fileSystem == "cifs"
+             || fileSystem.startsWith("smb"))
+        flags = 0;
 
     capabilities = QDriveInfo::Capabilities(flags);
 }
