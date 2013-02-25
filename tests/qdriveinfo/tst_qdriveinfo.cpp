@@ -58,7 +58,7 @@ void tst_QDriveInfo::initTestCase()
     qRegisterMetaType<QDriveInfo>();
 
     // invalid
-    DriveInfo invalidDrive = { "", "", "", "", QDriveInfo::InvalidDrive, 0, false, false, false };
+    DriveInfo invalidDrive = { "", "", "", "", QDriveInfo::UnknownDrive, 0, false, false, false };
     testDrives.insert("invalid", invalidDrive);
 
 #if defined(Q_OS_WIN)

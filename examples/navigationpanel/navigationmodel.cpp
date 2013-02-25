@@ -67,7 +67,7 @@ void NavigationModelPrivate::onDriveAdded(const QString &path)
 
     if (info.type() == QDriveInfo::RemoteDrive)
         insertItem(networkItem, name, path);
-    else if (info.type() != QDriveInfo::InvalidDrive)
+    else if (info.type() != QDriveInfo::UnknownDrive)
         insertItem(drivesItem, name, path);
 }
 
@@ -100,7 +100,7 @@ NavigationModel::NavigationModel(QObject *parent) :
         TreeItem *item = 0;
         if (info.type() == QDriveInfo::RemoteDrive)
             item = new TreeItem(d->networkItem, name, path);
-        else if (info.type() != QDriveInfo::InvalidDrive)
+        else if (info.type() != QDriveInfo::UnknownDrive)
             item = new TreeItem(d->drivesItem, name, path);
 
         if (item) {
