@@ -34,8 +34,6 @@
 #include "qdriveinfo.h"
 #include "qdriveinfo_p.h"
 
-#include <QtCore/QMutex>
-
 QT_BEGIN_NAMESPACE
 
 /*!
@@ -172,8 +170,9 @@ bool QDriveInfo::operator==(const QDriveInfo &other) const
 */
 QString QDriveInfo::rootPath() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedRootPathFlag);
-    return d_func()->rootPath;
+    Q_D(const QDriveInfo);
+    const_cast<QDriveInfoPrivate *>(d)->doStat(QDriveInfoPrivate::CachedRootPathFlag);
+    return d->rootPath;
 }
 
 /*!
@@ -189,7 +188,8 @@ void QDriveInfo::setRootPath(const QString &rootPath)
     if (d_ptr->rootPath == rootPath)
         return;
 
-    Q_D(QDriveInfo); // detach here
+    d_ptr.detach();
+    Q_D(QDriveInfo);
     d->clear();
     d->rootPath = rootPath;
 }
@@ -203,8 +203,9 @@ void QDriveInfo::setRootPath(const QString &rootPath)
 */
 quint64 QDriveInfo::bytesAvailable() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedBytesAvailableFlag);
-    return d_func()->bytesAvailable;
+    Q_D(const QDriveInfo);
+    const_cast<QDriveInfoPrivate *>(d)->doStat(QDriveInfoPrivate::CachedBytesAvailableFlag);
+    return d->bytesAvailable;
 }
 
 /*!
@@ -215,8 +216,9 @@ quint64 QDriveInfo::bytesAvailable() const
 */
 quint64 QDriveInfo::bytesFree() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedBytesFreeFlag);
-    return d_func()->bytesFree;
+    Q_D(const QDriveInfo);
+    const_cast<QDriveInfoPrivate *>(d)->doStat(QDriveInfoPrivate::CachedBytesFreeFlag);
+    return d->bytesFree;
 }
 
 /*!
@@ -226,8 +228,9 @@ quint64 QDriveInfo::bytesFree() const
 */
 quint64 QDriveInfo::bytesTotal() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedBytesTotalFlag);
-    return d_func()->bytesTotal;
+    Q_D(const QDriveInfo);
+    const_cast<QDriveInfoPrivate *>(d)->doStat(QDriveInfoPrivate::CachedBytesTotalFlag);
+    return d->bytesTotal;
 }
 
 /*!
@@ -241,8 +244,9 @@ quint64 QDriveInfo::bytesTotal() const
 */
 QByteArray QDriveInfo::fileSystemName() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedFileSystemNameFlag);
-    return d_func()->fileSystemName;
+    Q_D(const QDriveInfo);
+    const_cast<QDriveInfoPrivate *>(d)->doStat(QDriveInfoPrivate::CachedFileSystemNameFlag);
+    return d->fileSystemName;
 }
 
 /*!
@@ -260,8 +264,9 @@ QByteArray QDriveInfo::fileSystemName() const
 */
 QByteArray QDriveInfo::device() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedDeviceFlag);
-    return d_func()->device;
+    Q_D(const QDriveInfo);
+    const_cast<QDriveInfoPrivate *>(d)->doStat(QDriveInfoPrivate::CachedDeviceFlag);
+    return d->device;
 }
 
 /*!
@@ -276,8 +281,9 @@ QByteArray QDriveInfo::device() const
 */
 QString QDriveInfo::name() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedNameFlag);
-    return d_func()->name;
+    Q_D(const QDriveInfo);
+    const_cast<QDriveInfoPrivate *>(d)->doStat(QDriveInfoPrivate::CachedNameFlag);
+    return d->name;
 }
 
 /*!
@@ -296,8 +302,9 @@ QString QDriveInfo::name() const
 */
 bool QDriveInfo::isReadOnly() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedReadOnlyFlag);
-    return d_func()->readOnly;
+    Q_D(const QDriveInfo);
+    const_cast<QDriveInfoPrivate *>(d)->doStat(QDriveInfoPrivate::CachedReadOnlyFlag);
+    return d->readOnly;
 }
 
 /*!
@@ -310,8 +317,9 @@ bool QDriveInfo::isReadOnly() const
 */
 bool QDriveInfo::isReady() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedReadyFlag);
-    return d_func()->ready;
+    Q_D(const QDriveInfo);
+    const_cast<QDriveInfoPrivate *>(d)->doStat(QDriveInfoPrivate::CachedReadyFlag);
+    return d->ready;
 }
 
 /*!
@@ -321,8 +329,9 @@ bool QDriveInfo::isReady() const
 */
 bool QDriveInfo::isValid() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedValidFlag);
-    return d_func()->valid;
+    Q_D(const QDriveInfo);
+    const_cast<QDriveInfoPrivate *>(d)->doStat(QDriveInfoPrivate::CachedValidFlag);
+    return d->valid;
 }
 
 /*!
@@ -336,8 +345,9 @@ bool QDriveInfo::isValid() const
 */
 QDriveInfo::DriveType QDriveInfo::type() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedTypeFlag);
-    return QDriveInfo::DriveType(d_func()->type);
+    Q_D(const QDriveInfo);
+    const_cast<QDriveInfoPrivate *>(d)->doStat(QDriveInfoPrivate::CachedTypeFlag);
+    return QDriveInfo::DriveType(d->type);
 }
 
 /*!
@@ -345,17 +355,16 @@ QDriveInfo::DriveType QDriveInfo::type() const
 */
 QDriveInfo::Capabilities QDriveInfo::capabilities() const
 {
-    const_cast<QDriveInfoPrivate*>(d_func())->doStat(QDriveInfoPrivate::CachedCapabilitiesFlag);
-    return d_func()->capabilities;
+    Q_D(const QDriveInfo);
+    const_cast<QDriveInfoPrivate *>(d)->doStat(QDriveInfoPrivate::CachedCapabilitiesFlag);
+    return d->capabilities;
 }
 
 /*!
+    \fn bool QDriveInfo::hasCapability(QDriveInfo::Capability capability) const
+
     Returns true if drive's filesystem supports specified \a capability.
 */
-bool QDriveInfo::hasCapability(QDriveInfo::Capability capability) const
-{
-    return capabilities() & capability;
-}
 
 /*!
     Resets QDriveInfo's inner cache.
@@ -368,7 +377,8 @@ bool QDriveInfo::hasCapability(QDriveInfo::Capability capability) const
 */
 void QDriveInfo::refresh()
 {
-    d_ptr->clear(); // do not detach
+    // do not detach
+    d_func()->clear();
 }
 
 /*!
@@ -390,7 +400,15 @@ QList<QDriveInfo> QDriveInfo::drives()
     return QDriveInfoPrivate::drives();
 }
 
+// ### improve by using the new code from 5.0
+#include <QtCore/QMutex>
 Q_GLOBAL_STATIC(QMutex, initLock)
+static QDriveInfo *m_rootDrive = 0;
+static class QDriveInfoDeleter {
+public:
+    ~QDriveInfoDeleter() { delete m_rootDrive; }
+} deleter;
+
 /*!
     Returns a QDriveInfo object that represents the system root volume or drive.
 
@@ -399,12 +417,6 @@ Q_GLOBAL_STATIC(QMutex, initLock)
 
     \sa isRoot()
 */
-static QDriveInfo *m_rootDrive = 0;
-static class QDriveInfoDeleter {
-    public:
-    ~QDriveInfoDeleter() { delete m_rootDrive; }
-} deleter;
-
 QDriveInfo QDriveInfo::rootDrive()
 {
     if (!m_rootDrive) {
@@ -413,14 +425,6 @@ QDriveInfo QDriveInfo::rootDrive()
             m_rootDrive = new QDriveInfo(QDriveInfoPrivate::rootDrive());
     }
     return *m_rootDrive;
-}
-
-/*! \internal
-    Detaches all internal data.
-*/
-void QDriveInfo::detach()
-{
-    d_ptr.detach();
 }
 
 QT_END_NAMESPACE

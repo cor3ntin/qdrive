@@ -63,15 +63,15 @@ void QDriveInfoPrivate::initRootPath()
 
     // ### test if disk mounted to folder on other disk
     wchar_t buffer[MAX_PATH + 1];
-    if (::GetVolumePathName((wchar_t *)path.utf16(), buffer, MAX_PATH))
+    if (::GetVolumePathName(reinterpret_cast<wchar_t *>(path.utf16()), buffer, MAX_PATH))
         rootPath = QDir::fromNativeSeparators(QString::fromWCharArray(buffer));
 }
 
 static inline QByteArray getDevice(const QString &rootPath)
 {
-    QString path = QDir::toNativeSeparators(rootPath);
+    const QString path = QDir::toNativeSeparators(rootPath);
     wchar_t deviceBuffer[MAX_PATH + 1];
-    if (::GetVolumeNameForVolumeMountPoint((wchar_t *)path.utf16(), deviceBuffer, MAX_PATH))
+    if (::GetVolumeNameForVolumeMountPoint(reinterpret_cast<wchar_t *>(path.utf16()), deviceBuffer, MAX_PATH))
         return QString::fromWCharArray(deviceBuffer).toLatin1();
 
     return QByteArray();
@@ -80,7 +80,7 @@ static inline QByteArray getDevice(const QString &rootPath)
 static inline QDriveInfo::DriveType determineType(const QString &rootPath)
 {
 #if !defined(Q_OS_WINCE)
-    UINT result = ::GetDriveType((wchar_t *)rootPath.utf16());
+    UINT result = ::GetDriveType(reinterpret_cast<wchar_t *>(rootPath.utf16()));
     switch (result) {
     case DRIVE_REMOVABLE:
         return QDriveInfo::RemovableDrive;
@@ -167,7 +167,7 @@ void QDriveInfoPrivate::getVolumeInfo()
     wchar_t nameBuf[MAX_PATH + 1];
     DWORD fileSystemFlags = 0;
     wchar_t fileSystemNameBuf[MAX_PATH + 1];
-    bool result = ::GetVolumeInformation((wchar_t *)path.utf16(),
+    bool result = ::GetVolumeInformation(reinterpret_cast<wchar_t *>(path.utf16()),
                                          nameBuf, MAX_PATH,
                                          0, 0,
                                          &fileSystemFlags,
@@ -187,7 +187,7 @@ void QDriveInfoPrivate::getVolumeInfo()
         capabilities = 0;
         if (fileSystemFlags & FILE_SUPPORTS_OBJECT_IDS) // ?
             capabilities |= QDriveInfo::SupportsPersistentIDs;
-        if (fileSystemName.toLower() == "ntfs")
+        if (fileSystemName.toLower() == "ntfs") // ###
             capabilities |= QDriveInfo::SupportsSymbolicLinks;
         if (fileSystemFlags & FILE_SUPPORTS_HARD_LINKS)
             capabilities |= QDriveInfo::SupportsHardLinks;
@@ -209,7 +209,7 @@ void QDriveInfoPrivate::getDiskFreeSpace()
     UINT oldmode = ::SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
 
     QString path = QDir::toNativeSeparators(rootPath);
-    ::GetDiskFreeSpaceEx((wchar_t *)path.utf16(),
+    ::GetDiskFreeSpaceEx(reinterpret_cast<wchar_t *>(path.utf16()),
                          (PULARGE_INTEGER)&bytesAvailable,
                          (PULARGE_INTEGER)&bytesTotal,
                          (PULARGE_INTEGER)&bytesFree);

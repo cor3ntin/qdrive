@@ -87,15 +87,12 @@ void QDriveInfoPrivate::initRootPath()
 static inline QDriveInfo::DriveType determineType(const QByteArray &device)
 {
     QString dmFile;
-
     if (device.contains("mapper")) {
         QT_STATBUF stat_buf;
         int result;
         EINTR_LOOP(result, QT_STAT(device.constData(), &stat_buf));
         if (result == 0)
             dmFile = QLatin1String("dm-") + QString::number(stat_buf.st_rdev & 0377);
-        else
-            return QDriveInfo::UnknownDrive;
     } else {
         dmFile = QString::fromLatin1(device).section(QLatin1Char('/'), 2, 3);
         if (dmFile.startsWith(QLatin1String("mmc"))) {
@@ -110,28 +107,28 @@ static inline QDriveInfo::DriveType determineType(const QByteArray &device)
                 dmFile.chop(1); // get rid of partition number
         }
     }
-    dmFile = QLatin1String("/sys/block/") + dmFile + QLatin1String("/removable");
+    if (!dmFile.isEmpty()) {
+        dmFile = QLatin1String("/sys/block/") + dmFile + QLatin1String("/removable");
 
-    QFile file(dmFile);
-    if (file.open(QIODevice::ReadOnly)) {
-        QTextStream sysinfo(&file);
-        QString line = sysinfo.readAll();
-        if (line.contains(QLatin1Char('1')))
-            return QDriveInfo::RemovableDrive;
+        QFile file(dmFile);
+        if (file.open(QIODevice::ReadOnly)) {
+            QTextStream sysinfo(&file); // ### can we get rid of QTextStream ?
+            const QString line = sysinfo.readAll();
+            if (line.contains(QLatin1Char('1')))
+                return QDriveInfo::RemovableDrive;
+        }
+
+        if (device.startsWith("/dev"))
+            return QDriveInfo::InternalDrive;
     }
-
-    if (device.startsWith("/dev"))
-        return QDriveInfo::InternalDrive;
 
     return QDriveInfo::UnknownDrive;
 }
 
-// we need udev to be present in system to get label name
-// Unfortunately, i don't know proper way to get labels except this. Maybe libudev can provide
-// this information. TODO: explore it
-// If we have udev installed in the system, proper symlinks are created by it, so we don't
-// need to link to libudev
-// If not, i don't know other way to get labels without root privelegies
+// Unfortunately, I don't know other way to get labels without root privelegies.
+// Maybe libudev can provide this information. TODO: explore it
+// If we have udev installed in the system, proper symlinks are created by it,
+// so we don't need to link to libudev.
 static inline QString getName(const QByteArray &device)
 {
     QDirIterator it(QLatin1String(_PATH_DISK_BY_LABEL), QDir::NoDotAndDotDot);
@@ -230,10 +227,10 @@ void QDriveInfoPrivate::getCapabilities()
     if (fileSystem == "ext4"
             || fileSystem == "ext3"
             || fileSystem == "ext3cow"
-            || fileSystem == "reiserfs"
-            || fileSystem == "jfs"
             || fileSystem == "xfs"
+            || fileSystem == "jfs"
             || fileSystem == "ntfs"
+            || fileSystem == "reiserfs"
             || fileSystem == "hfsplus")
         flags = QDriveInfo::SupportsSymbolicLinks
                 | QDriveInfo::SupportsHardLinks
@@ -242,8 +239,8 @@ void QDriveInfoPrivate::getCapabilities()
                 | QDriveInfo::SupportsJournaling
                 | QDriveInfo::SupportsSparseFiles;
     else if (fileSystem == "ext2"
-             || fileSystem == "reiser4"
              || fileSystem == "btrfs"
+             || fileSystem == "reiser4"
              || fileSystem == "zfs")
         flags = QDriveInfo::SupportsSymbolicLinks
                 | QDriveInfo::SupportsHardLinks
@@ -252,10 +249,10 @@ void QDriveInfoPrivate::getCapabilities()
                 | QDriveInfo::SupportsSparseFiles;
     else if (fileSystem == "ntfs-3g")
         flags = QDriveInfo::SupportsSparseFiles;
-    else if (fileSystem == "fat12"
+    else if (fileSystem == "fat32"
+             || fileSystem == "vfat"
              || fileSystem == "fat16"
-             || fileSystem == "fat32"
-             || fileSystem == "vfat")
+             || fileSystem == "fat12")
         flags = 0;
     else if (fileSystem == "exfat")
         flags = QDriveInfo::SupportsCasePreservedNames;

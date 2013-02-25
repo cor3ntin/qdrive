@@ -81,7 +81,7 @@ public:
     inline bool operator!=(const QDriveInfo &other) const;
 
     QString rootPath() const;
-    void setRootPath(const QString &);
+    void setRootPath(const QString &rootPath);
 
     QByteArray device() const;
     QByteArray fileSystemName() const;
@@ -99,37 +99,28 @@ public:
     DriveType type() const;
 
     Capabilities capabilities() const;
-    bool hasCapability(Capability capability) const;
+    inline bool hasCapability(Capability capability) const;
 
     void refresh();
 
     static QList<QDriveInfo> drives();
     static QDriveInfo rootDrive();
 
-protected:
-    QExplicitlySharedDataPointer<QDriveInfoPrivate> d_ptr;
-
 private:
-    void detach();
-
-    inline QDriveInfoPrivate* d_func()
-    {
-        detach();
-        return const_cast<QDriveInfoPrivate*>(d_ptr.constData());
-    }
-
-    inline const QDriveInfoPrivate* d_func() const
-    {
-        return d_ptr.constData();
-    }
-    friend class QDriveInfoPrivate;
+    Q_DECLARE_PRIVATE(QDriveInfo)
+    QExplicitlySharedDataPointer<QDriveInfoPrivate> d_ptr;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(QDriveInfo::Capabilities)
 
 inline bool QDriveInfo::operator!=(const QDriveInfo &other) const
 { return !(operator==(other)); }
 
 inline bool QDriveInfo::isRoot() const
 { return *this == QDriveInfo::rootDrive(); }
+
+inline bool QDriveInfo::hasCapability(QDriveInfo::Capability capability) const
+{ return (capabilities() & capability) != 0; }
 
 QT_END_NAMESPACE
 
