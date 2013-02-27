@@ -401,8 +401,7 @@ QList<QDriveInfo> QDriveInfo::drives()
 }
 
 // ### improve by using the new code from 5.0
-#include <QtCore/QMutex>
-Q_GLOBAL_STATIC(QMutex, initLock)
+#include <QtCore/QBasicMutex>
 static QDriveInfo *m_rootDrive = 0;
 static class QDriveInfoDeleter {
 public:
@@ -420,7 +419,8 @@ public:
 QDriveInfo QDriveInfo::rootDrive()
 {
     if (!m_rootDrive) {
-        QMutexLocker lock(initLock());
+        static QBasicMutex mutex;
+        QMutexLocker lock(&mutex);
         if (!m_rootDrive)
             m_rootDrive = new QDriveInfo(QDriveInfoPrivate::rootDrive());
     }
