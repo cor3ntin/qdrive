@@ -223,7 +223,7 @@ void QDriveWatcher::stop_sys()
     }
 }
 
-QString getEmptyLetter()
+static QString getEmptyLetter()
 {
     char driveName[] = "Z:";
     quint32 driveBits = quint32(::GetLogicalDrives()) & 0x3ffffff;
