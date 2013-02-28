@@ -400,7 +400,7 @@ QList<QDriveInfo> QDriveInfo::drives()
     return QDriveInfoPrivate::drives();
 }
 
-Q_GLOBAL_STATIC_WITH_ARGS(QDriveInfo, rootDrive, (QDriveInfoPrivate::rootDrive()))
+Q_GLOBAL_STATIC_WITH_ARGS(QDriveInfo, theRootDrive, (QDriveInfoPrivate::rootDrive()))
 
 /*!
     Returns a QDriveInfo object that represents the system root volume or drive.
@@ -412,7 +412,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(QDriveInfo, rootDrive, (QDriveInfoPrivate::rootDrive()
 */
 QDriveInfo QDriveInfo::rootDrive()
 {
-    return *::rootDrive();
+    return *theRootDrive();
 }
 
 QT_END_NAMESPACE
