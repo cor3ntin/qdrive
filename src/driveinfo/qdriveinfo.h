@@ -106,7 +106,10 @@ public:
     static QList<QDriveInfo> drives();
     static QDriveInfo rootDrive();
 
+protected:
+    explicit QDriveInfo(QDriveInfoPrivate &dd);
 private:
+
     friend class QDriveInfoPrivate;
     QSharedDataPointer<QDriveInfoPrivate> d;
 };

@@ -277,14 +277,14 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
     if (fp) {
         struct mntent *mnt;
         while ((mnt = ::getmntent(fp))) {
-            QDriveInfo drive;
-            drive.d->rootPath = QFile::decodeName(mnt->mnt_dir);
-            drive.d->device = QByteArray(mnt->mnt_fsname);
-            drive.d->fileSystemName = QByteArray(mnt->mnt_type);
-            drive.d->setCachedFlag(CachedRootPathFlag |
-                                             CachedFileSystemNameFlag |
-                                             CachedDeviceFlag);
-            drives.append(drive);
+            QDriveInfoPrivate data;
+            data.rootPath = QFile::decodeName(mnt->mnt_dir);
+            data.device = QByteArray(mnt->mnt_fsname);
+            data.fileSystemName = QByteArray(mnt->mnt_type);
+            data.setCachedFlag(CachedRootPathFlag |
+                               CachedFileSystemNameFlag |
+                               CachedDeviceFlag);
+            drives.append(QDriveInfo(data));
         }
         ::endmntent(fp);
     }

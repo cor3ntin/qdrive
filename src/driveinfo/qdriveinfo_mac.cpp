@@ -327,10 +327,10 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
         if (result == kCFURLEnumeratorSuccess) {
             QCFString urlString = CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
 
-            QDriveInfo drive;
-            drive.d->rootPath = urlString;
-            drive.d->setCachedFlag(CachedRootPathFlag);
-            drives.append(drive);
+            QDriveInfoPrivate data;
+            data.rootPath = urlString;
+            data.setCachedFlag(CachedRootPathFlag);
+            drives.append(QDriveInfo(data));
         }
     } while (result != kCFURLEnumeratorEnd);
 

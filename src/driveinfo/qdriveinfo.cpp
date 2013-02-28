@@ -124,6 +124,14 @@ QDriveInfo::QDriveInfo(const QDriveInfo &other)
 }
 
 /*!
+    \internal
+*/
+QDriveInfo::QDriveInfo(QDriveInfoPrivate &dd)
+    : d(&dd)
+{
+}
+
+/*!
     Destroys the QDriveInfo and frees its resources.
 */
 QDriveInfo::~QDriveInfo()
