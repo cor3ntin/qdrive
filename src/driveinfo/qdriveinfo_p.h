@@ -65,14 +65,6 @@ public:
         cachedFlags(0)
     {}
 
-    QDriveInfoPrivate(const QDriveInfoPrivate &other) : QSharedData(other),
-        rootPath(other.rootPath),
-        bytesTotal(0), bytesFree(0), bytesAvailable(0),
-        type(QDriveInfo::UnknownDrive),
-        readOnly(false), ready(false), valid(false),
-        cachedFlags(0)
-    {}
-
     enum CachedFlags {
         CachedRootPathFlag = 0x001,
         CachedDeviceFlag = 0x002,
