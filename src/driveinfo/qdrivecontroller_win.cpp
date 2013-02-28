@@ -234,7 +234,7 @@ QString getEmptyLetter()
             break;
         }
     }
-    return QLatin1String(driveName);
+    return QString::fromLatin1(driveName);
 }
 
 bool QDriveController::mount(const QString &device, const QString &path)
