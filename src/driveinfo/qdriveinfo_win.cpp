@@ -226,8 +226,8 @@ QList<QDriveInfo> QDriveInfoPrivate::drives()
     while (driveBits) {
         if (driveBits & 1) {
             QDriveInfo drive;
-            drive.d_ptr->rootPath = QLatin1String(driveName);
-            drive.d_ptr->setCachedFlag(CachedRootPathFlag);
+            drive.d->rootPath = QLatin1String(driveName);
+            drive.d->setCachedFlag(CachedRootPathFlag);
             drives.append(drive);
         }
         driveName[0]++;

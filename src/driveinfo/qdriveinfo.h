@@ -37,7 +37,7 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QList>
 #include <QtCore/QString>
-#include <QtCore/QExplicitlySharedDataPointer>
+#include <QtCore/QSharedDataPointer>
 
 #include "qtdriveinfoglobal.h"
 
@@ -107,8 +107,8 @@ public:
     static QDriveInfo rootDrive();
 
 private:
-    Q_DECLARE_PRIVATE(QDriveInfo)
-    QExplicitlySharedDataPointer<QDriveInfoPrivate> d_ptr;
+    friend class QDriveInfoPrivate;
+    QSharedDataPointer<QDriveInfoPrivate> d;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QDriveInfo::Capabilities)
