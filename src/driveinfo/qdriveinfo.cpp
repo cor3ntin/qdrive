@@ -36,6 +36,15 @@
 
 QT_BEGIN_NAMESPACE
 
+void QDriveInfoPrivate::ensureCached(const QDriveInfo *q, uint flags)
+{
+    if ((q->d_ptr->cachedFlags & flags) != flags) {
+        QDriveInfo *that = const_cast<QDriveInfo *>(q);
+        that->d_ptr.detach();
+        that->d_ptr->doStat(flags);
+    }
+}
+
 /*!
     \class QDriveInfo
     \reentrant
@@ -170,9 +179,8 @@ bool QDriveInfo::operator==(const QDriveInfo &other) const
 */
 QString QDriveInfo::rootPath() const
 {
-    Q_D(const QDriveInfo);
-    const_cast<QDriveInfoPrivate *>(d)->doStat(QDriveInfoPrivate::CachedRootPathFlag);
-    return d->rootPath;
+    QDriveInfoPrivate::ensureCached(this, QDriveInfoPrivate::CachedRootPathFlag);
+    return d_func()->rootPath;
 }
 
 /*!
@@ -203,9 +211,8 @@ void QDriveInfo::setRootPath(const QString &rootPath)
 */
 quint64 QDriveInfo::bytesAvailable() const
 {
-    Q_D(const QDriveInfo);
-    const_cast<QDriveInfoPrivate *>(d)->doStat(QDriveInfoPrivate::CachedBytesAvailableFlag);
-    return d->bytesAvailable;
+    QDriveInfoPrivate::ensureCached(this, QDriveInfoPrivate::CachedBytesAvailableFlag);
+    return d_func()->bytesAvailable;
 }
 
 /*!
@@ -216,9 +223,8 @@ quint64 QDriveInfo::bytesAvailable() const
 */
 quint64 QDriveInfo::bytesFree() const
 {
-    Q_D(const QDriveInfo);
-    const_cast<QDriveInfoPrivate *>(d)->doStat(QDriveInfoPrivate::CachedBytesFreeFlag);
-    return d->bytesFree;
+    QDriveInfoPrivate::ensureCached(this, QDriveInfoPrivate::CachedBytesFreeFlag);
+    return d_func()->bytesFree;
 }
 
 /*!
@@ -228,9 +234,8 @@ quint64 QDriveInfo::bytesFree() const
 */
 quint64 QDriveInfo::bytesTotal() const
 {
-    Q_D(const QDriveInfo);
-    const_cast<QDriveInfoPrivate *>(d)->doStat(QDriveInfoPrivate::CachedBytesTotalFlag);
-    return d->bytesTotal;
+    QDriveInfoPrivate::ensureCached(this, QDriveInfoPrivate::CachedBytesTotalFlag);
+    return d_func()->bytesTotal;
 }
 
 /*!
@@ -244,9 +249,8 @@ quint64 QDriveInfo::bytesTotal() const
 */
 QByteArray QDriveInfo::fileSystemName() const
 {
-    Q_D(const QDriveInfo);
-    const_cast<QDriveInfoPrivate *>(d)->doStat(QDriveInfoPrivate::CachedFileSystemNameFlag);
-    return d->fileSystemName;
+    QDriveInfoPrivate::ensureCached(this, QDriveInfoPrivate::CachedFileSystemNameFlag);
+    return d_func()->fileSystemName;
 }
 
 /*!
@@ -264,9 +268,8 @@ QByteArray QDriveInfo::fileSystemName() const
 */
 QByteArray QDriveInfo::device() const
 {
-    Q_D(const QDriveInfo);
-    const_cast<QDriveInfoPrivate *>(d)->doStat(QDriveInfoPrivate::CachedDeviceFlag);
-    return d->device;
+    QDriveInfoPrivate::ensureCached(this, QDriveInfoPrivate::CachedDeviceFlag);
+    return d_func()->device;
 }
 
 /*!
@@ -281,9 +284,8 @@ QByteArray QDriveInfo::device() const
 */
 QString QDriveInfo::name() const
 {
-    Q_D(const QDriveInfo);
-    const_cast<QDriveInfoPrivate *>(d)->doStat(QDriveInfoPrivate::CachedNameFlag);
-    return d->name;
+    QDriveInfoPrivate::ensureCached(this, QDriveInfoPrivate::CachedNameFlag);
+    return d_func()->name;
 }
 
 /*!
@@ -302,9 +304,8 @@ QString QDriveInfo::name() const
 */
 bool QDriveInfo::isReadOnly() const
 {
-    Q_D(const QDriveInfo);
-    const_cast<QDriveInfoPrivate *>(d)->doStat(QDriveInfoPrivate::CachedReadOnlyFlag);
-    return d->readOnly;
+    QDriveInfoPrivate::ensureCached(this, QDriveInfoPrivate::CachedReadOnlyFlag);
+    return d_func()->readOnly;
 }
 
 /*!
@@ -317,9 +318,8 @@ bool QDriveInfo::isReadOnly() const
 */
 bool QDriveInfo::isReady() const
 {
-    Q_D(const QDriveInfo);
-    const_cast<QDriveInfoPrivate *>(d)->doStat(QDriveInfoPrivate::CachedReadyFlag);
-    return d->ready;
+    QDriveInfoPrivate::ensureCached(this, QDriveInfoPrivate::CachedReadyFlag);
+    return d_func()->ready;
 }
 
 /*!
@@ -329,9 +329,8 @@ bool QDriveInfo::isReady() const
 */
 bool QDriveInfo::isValid() const
 {
-    Q_D(const QDriveInfo);
-    const_cast<QDriveInfoPrivate *>(d)->doStat(QDriveInfoPrivate::CachedValidFlag);
-    return d->valid;
+    QDriveInfoPrivate::ensureCached(this, QDriveInfoPrivate::CachedValidFlag);
+    return d_func()->valid;
 }
 
 /*!
@@ -345,9 +344,8 @@ bool QDriveInfo::isValid() const
 */
 QDriveInfo::DriveType QDriveInfo::type() const
 {
-    Q_D(const QDriveInfo);
-    const_cast<QDriveInfoPrivate *>(d)->doStat(QDriveInfoPrivate::CachedTypeFlag);
-    return QDriveInfo::DriveType(d->type);
+    QDriveInfoPrivate::ensureCached(this, QDriveInfoPrivate::CachedTypeFlag);
+    return QDriveInfo::DriveType(d_func()->type);
 }
 
 /*!
@@ -355,9 +353,8 @@ QDriveInfo::DriveType QDriveInfo::type() const
 */
 QDriveInfo::Capabilities QDriveInfo::capabilities() const
 {
-    Q_D(const QDriveInfo);
-    const_cast<QDriveInfoPrivate *>(d)->doStat(QDriveInfoPrivate::CachedCapabilitiesFlag);
-    return d->capabilities;
+    QDriveInfoPrivate::ensureCached(this, QDriveInfoPrivate::CachedCapabilitiesFlag);
+    return d_func()->capabilities;
 }
 
 /*!

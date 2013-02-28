@@ -109,6 +109,8 @@ public:
     static QList<QDriveInfo> drives();
     static QDriveInfo rootDrive();
 
+    static inline void ensureCached(const QDriveInfo *q, uint flags);
+
 protected:
 #if defined(Q_OS_WIN)
     void getVolumeInfo();
