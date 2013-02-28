@@ -400,13 +400,7 @@ QList<QDriveInfo> QDriveInfo::drives()
     return QDriveInfoPrivate::drives();
 }
 
-// ### improve by using the new code from 5.0
-#include <QtCore/QBasicMutex>
-static QDriveInfo *m_rootDrive = 0;
-static class QDriveInfoDeleter {
-public:
-    ~QDriveInfoDeleter() { delete m_rootDrive; }
-} deleter;
+Q_GLOBAL_STATIC_WITH_ARGS(QDriveInfo, rootDrive, (QDriveInfoPrivate::rootDrive()))
 
 /*!
     Returns a QDriveInfo object that represents the system root volume or drive.
@@ -418,13 +412,7 @@ public:
 */
 QDriveInfo QDriveInfo::rootDrive()
 {
-    if (!m_rootDrive) {
-        static QBasicMutex mutex;
-        QMutexLocker lock(&mutex);
-        if (!m_rootDrive)
-            m_rootDrive = new QDriveInfo(QDriveInfoPrivate::rootDrive());
-    }
-    return *m_rootDrive;
+    return *::rootDrive();
 }
 
 QT_END_NAMESPACE
