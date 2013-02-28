@@ -121,8 +121,6 @@ void tst_QDriveInfo::initTestCase()
     DriveInfo bootDrive = { "/boot", "/dev/sda1", "ext3", "",
                             QDriveInfo::InternalDrive, false, true, true, false };
     testDrives.insert("sda1", bootDrive);
-#elif defined(Q_OS_SYMBIAN)
-    // ###
 #else
     // ###
 #endif
@@ -158,8 +156,6 @@ void tst_QDriveInfo::common_data()
     QTest::newRow("/net") << "/net" << testDrives["share1"];
     QTest::newRow("/home") << "/home" << testDrives["share2"];
 #elif defined(Q_OS_LINUX)
-    // ###
-#elif defined(Q_OS_SYMBIAN)
     // ###
 #else
     // ###
