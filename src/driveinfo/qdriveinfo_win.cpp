@@ -82,21 +82,11 @@ static inline QDriveInfo::DriveType determineType(const QString &rootPath)
 #if !defined(Q_OS_WINCE)
     UINT result = ::GetDriveType(reinterpret_cast<wchar_t *>(rootPath.utf16()));
     switch (result) {
-    case DRIVE_REMOVABLE:
-        return QDriveInfo::RemovableDrive;
-
-    case DRIVE_FIXED:
-        return QDriveInfo::InternalDrive;
-
-    case DRIVE_REMOTE:
-        return QDriveInfo::RemoteDrive;
-
-    case DRIVE_CDROM:
-        return QDriveInfo::CdromDrive;
-
-    case DRIVE_RAMDISK:
-        return QDriveInfo::RamDrive;
-
+    case DRIVE_REMOVABLE: return QDriveInfo::RemovableDrive;
+    case DRIVE_FIXED: return QDriveInfo::InternalDrive;
+    case DRIVE_REMOTE: return QDriveInfo::RemoteDrive;
+    case DRIVE_CDROM: return QDriveInfo::CdromDrive;
+    case DRIVE_RAMDISK: return QDriveInfo::RamDrive;
     case DRIVE_UNKNOWN:
     case DRIVE_NO_ROOT_DIR:
     // fall through

@@ -48,6 +48,8 @@ QT_BEGIN_NAMESPACE
 class QDriveInfoPrivate;
 class Q_DRIVEINFO_EXPORT QDriveInfo
 {
+    friend class QDriveInfoPrivate;
+
 public:
     enum DriveType {
         UnknownDrive = 0,
@@ -108,9 +110,7 @@ public:
 
 protected:
     explicit QDriveInfo(QDriveInfoPrivate &dd);
-private:
 
-    friend class QDriveInfoPrivate;
     QSharedDataPointer<QDriveInfoPrivate> d;
 };
 

@@ -54,7 +54,7 @@
 
 QT_BEGIN_NAMESPACE
 
-class QDriveInfoPrivate : public QSharedData
+class Q_AUTOTEST_EXPORT QDriveInfoPrivate : public QSharedData
 {
 public:
 
