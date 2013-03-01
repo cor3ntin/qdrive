@@ -207,9 +207,8 @@ bool QDriveWatcher::start_sys()
 {
     engine = new QDriveWatcherEngine;
     engine->watcher = this;
-    foreach (const QDriveInfo &info, QDriveInfo::drives()) {
+    foreach (const QDriveInfo &info, QDriveInfo::drives())
         engine->drives.insert(info.rootPath());
-    }
     engine->hwnd = dw_create_internal_window(engine);
     return engine->hwnd;
 }
@@ -223,11 +222,10 @@ void QDriveWatcher::stop_sys()
     }
 }
 
-static QString getEmptyLetter()
+static inline QString getEmptyLetter()
 {
     char driveName[] = "Z:";
     quint32 driveBits = quint32(::GetLogicalDrives()) & 0x3ffffff;
-
     for (int i = 25; i >= 0; i--) {
         if (driveBits & (1 << i)) {
             driveName[0] -= 25 - i;
@@ -239,100 +237,91 @@ static QString getEmptyLetter()
 
 bool QDriveController::mount(const QString &device, const QString &path)
 {
+    d->clearError();
+    int err = ERROR_BAD_PATHNAME;
+
     QString targetPath = QDir::toNativeSeparators(path.isEmpty() ? getEmptyLetter() : path);
     if (targetPath.endsWith(QLatin1Char('\\')))
-        targetPath = targetPath.left(targetPath.length()-1);
+        targetPath.chop(1);
 
     if (device.startsWith(QLatin1String("\\\\?\\"))) { // GUID
-
-        bool result = SetVolumeMountPoint((wchar_t*)targetPath.utf16(), (wchar_t*)device.utf16());
-        if (!result) {
-            d->setError(GetLastError());
-            return false;
+        if (::SetVolumeMountPoint(reinterpret_cast<const wchar_t *>(targetPath.utf16()),
+                                  reinterpret_cast<const wchar_t *>(device.utf16()))) {
+            return true;
         }
-
+        err = GetLastError();
     } else if (device.startsWith(QLatin1String("\\\\"))) { // network share
-
         NETRESOURCE resource;
         resource.dwType = RESOURCETYPE_ANY;
-        resource.lpRemoteName = (wchar_t*)device.utf16();
-        resource.lpLocalName = (wchar_t*)targetPath.utf16();
+        resource.lpRemoteName = (wchar_t *)device.utf16();
+        resource.lpLocalName = (wchar_t *)targetPath.utf16();
         resource.lpProvider = NULL;
 
-        DWORD result = WNetAddConnection2(&resource, 0, 0, CONNECT_UPDATE_PROFILE);
-        if (result != NO_ERROR) {
-            d->setError(result);
-            return false;
-        }
-
+        err = WNetAddConnection2(&resource, 0, 0, CONNECT_UPDATE_PROFILE);
+        if (err == NO_ERROR)
+            return true;
     } else {
-
         QDriveInfo driveInfo(device);
-        if (!driveInfo.isValid()) {
-            d->setError(ERROR_BAD_PATHNAME);
-            return false;
-        }
-
-        return mount(QString::fromLatin1(driveInfo.device()), targetPath); // ### shouldn't device() return QString for convenience?
+        if (driveInfo.isValid())
+            return mount(QString::fromLatin1(driveInfo.device()), targetPath); // ### shouldn't device() return QString for convenience?
     }
 
-    return true;
+    d->setError(err);
+    return false;
 }
 
 bool QDriveController::unmount(const QString &path)
 {
+    d->clearError();
+    int err = ERROR_BAD_PATHNAME;
+
     QString targetPath = QDir::toNativeSeparators(path);
     if (targetPath.startsWith(QLatin1String("\\\\")) ||
-            QDriveInfo(path).type() == QDriveInfo::RemoteDrive) { // share
+        QDriveInfo(path).type() == QDriveInfo::RemoteDrive) { // share
 
         if (targetPath.endsWith(QLatin1Char('\\')))
             targetPath.chop(1);
 
-        DWORD result = WNetCancelConnection2((wchar_t*)targetPath.utf16(), CONNECT_UPDATE_PROFILE, true);
-        if (result != NO_ERROR) {
-            d->setError(result);
-            return false;
-        }
-
+        err = WNetCancelConnection2(reinterpret_cast<const wchar_t *>(targetPath.utf16()),
+                                    CONNECT_UPDATE_PROFILE, true);
+        if (err == NO_ERROR)
+            return true;
     } else {
-
         if (!targetPath.endsWith(QLatin1Char('\\')))
             targetPath.append(QLatin1Char('\\'));
 
-        bool result = DeleteVolumeMountPoint((wchar_t*)targetPath.utf16());
-        if (!result) {
-            d->setError(GetLastError());
-            return false;
-        }
-
+        if (::DeleteVolumeMountPoint(reinterpret_cast<const wchar_t *>(targetPath.utf16())))
+            return true;
+        err = GetLastError();
     }
 
+    d->setError(err);
     return true;
 }
 
-static bool ejectCDRom(bool eject, const QString &drive, QDriveControllerPrivate::Error &error)
+static inline bool ejectCDRom(const QString &drive, bool eject, QDriveControllerPrivate::Error &error)
 {
-    wchar_t buffer[255] = L"";
     MCI_OPEN_PARMS open;
     DWORD flags;
 
     ZeroMemory(&open, sizeof(MCI_OPEN_PARMS));
 
     open.lpstrDeviceType = (LPWSTR) MCI_DEVTYPE_CD_AUDIO;
-    open.lpstrElementName = (wchar_t*)drive.utf16();
+    open.lpstrElementName = (const wchar_t *)drive.utf16();
 
     flags = MCI_OPEN_TYPE | MCI_OPEN_TYPE_ID;
 
     MCIERROR result = mciSendCommand(0, MCI_OPEN, flags, (DWORD) &open);
     if (result == 0) {
-        result = mciSendCommand(open.wDeviceID, MCI_SET, (eject) ? MCI_SET_DOOR_OPEN : MCI_SET_DOOR_CLOSED, 0);
+        result = mciSendCommand(open.wDeviceID, MCI_SET, eject ? MCI_SET_DOOR_OPEN : MCI_SET_DOOR_CLOSED, 0);
         mciSendCommand(open.wDeviceID, MCI_CLOSE, MCI_WAIT, 0);
     }
 
     if (result) {
-        mciGetErrorString(result, buffer, 255);
+        wchar_t errorString[256];
+        mciGetErrorString(result, errorString, 255);
         error.code = result;
-        error.string = QString::fromWCharArray(buffer, 255);
+        error.string = QString::fromWCharArray(errorString);
         return false;
     }
 
@@ -342,8 +331,10 @@ static bool ejectCDRom(bool eject, const QString &drive, QDriveControllerPrivate
 bool QDriveController::eject(const QString &path)
 {
     QDriveInfo info(path);
-    if (info.type() == QDriveInfo::CdromDrive)
-        return ejectCDRom(true, info.rootPath(), d->error);
+    if (info.type() == QDriveInfo::CdromDrive) {
+        d->clearError();
+        return ejectCDRom(info.rootPath(), true, d->error);
+    }
 
     return unmount(path);
 }

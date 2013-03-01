@@ -16,6 +16,12 @@ public:
         QString string;
     };
 
+    inline void clearError()
+    {
+        error.code = 0;
+        error.string.clear();
+    }
+
     inline void setError(int errorCode, const QString& errorString)
     {
         error.code = errorCode;
