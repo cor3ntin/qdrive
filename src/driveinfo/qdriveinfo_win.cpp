@@ -36,7 +36,7 @@
 #include <QtCore/QDir>
 #include <QtCore/QVarLengthArray>
 
-#include <Userenv.h>
+#include <userenv.h>
 
 QT_BEGIN_NAMESPACE
 

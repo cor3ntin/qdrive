@@ -41,8 +41,6 @@
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 
-#include <private/qcore_unix_p.h>
-
 #if defined(QT_LARGEFILE_SUPPORT)
 #  define QT_STATFSBUF struct statvfs64
 #  define QT_STATFS    ::statvfs64
@@ -94,7 +92,7 @@ static inline QDriveInfo::DriveType determineType(const QByteArray &device)
         if (result == 0)
             dmFile = QLatin1String("dm-") + QString::number(stat_buf.st_rdev & 0377);
     } else {
-        dmFile = QString::fromLatin1(device).section(QLatin1Char('/'), 2, 3);
+        dmFile = QString::fromLatin1(device.constData()).section(QLatin1Char('/'), 2, 3);
         if (dmFile.startsWith(QLatin1String("mmc"))) {
             // assume this dev is removable sd/mmc card.
             return QDriveInfo::RemovableDrive;

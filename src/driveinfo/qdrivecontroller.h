@@ -3,7 +3,7 @@
 
 #include <QtCore/QObject>
 
-#include <QtDriveInfo/qtdriveinfoglobal.h>
+#include "qtdriveinfoglobal.h"
 
 QT_BEGIN_HEADER
 

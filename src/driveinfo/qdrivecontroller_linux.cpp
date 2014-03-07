@@ -3,7 +3,7 @@
 
 #include <QtCore/QFile>
 #include <QtCore/QSet>
-#include <QtCore/private/qcore_unix_p.h>
+//#include <QtCore/private/qcore_unix_p.h>
 
 #if !defined(QT_NO_UDISKS)
 #include <QtDBus/QDBusConnection>
@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <mntent.h>
 #include <linux/cdrom.h>
+#include <unistd.h>
 
 #include  "qdriveinfo.h"
 
@@ -235,7 +236,7 @@ bool QDriveController::mount(const QString &device, const QString &path)
 
 bool QDriveController::unmount(const QString &path)
 {
-    return unmountUdisks(QString::fromLatin1(QDriveInfo(path).device()), QStringList(), d->error);
+    return unmountUdisks(QString::fromLatin1(QDriveInfo(path).device().data()), QStringList(), d->error);
 }
 
 bool QDriveController::eject(const QString &device)

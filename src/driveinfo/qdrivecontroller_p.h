@@ -5,7 +5,7 @@
 
 #include <QtCore/QAtomicInt>
 #include <QtCore/QObject>
-#include <QtCore/private/qsystemerror_p.h>
+//#include <QtCore/private/qsystemerror_p.h>
 
 class QDriveControllerPrivate
 {
@@ -30,9 +30,7 @@ public:
 
     inline void setError(int errorCode)
     {
-        QSystemError systemError(errorCode, QSystemError::NativeError);
-        error.code = systemError.errorCode;
-        error.string = systemError.toString();
+        error.code = errorCode;
     }
 
     inline void setError(Error error)

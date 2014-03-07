@@ -40,8 +40,8 @@
 #include <IOKit/storage/IODVDMedia.h>
 
 #include <sys/mount.h>
-#include <private/qcore_mac_p.h>
 #include <QDebug>
+#include <QString>
 
 #if defined(QT_LARGEFILE_SUPPORT)
 #  define QT_STATFSBUF struct statfs64

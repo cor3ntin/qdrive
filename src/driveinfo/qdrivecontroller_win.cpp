@@ -6,7 +6,7 @@
 #include <QtCore/QFileInfo>
 #include <QtCore/QStringList>
 
-#include <QtDriveInfo/QDriveInfo>
+#include "qdriveinfo.h"
 
 #include <qt_windows.h>
 #include <dbt.h>
@@ -263,7 +263,7 @@ bool QDriveController::mount(const QString &device, const QString &path)
     } else {
         QDriveInfo driveInfo(device);
         if (driveInfo.isValid())
-            return mount(QString::fromLatin1(driveInfo.device()), targetPath); // ### shouldn't device() return QString for convenience?
+            return mount(QString::fromLatin1(driveInfo.device().data()), targetPath); // ### shouldn't device() return QString for convenience?
     }
 
     d->setError(err);

@@ -10,7 +10,7 @@ QDriveWatcher::QDriveWatcher(QObject *parent) :
 
 QDriveWatcher::~QDriveWatcher()
 {
-    if (startStopCounter.load() != 0)
+    if (startStopCounter != 0)
         qWarning("QDriveWatcher is going to be deleted but it seems like it is still in use.");
 
     stop_sys();
@@ -19,7 +19,7 @@ QDriveWatcher::~QDriveWatcher()
 void QDriveWatcher::start()
 {
     startStopCounter.ref();
-    if (startStopCounter.load() == 1) {
+    if (startStopCounter == 1) {
         if (!start_sys())
             stop();
     }
